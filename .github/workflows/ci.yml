@@ -54,6 +54,9 @@ jobs:
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: nightly
+          targets: wasm32-unknown-unknown
 
       - name: Install trunk
         uses: jaxxstorm/action-install-gh-release@v1.9.0
