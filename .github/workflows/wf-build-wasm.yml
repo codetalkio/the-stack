@@ -1,4 +1,4 @@
-name: Build Lambda Microservice
+name: Build WASM Application
 
 on:
   workflow_call:
@@ -6,9 +6,6 @@ on:
       working-directory:
         required: true
         type: string
-    # secrets:
-    #   token:
-    #     required: true
 
 jobs:
   ${{ inputs.working-directory }}:
@@ -18,18 +15,16 @@ jobs:
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-
-      - name: Install Zig toolchain (used for cross-compilation)
-        uses: korandoru/setup-zig@v1
         with:
-          zig-version: 0.10.0
+          toolchain: nightly
+          targets: wasm32-unknown-unknown
 
-      - name: Install Cargo Lambda
+      - name: Install trunk
         uses: jaxxstorm/action-install-gh-release@v1.9.0
         with:
-          repo: cargo-lambda/cargo-lambda
+          repo: thedodd/trunk
           platform: linux # Other valid options: 'windows' or 'darwin'.
-          arch: x86_64 # Other valid options for linux: 'aarch64'.
+          arch: x86_64
 
       - name: Set up cargo cache
         uses: actions/cache@v3
@@ -46,4 +41,4 @@ jobs:
 
       - name: Build release
         working-directory: ${{ inputs.working-directory }}
-        run: cargo lambda build --arm64 --release
+        run: trunk build --release

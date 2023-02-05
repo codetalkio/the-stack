@@ -15,6 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         service:
+          - ms-router
           - ms-queue
           - ms-gql-todo
           - ms-gql-media
@@ -23,37 +24,12 @@ jobs:
       working-directory: ${{ matrix.service }}
     # secrets: inherit
 
-  ui-app:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: nightly
-          targets: wasm32-unknown-unknown
-
-      - name: Install trunk
-        uses: jaxxstorm/action-install-gh-release@v1.9.0
-        with:
-          repo: thedodd/trunk
-          platform: linux # Other valid options: 'windows' or 'darwin'.
-          arch: x86_64
-
-      - name: Set up cargo cache
-        uses: actions/cache@v3
-        continue-on-error: false
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
-
-      - name: Build release
-        working-directory: ui-app
-        run: trunk build --release
+  apps:
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - ui-app
+    uses: ./.github/workflows/wf-build-wasm.yml
+    with:
+      working-directory: ${{ matrix.service }}
