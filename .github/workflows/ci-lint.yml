@@ -24,6 +24,5 @@ jobs:
     with:
       working-directory: ${{ matrix.service.name }}
       toolchain: ${{ matrix.service.toolchain }}
-      target: ${{ matrix.service.target }}
       with-openssl: ${{ matrix.service.with-openssl }}
       with-protobuf: ${{ matrix.service.with-protobuf }}

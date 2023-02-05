@@ -1,6 +1,7 @@
 use apollo_router::services::supergraph;
 use apollo_router::TestHarness;
 use tower::ServiceExt;
+use tracing::info;
 
 use lambda_http::{run, service_fn, Body, Error, Request, Response};
 
@@ -8,17 +9,37 @@ use lambda_http::{run, service_fn, Body, Error, Request, Response};
 /// Write your code inside it.
 /// There are some code examples in the Runtime repository:
 /// - https://github.com/awslabs/aws-lambda-rust-runtime/tree/main/examples
-async fn function_handler(_event: Request) -> Result<Response<Body>, Error> {
-    // TestHarness creates a GraphQL pipeline to process queries against a supergraph Schema
+async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
+    // Extract the query from the request.
+    let body = event.body();
+    let query = std::str::from_utf8(body).expect("invalid utf-8 sequence");
+    info!("query: '{}'", query);
+    info!("event: '{:#?}'", event);
+
+    // Builder for the part of an Apollo Router that handles GraphQL requests, as a tower::Service.
+    //
+    // This allows tests, benchmarks, etc to manipulate request and response objects in memory
+    // without going over the network on the supergraph side.
+    //
+    // On the subgraph side, this test harness never makes network requests to subgraphs unless
+    // with_subgraph_network_requests is called.
+    //
+    // Compared to running a full RouterHttpServer, this test harness is lacking:
+    // - Custom endpoints from plugins
+    // - The health check endpoint
+    // - CORS?
+    // - HTTP compression
+    let config = serde_json::json!({"supergraph": { "introspection": true }});
     let router = TestHarness::builder()
         .schema(include_str!("../supergraph.graphql"))
         .with_subgraph_network_requests()
+        .configuration_json(config)?
         .build_router()
         .await?;
 
     // ...then create a GraphQL request...
     let request = supergraph::Request::fake_builder()
-        .query(r#"query Query { me { name } }"#)
+        .query(query)
         .build()
         .expect("expecting valid request");
 
@@ -28,30 +49,31 @@ async fn function_handler(_event: Request) -> Result<Response<Body>, Error> {
         .await?
         .next_response()
         .await
-        .unwrap()?;
+        .expect("expecting a response from the router");
 
-    // {"data":{"me":{"name":"Ada Lovelace"}}}
-    // println!("{}", std::str::from_utf8(res.to_vec().as_slice())?);
-
-    // Extract some useful information from the request
-
-    // Return something that implements IntoResponse.
-    // It will be serialized to the right response event automatically by the runtime
-    let resp = Response::builder()
-        .status(200)
-        .header("content-type", "application/json")
-        .body(std::str::from_utf8(res.to_vec().as_slice())?.into())
-        .map_err(Box::new)?;
+    // Return the response.
+    let resp = match res {
+        Ok(response) => Response::builder()
+            .status(200)
+            .header("content-type", "application/json")
+            .body(std::str::from_utf8(response.to_vec().as_slice())?.into())
+            .map_err(Box::new)?,
+        Err(err) => Response::builder()
+            .status(400)
+            .header("content-type", "application/json")
+            .body(format!("{err}").as_str().into())
+            .map_err(Box::new)?,
+    };
     Ok(resp)
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::ERROR)
-        // disabling time is handy because CloudWatch will add the ingestion time.
-        .without_time()
-        .init();
+    // tracing_subscriber::fmt()
+    //     .with_max_level(tracing::Level::INFO)
+    //     // disabling time is handy because CloudWatch will add the ingestion time.
+    //     .without_time()
+    //     .init();
 
     run(service_fn(function_handler)).await
 }

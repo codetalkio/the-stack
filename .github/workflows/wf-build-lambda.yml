@@ -25,7 +25,7 @@ jobs:
 
       - name: Install openssl (if needed)
         if: ${{ inputs.with-openssl }}
-        run: sudo apt-get install -y libssl-dev
+        run: sudo apt-get install -y libssl-dev openssl ca-certificates
 
       - name: Install protobuf (if needed)
         if: ${{ inputs.with-protobuf }}

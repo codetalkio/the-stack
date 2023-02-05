@@ -1,4 +1,4 @@
-name: Build Lambda Microservice
+name: Check dependencies
 
 on:
   workflow_call:
@@ -70,5 +70,5 @@ jobs:
 
       - name: Ling dependencies and their licenses
         continue-on-error: true.
-        run: cargo deny check
+        run: cargo deny check --config ../.github/deny.toml --hide-inclusion-graph
         working-directory: ${{ inputs.working-directory }}

@@ -2,10 +2,7 @@
 name = "ms-queue"
 version = "0.1.0"
 edition = "2021"
-
-[package.metadata.lambda.env]
-RUST_LOG = "debug"
-INVOKE_PORT = "3075"
+license = "MIT OR Apache-2.0"
 
 [dependencies]
 serde = "1"

@@ -1,4 +1,4 @@
-name: Build Lambda Microservice
+name: Lint code
 
 on:
   workflow_call:
@@ -29,7 +29,7 @@ jobs:
 
       - name: Install openssl (if needed)
         if: ${{ inputs.with-openssl }}
-        run: sudo apt-get install -y libssl-dev
+        run: sudo apt-get install -y libssl-dev openssl ca-certificates
 
       - name: Install protobuf (if needed)
         if: ${{ inputs.with-protobuf }}
@@ -68,7 +68,7 @@ jobs:
 
       - name: Install openssl (if needed)
         if: ${{ inputs.with-openssl }}
-        run: sudo apt-get install -y libssl-dev
+        run: sudo apt-get install -y libssl-dev openssl ca-certificates
 
       - name: Install protobuf (if needed)
         if: ${{ inputs.with-protobuf }}
