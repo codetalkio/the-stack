@@ -7,8 +7,8 @@ Quick install:
 
 ```bash
 $ brew install protobuf
-$ $ npm install --global zig sass
-$ curl -L https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-aarch64-apple-darwin.zip --output cargo-binstall.zip && unzip cargo-binstall.zip && rm cargo-binstall.zip && mv cargo-binstall ~/.cargo/bin/cargo-binstall
+$ npm install --global zig sass
+$ curl -L https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-$([[ "$(uname -m)" == "arm64" ]] && echo "aarch64" || uname -m)-apple-darwin.zip --output cargo-binstall.zip && unzip cargo-binstall.zip && rm cargo-binstall.zip && mv cargo-binstall ~/.cargo/bin/cargo-binstall
 $ cargo binstall trunk mprocs cargo-lambda cargo-edit
 $ python3 -m pip install localstack==1.3.0
 ```
@@ -21,7 +21,7 @@ $ python3 -m pip install localstack==1.3.0
 ```bash
 $ sudo apt-get install protobuf
 $ npm install --global zig sass
-$ curl -L https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-x86_64-unknown-linux-musl.tgz --output cargo-binstall.tgz && tar xf cargo-binstall.tgz && rm cargo-binstall.tgz && mv cargo-binstall ~/.cargo/bin/cargo-binstall
+$ curl -L https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-$([[ "$(uname -m)" == "arm64" ]] && echo "aarch64" || uname -m)-unknown-linux-musl.tgz --output cargo-binstall.tgz && tar xf cargo-binstall.tgz && rm cargo-binstall.tgz && mv cargo-binstall ~/.cargo/bin/cargo-binstall
 $ cargo binstall trunk mprocs cargo-lambda cargo-edit
 $ python3 -m pip install localstack==1.3.0
 ```
@@ -40,12 +40,10 @@ $ python3 -m pip install localstack==1.3.0
 We'll use [cargo-binstall](https://github.com/cargo-bins/cargo-binstall) to get the rest of our tools. Fetch a suitable binary, e.g.:
 
 ```bash
-# macOS Arm
-$ curl -L https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-aarch64-apple-darwin.zip --output cargo-binstall.zip && unzip cargo-binstall.zip && rm cargo-binstall.zip && mv cargo-binstall ~/.cargo/bin/cargo-binstall
-# Linux Arm
-$ curl -L https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-aarch64-unknown-linux-musl.tgz --output cargo-binstall.tgz && tar xf cargo-binstall.tgz && rm cargo-binstall.tgz && mv cargo-binstall ~/.cargo/bin/cargo-binstall
-# Linux X86
-$ curl -L https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-x86_64-unknown-linux-musl.tgz --output cargo-binstall.tgz && tar xf cargo-binstall.tgz && rm cargo-binstall.tgz && mv cargo-binstall ~/.cargo/bin/cargo-binstall
+# macOS
+$ curl -L https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-$([[ "$(uname -m)" == "arm64" ]] && echo "aarch64" || uname -m)-apple-darwin.zip --output cargo-binstall.zip && unzip cargo-binstall.zip && rm cargo-binstall.zip && mv cargo-binstall ~/.cargo/bin/cargo-binstall
+# Linux
+$ curl -L https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-$([[ "$(uname -m)" == "arm64" ]] && echo "aarch64" || uname -m)-unknown-linux-musl.tgz --output cargo-binstall.tgz && tar xf cargo-binstall.tgz && rm cargo-binstall.tgz && mv cargo-binstall ~/.cargo/bin/cargo-binstall
 ```
 
 We can then install all required tools:

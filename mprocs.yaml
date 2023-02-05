@@ -3,22 +3,44 @@ procs:
   ui-app:
     cwd: ui-app
     shell: trunk serve
+
   ms-router:
     cwd: ms-router
-    shell: cargo lambda watch --invoke-port 3045 --no-reload
+    shell: |
+      lsof -i :3045 | grep "cargo-lam" --color=never | awk '{ print $2 }' | xargs --no-run-if-empty kill
+      cargo lambda watch --invoke-port 3045 --no-reload
+  invoke-router:
+    shell: 'cargo lambda invoke --invoke-port 3045 --data-ascii ''{"command": "hi"}'''
+
   ms-gql-todo:
     cwd: ms-gql-todo
-    shell: cargo lambda watch --invoke-port 3055 --no-reload
+    shell: |
+      lsof -i :3055 | grep "cargo-lam" --color=never | awk '{ print $2 }' | xargs --no-run-if-empty kill
+      cargo lambda watch --invoke-port 3055 --no-reload
+  invoke-todo:
+    shell: 'cargo lambda invoke --invoke-port 3055 --data-ascii ''{"command": "hi"}'''
+
   ms-gql-media:
     cwd: ms-gql-media
-    shell: cargo lambda watch --invoke-port 3065 --no-reload
+    shell: |
+      lsof -i :3065 | grep "cargo-lam" --color=never | awk '{ print $2 }' | xargs --no-run-if-empty kill
+      cargo lambda watch --invoke-port 3065 --no-reload
+  invoke-media:
+    shell: 'cargo lambda invoke --invoke-port 3065 --data-ascii ''{"command": "hi"}'''
+
   ms-queue:
     cwd: ms-queue
-    shell: cargo lambda watch --invoke-port 3075 --no-reload
+    shell: |
+      lsof -i :3075 | grep "cargo-lam" --color=never | awk '{ print $2 }' | xargs --no-run-if-empty kill
+      cargo lambda watch --invoke-port 3075 --no-reload
+  invoke-queue:
+    shell: 'cargo lambda invoke --invoke-port 3075 --data-ascii ''{"command": "hi"}'''
 
   # Infrastructure.
   localstack:
-    # Can also be started with --detached followed by .ocalstack logs --follow.
+    # In the terminal directly:
+    # EAGER_SERVICE_LOADING=1 DYNAMODB_SHARE_DB=1 SERVICES="sqs,sns,ses,dynamodb,eventbridge" localstack start --no-banner
+    # Can also be started with --detached followed by localstack logs --follow.
     shell: localstack start --no-banner
     stop: SIGINT
     autostart: false
@@ -28,9 +50,3 @@ procs:
       # Limit the services we spin up, and start them immediately.
       EAGER_SERVICE_LOADING: "1"
       SERVICES: "sqs,sns,ses,dynamodb,eventbridge"
-
-  # Tests and commands.
-  invoke-todo:
-    shell: 'cargo lambda invoke --invoke-port 3055 --data-ascii ''{"command": "hi"}'''
-  invoke-router:
-    shell: 'cargo lambda invoke --invoke-port 3045 --data-ascii ''{"command": "hi"}'''
