@@ -40,10 +40,10 @@ procs:
   localstack:
     # In the terminal directly:
     # EAGER_SERVICE_LOADING=1 DYNAMODB_SHARE_DB=1 SERVICES="sqs,sns,ses,dynamodb,eventbridge" localstack start --no-banner
-    # Can also be started with --detached followed by localstack logs --follow.
-    shell: localstack start --no-banner
+    shell: |
+      localstack logs --follow || localstack start --no-banner --detached && localstack logs --follow
     stop: SIGINT
-    autostart: false
+    autostart: true
     eng:
       # Use a single database instead of separate databases for each credential and region.
       DYNAMODB_SHARE_DB: "1"

@@ -1,5 +1,18 @@
 # 🌥️ The Stack: Everything to build a modern cloud infrastructure
 
+To do:
+
+- [ ] Implement HTTP server for all lambdas for a better DevX (use feature flag as opt-in)
+- [ ] Get ui-app talking to ms-router
+- [ ] Implement GraphQL schema in ms-gql-.. services
+- [ ] Add ms-gql-... services as proper subgraphs of ms-router
+- [ ] Set up basic CDK for DynamoDB and SQS
+- [ ] Deploy CDK into LocalStack via cdklocal
+- [ ] Tie ms-gql-... services up to DynamoDB
+- [ ] Tie ms-queue up to SQS
+- [ ] Add new service ms-auth to handle authentication with API Gateway
+
+
 Quick install:
 
 <details>
