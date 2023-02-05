@@ -2,24 +2,23 @@ procs:
   ui-app:
     cwd: ui-app
     shell: trunk serve
-  # ms-router:
-  #   cwd: ms-gql-todo
-  #   shell: cargo lambda watch
-  #   env:
-  #     INVOKE_PORT: "3045"
+  ms-router:
+    cwd: ms-router
+    shell: cargo lambda watch --invoke-port 3045 --no-reload
   ms-gql-todo:
     cwd: ms-gql-todo
-    shell: cargo lambda watch --invoke-port 3055
+    shell: cargo lambda watch --invoke-port 3055 --no-reload
   ms-gql-media:
     cwd: ms-gql-media
-    shell: cargo lambda watch --invoke-port 3065
+    shell: cargo lambda watch --invoke-port 3065 --no-reload
   ms-queue:
     cwd: ms-queue
-    shell: cargo lambda watch --invoke-port 3075
+    shell: cargo lambda watch --invoke-port 3075 --no-reload
   localstack:
     # Can also be started with --detached followed by .ocalstack logs --follow.
     shell: localstack start --no-banner
     stop: SIGINT
+    autostart: false
     eng:
       # Use a single database instead of separate databases for each credential and region.
       DYNAMODB_SHARE_DB: "1"

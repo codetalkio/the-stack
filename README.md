@@ -5,6 +5,7 @@
 We'll be using the following our APIs:
 
 - [aws-lambda-runtime](https://github.com/awslabs/aws-lambda-rust-runtime): AWS runtime for Lambda functions using Rust
+- [apollo-router](https://github.com/apollographql/router): Federated GraphQL supergraph service
 
 # Applications
 
