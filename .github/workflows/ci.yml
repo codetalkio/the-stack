@@ -1,5 +1,14 @@
 name: CI
 
+on:
+  workflow_dispatch:
+  push:
+    paths:
+
+defaults:
+  run:
+    shell: bash # Set the default shell to bash.
+
 jobs:
   ms-queue:
     runs-on: ubuntu-latest
