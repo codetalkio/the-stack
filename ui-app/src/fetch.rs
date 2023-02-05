@@ -9,8 +9,7 @@ pub struct Cat {
 async fn fetch_cats(count: u32) -> Result<Vec<String>, ()> {
     if count > 0 {
         let res = reqwasm::http::Request::get(&format!(
-            "https://api.thecatapi.com/v1/images/search?limit={}",
-            count
+            "https://api.thecatapi.com/v1/images/search?limit={count}"
         ))
         .send()
         .await
@@ -29,7 +28,7 @@ async fn fetch_cats(count: u32) -> Result<Vec<String>, ()> {
 
 pub fn fetch_example(cx: Scope) -> impl IntoView {
     let (cat_count, set_cat_count) = create_signal::<u32>(cx, 1);
-    let cats = create_resource(cx, cat_count, |count| fetch_cats(count));
+    let cats = create_resource(cx, cat_count, fetch_cats);
 
     view! { cx,
         <div>
