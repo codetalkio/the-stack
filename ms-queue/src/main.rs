@@ -57,7 +57,7 @@ where
     D: DeserializeOwned,
     R: Future<Output = Result<(), Error>>,
 {
-    run(service_fn(|e| batch_handler(|d| f(d), e))).await
+    run(service_fn(|e| batch_handler(&f, e))).await
 }
 
 /// Helper function to lift the user provided `f` function from message to batch of messages.
@@ -129,7 +129,7 @@ mod test {
     }
 
     #[tokio::test]
-    async fn test() -> () {
+    async fn test() {
         let msg_to_fail: SqsMessageObj<serde_json::Value> = serde_json::from_str(
             r#"{
                 "messageId": "1",
