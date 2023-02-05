@@ -28,8 +28,8 @@ jobs:
         with:
           repo: cargo-lambda/cargo-lambda
           platform: linux # Other valid options: 'windows' or 'darwin'.
-          arch: aarch64 # Other valid options for linux: 'x86_64'.
+          arch: x86_64 # Other valid options for linux: 'aarch64'.
 
-      - name: Build
+      - name: Build release
         working-directory: ms-queue
         run: cargo lambda build --arm64 --release
