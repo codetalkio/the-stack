@@ -47,6 +47,15 @@ jobs:
         working-directory: ms-queue
         run: cargo lambda build --arm64 --release
 
+  ms-gql-todo:
+    strategy:
+      matrix:
+        service: [ms-gql-todo]
+      uses: ./.github/workflows/wf-build-lambda.yml
+        with:
+          working-directory: ${{ matrix.service }}
+        secrets: inherit
+
   ui-app:
     runs-on: ubuntu-latest
     steps:
