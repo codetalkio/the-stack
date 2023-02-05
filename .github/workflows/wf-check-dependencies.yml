@@ -24,6 +24,14 @@ jobs:
         continue-on-error: false
         with:
           path: |
+            ~/.cargo/bin
+          key: cargo-bin-${{ hashFiles('**/Cargo.lock') }}-${{ inputs.working-directory }}
+          restore-keys: ${{ runner.os }}-cargo-bin-
+
+      - uses: actions/cache@v3
+        continue-on-error: false
+        with:
+          path: |
             ~/.cargo/registry
             ~/.cargo/git
             ${{ inputs.working-directory }}/target
