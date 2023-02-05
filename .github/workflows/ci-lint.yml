@@ -15,11 +15,41 @@ jobs:
       fail-fast: false
       matrix:
         service:
-          - { name: ms-router, toolchain: stable, with-openssl: true, with-protobuf: true }
-          - { name: ms-queue, toolchain: stable }
-          - { name: ms-gql-todo, toolchain: stable }
-          - { name: ms-gql-media, toolchain: stable }
-          - { name: ui-app, toolchain: nightly, target: wasm32-unknown-unknown }
+          - {
+              name: ms-router,
+              toolchain: stable,
+              target: x86_64-unknown-linux-gnu,
+              with-openssl: true,
+              with-protobuf: true,
+            }
+          - {
+              name: ms-queue,
+              toolchain: stable,
+              target: x86_64-unknown-linux-gnu,
+              with-openssl: false,
+              with-protobuf: false,
+            }
+          - {
+              name: ms-gql-todo,
+              toolchain: stable,
+              target: x86_64-unknown-linux-gnu,
+              with-openssl: false,
+              with-protobuf: false,
+            }
+          - {
+              name: ms-gql-media,
+              toolchain: stable,
+              target: x86_64-unknown-linux-gnu,
+              with-openssl: false,
+              with-protobuf: false,
+            }
+          - {
+              name: ui-app,
+              toolchain: nightly,
+              target: wasm32-unknown-unknown,
+              with-openssl: false,
+              with-protobuf: false,
+            }
     uses: ./.github/workflows/wf-lint.yml
     with:
       working-directory: ${{ matrix.service.name }}
