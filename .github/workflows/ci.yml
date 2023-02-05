@@ -22,7 +22,6 @@ jobs:
     uses: ./.github/workflows/wf-build-lambda.yml
     with:
       working-directory: ${{ matrix.service }}
-    # secrets: inherit
 
   apps:
     strategy:
@@ -33,3 +32,17 @@ jobs:
     uses: ./.github/workflows/wf-build-wasm.yml
     with:
       working-directory: ${{ matrix.app }}
+
+  lint:
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - ms-router
+          - ms-queue
+          - ms-gql-todo
+          - ms-gql-media
+          - ui-app
+    uses: ./.github/workflows/wf-lint.yml
+    with:
+      working-directory: ${{ matrix.service }}

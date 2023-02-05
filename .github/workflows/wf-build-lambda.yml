@@ -6,9 +6,6 @@ on:
       working-directory:
         required: true
         type: string
-    # secrets:
-    #   token:
-    #     required: true
 
 jobs:
   build:
@@ -31,8 +28,7 @@ jobs:
           platform: linux # Other valid options: 'windows' or 'darwin'.
           arch: x86_64 # Other valid options for linux: 'aarch64'.
 
-      - name: Set up cargo cache
-        uses: actions/cache@v3
+      - uses: actions/cache@v3
         continue-on-error: false
         with:
           path: |
