@@ -28,8 +28,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service:
+        app:
           - ui-app
     uses: ./.github/workflows/wf-build-wasm.yml
     with:
-      working-directory: ${{ matrix.service }}
+      working-directory: ${{ matrix.app }}
