@@ -6,12 +6,12 @@ on:
       working-directory:
         required: true
         type: string
-    secrets:
-      token:
-        required: true
+    # secrets:
+    #   token:
+    #     required: true
 
 jobs:
-  triage:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

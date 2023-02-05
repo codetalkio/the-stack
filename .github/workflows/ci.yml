@@ -10,14 +10,14 @@ defaults:
     shell: bash # Set the default shell to bash.
 
 jobs:
-  ms-gql-todo:
+  services:
     strategy:
       matrix:
         service: [ms-gql-todo]
     uses: ./.github/workflows/wf-build-lambda.yml
     with:
       working-directory: ${{ matrix.service }}
-    secrets: inherit
+    # secrets: inherit
 
   ms-queue:
     runs-on: ubuntu-latest
