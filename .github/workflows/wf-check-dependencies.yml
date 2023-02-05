@@ -69,6 +69,5 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
 
       - name: Ling dependencies and their licenses
-        continue-on-error: true.
         run: cargo deny check --config ../.github/deny.toml --hide-inclusion-graph
         working-directory: ${{ inputs.working-directory }}
