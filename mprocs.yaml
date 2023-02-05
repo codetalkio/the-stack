@@ -1,4 +1,5 @@
 procs:
+  # Services.
   ui-app:
     cwd: ui-app
     shell: trunk serve
@@ -14,6 +15,8 @@ procs:
   ms-queue:
     cwd: ms-queue
     shell: cargo lambda watch --invoke-port 3075 --no-reload
+
+  # Infrastructure.
   localstack:
     # Can also be started with --detached followed by .ocalstack logs --follow.
     shell: localstack start --no-banner
@@ -25,3 +28,9 @@ procs:
       # Limit the services we spin up, and start them immediately.
       EAGER_SERVICE_LOADING: "1"
       SERVICES: "sqs,sns,ses,dynamodb,eventbridge"
+
+  # Tests and commands.
+  invoke-todo:
+    shell: 'cargo lambda invoke --invoke-port 3055 --data-ascii ''{"command": "hi"}'''
+  invoke-router:
+    shell: 'cargo lambda invoke --invoke-port 3045 --data-ascii ''{"command": "hi"}'''

@@ -1,0 +1,23 @@
+name: CI
+
+jobs:
+  ms-queue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Zig toolchain (used for cross-compilation)
+        uses: korandoru/setup-zig@v1
+        with:
+          zig-version: 0.10.0
+
+      - name: Install Cargo Lambda
+        uses: jaxxstorm/action-install-gh-release@v1.9.0
+        with:
+          repo: cargo-lambda/cargo-lambda
+          platform: linux # Other valid options: 'windows' or 'darwin'.
+          arch: aarch64 # Other valid options for linux: 'x86_64'.
+
+      - name: Build
+        run: cargo lambda build --arm64 --release
