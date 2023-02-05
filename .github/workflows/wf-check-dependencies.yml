@@ -50,12 +50,25 @@ jobs:
           # Check for security vulnerabilities.
           cargo install --locked cargo-pants || true
 
-      - name: Check dependencies
+      - name: Find outdated dependencies
+        run: cargo outdated --exit-code 1
+        working-directory: ${{ inputs.working-directory }}
+
+      - name: Find unused dependencies
+        run: cargo udeps
+        working-directory: ${{ inputs.working-directory }}
+
+      - name: Audit Cargo.lock for security vulnerabilities via RustSec Advisory Database
         run: |
-          cargo deny check
-          cargo outdated --exit-code 1
-          cargo udeps
           rm -rf ~/.cargo/advisory-db
           cargo audit
-          cargo pants
+        working-directory: ${{ inputs.working-directory }}
+
+      - name: Audit Cargo.lock for security vulnerabilities via Sonatype OSSIndex
+        run: cargo pants
+        working-directory: ${{ inputs.working-directory }}
+
+      - name: Ling dependencies and their licenses
+        continue-on-error: true.
+        run: cargo deny check
         working-directory: ${{ inputs.working-directory }}
