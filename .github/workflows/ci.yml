@@ -29,4 +29,5 @@ jobs:
           arch: aarch64 # Other valid options for linux: 'x86_64'.
 
       - name: Build
+        working-directory: ms-queue
         run: cargo lambda build --arm64 --release
