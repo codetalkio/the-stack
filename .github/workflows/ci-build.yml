@@ -15,13 +15,15 @@ jobs:
       fail-fast: false
       matrix:
         service:
-          - ms-router
-          - ms-queue
-          - ms-gql-todo
-          - ms-gql-media
+          - { name: ms-router, with-openssl: true, with-protobuf: true }
+          - { name: ms-queue, with-openssl: false, with-protobuf: false }
+          - { name: ms-gql-todo, with-openssl: false, with-protobuf: false }
+          - { name: ms-gql-media, with-openssl: false, with-protobuf: false }
     uses: ./.github/workflows/wf-build-lambda.yml
     with:
       working-directory: ${{ matrix.service }}
+      with-openssl: ${{ matrix.with-openssl }}
+      with-protobuf: ${{ matrix.with-protobuf }}
 
   apps:
     strategy:
