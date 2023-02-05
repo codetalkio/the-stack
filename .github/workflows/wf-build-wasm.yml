@@ -8,7 +8,7 @@ on:
         type: string
 
 jobs:
-  ${{ inputs.working-directory }}:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
