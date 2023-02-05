@@ -12,7 +12,7 @@ on:
         default: stable
 
 jobs:
-  check:
+  unused:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -20,43 +20,50 @@ jobs:
         with:
           toolchain: ${{ inputs.toolchain }}
 
-      - uses: actions/cache@v3
-        continue-on-error: false
+      - name: Install cargo-udeps
+        uses: jaxxstorm/action-install-gh-release@v1.9.0
         with:
-          path: ~/.cargo/bin
-          key: bin-cargo-bin
-          restore-keys: bin-cargo-
-
-      - uses: actions/cache@v3
-        continue-on-error: false
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            ${{ inputs.working-directory }}/target
-          key: cargo-${{ hashFiles('**/Cargo.lock') }}-${{ inputs.working-directory }}
-          restore-keys: cargo-
-
-      - name: Install cargo check tools
-        run: |
-          # Lint dependencies.
-          cargo install --locked cargo-deny || true
-          # Find outdated dependencies.
-          cargo install --locked cargo-outdated || true
-          # Find unused dependencies.
-          cargo install --locked cargo-udeps || true
-          # Check for security vulnerabilities.
-          cargo install --locked cargo-audit || true
-          # Check for security vulnerabilities.
-          cargo install --locked cargo-pants || true
-
-      - name: Find outdated dependencies
-        run: cargo outdated --exit-code 1
-        working-directory: ${{ inputs.working-directory }}
+          repo: est31/cargo-udeps
+          platform: linux
+          arch: x86_64
 
       - name: Find unused dependencies
         run: cargo udeps
         working-directory: ${{ inputs.working-directory }}
+
+  # outdated:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions-rs/toolchain@v1
+  #       with:
+  #         toolchain: ${{ inputs.toolchain }}
+
+  #     - name: Install cargo-udeps
+  #       uses: jaxxstorm/action-install-gh-release@v1.9.0
+  #       with:
+  #         repo: kbknapp/cargo-outdated
+  #         platform: linux
+  #         arch: x86_64
+
+  #     - name: Find outdated dependencies
+  #       run: cargo outdated --exit-code 1
+  #       working-directory: ${{ inputs.working-directory }}
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ inputs.toolchain }}
+
+      - name: Install cargo-udeps
+        uses: jaxxstorm/action-install-gh-release@v1.9.0
+        with:
+          repo: rustsec/rustsec
+          platform: linux
+          arch: x86_64
 
       - name: Audit Cargo.lock for security vulnerabilities via RustSec Advisory Database
         run: |
@@ -64,9 +71,20 @@ jobs:
           cargo audit
         working-directory: ${{ inputs.working-directory }}
 
-      - name: Audit Cargo.lock for security vulnerabilities via Sonatype OSSIndex
-        run: cargo pants
-        working-directory: ${{ inputs.working-directory }}
+  license:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ inputs.toolchain }}
+
+      - name: Install cargo-udeps
+        uses: jaxxstorm/action-install-gh-release@v1.9.0
+        with:
+          repo: EmbarkStudios/cargo-deny
+          platform: linux
+          arch: x86_64
 
       - name: Ling dependencies and their licenses
         run: cargo deny check --config ../.github/deny.toml --hide-inclusion-graph
