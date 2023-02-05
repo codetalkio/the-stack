@@ -1,0 +1,25 @@
+name: "CI: Lint"
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+
+defaults:
+  run:
+    shell: bash # Set the default shell to bash.
+
+jobs:
+  lint:
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - ms-router
+          - ms-queue
+          - ms-gql-todo
+          - ms-gql-media
+          - ui-app
+    uses: ./.github/workflows/wf-lint.yml
+    with:
+      working-directory: ${{ matrix.service }}
