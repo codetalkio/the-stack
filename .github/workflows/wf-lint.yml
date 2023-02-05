@@ -6,6 +6,10 @@ on:
       working-directory:
         required: true
         type: string
+      toolchain:
+        required: false
+        type: string
+        default: stable
 
 jobs:
   lint:
@@ -14,14 +18,17 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
+          toolchain: ${{ inputs.toolchain }}
           components: clippy
       - uses: actions/cache@v2
+        continue-on-error: false
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            target
-          key: cargo-${{ hashFiles('**/Cargo.lock') }}
+            ${{ inputs.working-directory }}/target
+          key: cargo-${{ hashFiles('**/Cargo.lock') }}-${{ inputs.working-directory }}
+          restore-keys: ${{ runner.os }}-cargo-
       - run: cargo check --all
         working-directory: ${{ inputs.working-directory }}
 
@@ -31,7 +38,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: ${{ inputs.toolchain }}
           components: rustfmt
       - run: cargo fmt --all -- --check
         working-directory: ${{ inputs.working-directory }}
@@ -42,18 +49,16 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: ${{ inputs.toolchain }}
           components: clippy
-      - uses: actions/cache@v3
+      - uses: actions/cache@v2
         continue-on-error: false
         with:
           path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            ~/.cargo/registry
+            ~/.cargo/git
+            ${{ inputs.working-directory }}/target
+          key: cargo-${{ hashFiles('**/Cargo.lock') }}-${{ inputs.working-directory }}
           restore-keys: ${{ runner.os }}-cargo-
       - run: cargo clippy --all-targets -- -D clippy::all
         working-directory: ${{ inputs.working-directory }}
@@ -64,14 +69,16 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: ${{ inputs.toolchain }}
           components: clippy
       - uses: actions/cache@v2
+        continue-on-error: false
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            target
-          key: cargo-${{ hashFiles('**/Cargo.lock') }}
+            ${{ inputs.working-directory }}/target
+          key: cargo-${{ hashFiles('**/Cargo.lock') }}-${{ inputs.working-directory }}
+          restore-keys: ${{ runner.os }}-cargo-
       - run: cargo test
         working-directory: ${{ inputs.working-directory }}

@@ -1,0 +1,54 @@
+name: Build Lambda Microservice
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        required: true
+        type: string
+      toolchain:
+        required: false
+        type: string
+        default: stable
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ inputs.toolchain }}
+
+      - uses: actions/cache@v2
+        continue-on-error: false
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ${{ inputs.working-directory }}/target
+          key: cargo-${{ hashFiles('**/Cargo.lock') }}-${{ inputs.working-directory }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Install cargo check tools
+        run: |
+          # Lint dependencies.
+          cargo install --locked cargo-deny || true
+          # Find outdated dependencies.
+          cargo install --locked cargo-outdated || true
+          # Find unused dependencies.
+          cargo install --locked cargo-udeps || true
+          # Check for security vulnerabilities.
+          cargo install --locked cargo-audit || true
+          # Check for security vulnerabilities.
+          cargo install --locked cargo-pants || true
+
+      - name: Check dependencies
+        run: |
+          cargo deny check
+          cargo outdated --exit-code 1
+          cargo udeps
+          rm -rf ~/.cargo/advisory-db
+          cargo audit
+          cargo pants
+        working-directory: ${{ inputs.working-directory }}

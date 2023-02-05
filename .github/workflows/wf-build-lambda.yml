@@ -28,16 +28,14 @@ jobs:
           platform: linux # Other valid options: 'windows' or 'darwin'.
           arch: x86_64 # Other valid options for linux: 'aarch64'.
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v2
         continue-on-error: false
         with:
           path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            ~/.cargo/registry
+            ~/.cargo/git
+            ${{ inputs.working-directory }}/target
+          key: cargo-${{ hashFiles('**/Cargo.lock') }}-${{ inputs.working-directory }}
           restore-keys: ${{ runner.os }}-cargo-
 
       - name: Build release
