@@ -21,9 +21,9 @@ jobs:
           - { name: ms-gql-media, with-openssl: false, with-protobuf: false }
     uses: ./.github/workflows/wf-build-lambda.yml
     with:
-      working-directory: ${{ matrix.service }}
-      with-openssl: ${{ matrix.with-openssl }}
-      with-protobuf: ${{ matrix.with-protobuf }}
+      working-directory: ${{ matrix.service.name }}
+      with-openssl: ${{ matrix.service.with-openssl }}
+      with-protobuf: ${{ matrix.service.with-protobuf }}
 
   apps:
     strategy:

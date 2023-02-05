@@ -15,11 +15,12 @@ jobs:
       fail-fast: false
       matrix:
         service:
-          - ms-router
-          - ms-queue
-          - ms-gql-todo
-          - ms-gql-media
-          - ui-app
+          - { name: ms-router, toolchain: stable }
+          - { name: ms-queue, toolchain: stable }
+          - { name: ms-gql-todo, toolchain: stable }
+          - { name: ms-gql-media, toolchain: stable }
+          - { name: ui-app, toolchain: nightly }
     uses: ./.github/workflows/wf-lint.yml
     with:
-      working-directory: ${{ matrix.service }}
+      working-directory: ${{ matrix.service.name }}
+      toolchain: ${{ matrix.service.toolchain }}
