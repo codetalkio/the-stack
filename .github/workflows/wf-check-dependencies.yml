@@ -23,10 +23,9 @@ jobs:
       - uses: actions/cache@v3
         continue-on-error: false
         with:
-          path: |
-            ~/.cargo/bin
-          key: cargo-bin-${{ hashFiles('**/Cargo.lock') }}-${{ inputs.working-directory }}
-          restore-keys: ${{ runner.os }}-cargo-bin-
+          path: ~/.cargo/bin
+          key: bin-cargo-bin
+          restore-keys: bin-cargo-
 
       - uses: actions/cache@v3
         continue-on-error: false
@@ -36,7 +35,7 @@ jobs:
             ~/.cargo/git
             ${{ inputs.working-directory }}/target
           key: cargo-${{ hashFiles('**/Cargo.lock') }}-${{ inputs.working-directory }}
-          restore-keys: ${{ runner.os }}-cargo-
+          restore-keys: cargo-
 
       - name: Install cargo check tools
         run: |

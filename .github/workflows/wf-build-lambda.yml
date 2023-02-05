@@ -54,7 +54,7 @@ jobs:
             ~/.cargo/git
             ${{ inputs.working-directory }}/target
           key: cargo-${{ hashFiles('**/Cargo.lock') }}-${{ inputs.working-directory }}
-          restore-keys: ${{ runner.os }}-cargo-
+          restore-keys: cargo-
 
       - name: Build release
         working-directory: ${{ inputs.working-directory }}
