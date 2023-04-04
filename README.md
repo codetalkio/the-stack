@@ -2,6 +2,16 @@
 
 To do:
 
+- [ ] Implement subgraph in ms-gql-media with axum
+  - [ ] Call graphql handler from lambda code
+- [ ] Implement subgraph in ms-gql-todo with axum
+  - [ ] Call graphql handler from lambda code
+- [ ] Spin up apollo-router in ms-router
+  - [ ] Start a async handler that spawns the apollo-router HTTP server
+  - [ ] The lambda version of the handler simply converts the event into a local HTTP request and calls the handler on localhost
+  - [ ] Configure all subgraphs to be localhost for apollo-router
+  - [ ] Spawn HTTP server on localhost that accepts requests and calls either lambda or local HTTP servers depending on the feature flag `local`
+
 - [ ] Implement HTTP server for all lambdas for a better DevX (use feature flag as opt-in)
   - [ ] ms-gql-media
   - [ ] ms-gql-todo
