@@ -1,0 +1,12 @@
+[workspace]
+members = [
+    "ui-app",
+    "ms-gql-media",
+    "ms-gql-todo",
+    "ms-queue",
+]
+
+exclude = [
+    "ms-router",
+    "ms-apollo-router",
+]

@@ -3,6 +3,9 @@
 To do:
 
 - [ ] Implement HTTP server for all lambdas for a better DevX (use feature flag as opt-in)
+  - [ ] ms-gql-media
+  - [ ] ms-gql-todo
+  - [ ] ms-router
 - [ ] Get ui-app talking to ms-router
 - [ ] Implement GraphQL schema in ms-gql-.. services
 - [ ] Add ms-gql-... services as proper subgraphs of ms-router
@@ -40,6 +43,10 @@ $ python3 -m pip install localstack==1.3.0
 ```
 
 </details>
+
+# Development
+
+We rely on [Cargo Features](https://doc.rust-lang.org/cargo/reference/features.html) to control whether the individual services should use the actual AWS API or if it should talk locally.
 
 # Tools
 

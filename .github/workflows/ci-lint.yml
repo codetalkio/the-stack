@@ -3,7 +3,6 @@ name: "CI: Lint"
 on:
   workflow_dispatch:
   push:
-    paths:
 
 defaults:
   run:

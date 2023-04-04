@@ -3,7 +3,6 @@ name: "CI: Build"
 on:
   workflow_dispatch:
   push:
-    paths:
 
 defaults:
   run:

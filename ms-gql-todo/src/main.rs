@@ -1,4 +1,4 @@
-use aws_sdk_dynamodb::model::AttributeValue;
+use aws_sdk_dynamodb::types::AttributeValue;
 use aws_sdk_dynamodb::{Client, Error as OtherError};
 use lambda_http::{run, service_fn, Body, Error, Request, Response};
 use tracing::info;

@@ -8,7 +8,7 @@ procs:
     cwd: ms-router
     shell: |
       lsof -i :3045 | grep "cargo-lam" --color=never | awk '{ print $2 }' | xargs --no-run-if-empty kill
-      cargo lambda watch --invoke-port 3045 --no-reload
+      cargo lambda watch --features local --invoke-port 3045 --no-reload
     env:
       APOLLO_TELEMETRY_DISABLED: "1"
   invoke-router:
@@ -18,25 +18,25 @@ procs:
     cwd: ms-gql-todo
     shell: |
       lsof -i :3055 | grep "cargo-lam" --color=never | awk '{ print $2 }' | xargs --no-run-if-empty kill
-      cargo lambda watch --invoke-port 3055 --no-reload
+      cargo lambda watch --invoke-port 3055
   invoke-todo:
-    shell: 'cargo lambda invoke --invoke-port 3055 --data-ascii ''{"command": "hi"}'''
+    shell: 'cargo lambda invoke --invoke-port 3055 --data-ascii ''{"body": "{\"p_type\": \"todo\", \"age\": \"22\", \"username\": \"tehnix\", \"first\": \"test\", \"last\": \"ing\"}"}'''
 
   ms-gql-media:
     cwd: ms-gql-media
     shell: |
       lsof -i :3065 | grep "cargo-lam" --color=never | awk '{ print $2 }' | xargs --no-run-if-empty kill
-      cargo lambda watch --invoke-port 3065 --no-reload
+      cargo lambda watch --invoke-port 3065
   invoke-media:
-    shell: 'cargo lambda invoke --invoke-port 3065 --data-ascii ''{"command": "hi"}'''
+    shell: 'cargo lambda invoke --invoke-port 3065 --data-ascii ''{"body": "{\"p_type\": \"todo\", \"age\": \"22\", \"username\": \"tehnix\", \"first\": \"test\", \"last\": \"ing\"}"}'''
 
   ms-queue:
     cwd: ms-queue
     shell: |
       lsof -i :3075 | grep "cargo-lam" --color=never | awk '{ print $2 }' | xargs --no-run-if-empty kill
-      cargo lambda watch --invoke-port 3075 --no-reload
+      cargo lambda watch --invoke-port 3075
   invoke-queue:
-    shell: 'cargo lambda invoke --invoke-port 3075 --data-ascii ''{"command": "hi"}'''
+    shell: 'cargo lambda invoke --invoke-port 3075 --data-ascii ''{"body": "hi"}'''
 
   # Infrastructure.
   localstack:

@@ -2,7 +2,48 @@ use apollo_router::services::supergraph;
 use apollo_router::TestHarness;
 use lambda_http::{run, service_fn, Body, Error, Request, Response};
 use tower::ServiceExt;
-use tracing::info;
+use tracing::{debug, info};
+
+#[cfg(feature = "local")]
+use reqwest::{Client, StatusCode};
+#[cfg(feature = "local")]
+use std::{net::IpAddr, str::FromStr};
+
+// Potential way we could go about this:
+// - Use the actual regular apollo-router (not as a library)
+// - Run it as a webservice in a thread
+// - Have the main handler take the Lambda Event and then call the web server locally
+// - Implement a subgraph_service plugin to control communication to subgraphs via lambda
+//   https://docs.rs/apollo-router/1.13.2/apollo_router/plugin/trait.Plugin.html#method.subgraph_service
+
+#[cfg(feature = "local")]
+async fn invoke_local(data: &str) -> Result<String, Error> {
+    let invoke_address = IpAddr::from_str("127.0.0.1")?.to_string();
+    let invoke_port = 3065;
+    let function_name = "_";
+    let host = invoke_address;
+
+    let url = format!(
+        "http://{}:{}/2015-03-31/functions/{}/invocations",
+        &host, invoke_port, &function_name
+    );
+
+    let client = Client::new();
+    let resp = client.post(url).body(data.to_string()).send().await?;
+    let success = resp.status() == StatusCode::OK;
+    let payload = resp.text().await?;
+
+    if success {
+        Ok(payload)
+    } else {
+        Err(payload.into())
+    }
+}
+
+#[cfg(not(feature = "local"))]
+async fn invoke_local(data: &str) -> Result<String, Error> {
+    Ok("Unimplemented".to_string())
+}
 
 /// This is the main body for the function.
 /// Write your code inside it.
@@ -13,6 +54,9 @@ async fn handle_request(event: Request) -> Result<Response<Body>, Error> {
     info!("event: '{:#?}'", event);
     let body = event.body();
     let query = std::str::from_utf8(body).expect("invalid utf-8 sequence");
+
+    let inv = invoke_local("{\"body\": \"\"}").await;
+    info!("Test invoke: {:?}", inv);
 
     // Builder for the part of an Apollo Router that handles GraphQL requests, as a tower::Service.
     //

@@ -3,7 +3,6 @@ name: "CI: Check"
 on:
   workflow_dispatch:
   push:
-    paths:
 
 defaults:
   run:

@@ -4,14 +4,21 @@ version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 
+[features]
+# Can be checked using: #[cfg(feature = "local")]
+local = ["dep:reqwest"]
+
 [dependencies]
+# Required for local development.
+reqwest = { version = "0.11.16", optional = true }
+# Production dependencies.
 lambda_http = "0.7.3"
 lambda_runtime = "0.7.3"
 tracing = { version = "0.1.37", features = ["log"] }
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt"] }
-anyhow = "1.0.68"
-apollo-router = "1.10.0"
-futures = "0.3.26"
+anyhow = "1.0.70"
+apollo-router = "1.13.2"
+futures = "0.3"
 serde_json = "1"
-tokio = { version = "1.25.0", features = ["full"] }
-tower = "0.4.13"
+tokio = { version = "1", features = ["full"] }
+tower = "0.4"
