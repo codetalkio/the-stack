@@ -2,8 +2,8 @@
 
 To do:
 
-- [ ] Implement subgraph in ms-gql-media with axum
-  - [ ] Call graphql handler from lambda code
+- [x] Implement subgraph in ms-gql-media with axum
+  - [x] Call graphql handler from lambda code
 - [ ] Implement subgraph in ms-gql-todo with axum
   - [ ] Call graphql handler from lambda code
 - [ ] Spin up apollo-router in ms-router

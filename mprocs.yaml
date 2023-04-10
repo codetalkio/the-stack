@@ -28,7 +28,7 @@ procs:
       lsof -i :3065 | grep "cargo-lam" --color=never | awk '{ print $2 }' | xargs --no-run-if-empty kill
       cargo lambda watch --invoke-port 3065
   invoke-media:
-    shell: 'cargo lambda invoke --invoke-port 3065 --data-ascii ''{"body": "{\"p_type\": \"todo\", \"age\": \"22\", \"username\": \"tehnix\", \"first\": \"test\", \"last\": \"ing\"}"}'''
+    shell: 'cargo lambda invoke --invoke-port 3065 --data-ascii ''{"body": "{ \"query\": \"{ media(id: \\\"123\\\") { id url } }\" }" }'''
 
   ms-queue:
     cwd: ms-queue
