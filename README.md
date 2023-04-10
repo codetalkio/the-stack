@@ -116,6 +116,9 @@ We'll be using the following to build our infrastructure:
 
 ```bash
 $ python3 -m pip install localstack==1.3.0
+$ brew install snappy
+$ CPPFLAGS="-I/usr/local/include -L/usr/local/lib"  python3 -m pip install localstack[runtime]
+$ EAGER_SERVICE_LOADING=1 DYNAMODB_SHARE_DB=1 SERVICES="sqs,sns,ses,dynamodb,eventbridge" localstack start --host
 ```
 
 Alternatively, directly as a Docker service:
