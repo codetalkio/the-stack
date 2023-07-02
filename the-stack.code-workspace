@@ -1,0 +1,27 @@
+{
+  "folders": [
+    {
+      "path": "."
+    },
+    {
+      "namer": "ms-router",
+      "path": "ms-router"
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/.git": true,
+      "**/.svn": true,
+      "**/.hg": true,
+      "**/CVS": true,
+      "**/.DS_Store": true,
+      "**/Thumbs.db": true,
+      "**/target": true,
+      "**/node_modules": true,
+      "**/Cargo.lock": true,
+      "**/dist": true,
+      "ms-router": true
+    },
+    "editor.formatOnSave": true
+  }
+}
