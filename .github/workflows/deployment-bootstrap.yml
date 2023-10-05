@@ -1,0 +1,34 @@
+name: "Deployment: Bootstrap"
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment (should already be set up with AWS credentials)"
+        required: true
+        type: choice
+        options:
+          - "Integration Test"
+          - "Production Single"
+          - "Production Multi"
+
+defaults:
+  run:
+    shell: bash # Set the default shell to bash.
+
+jobs:
+  bootstrap:
+    name: bootstrap
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: oven-sh/setup-bun@v1
+
+      - name: Install dependencies
+        working-directory: ./deployment
+        run: bun install
+
+      - name: Bootstrap account
+        working-directory: ./deployment
+        run: bun run cdk bootstrap
