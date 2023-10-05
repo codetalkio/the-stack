@@ -2,15 +2,6 @@ name: "Deployment: Bootstrap"
 
 on:
   workflow_dispatch:
-    inputs:
-      environment:
-        description: "Environment (should already be set up with AWS credentials)"
-        required: true
-        type: choice
-        options:
-          - "Integration Test"
-          - "Production Single"
-          - "Production Multi"
 
 defaults:
   run:
@@ -20,7 +11,8 @@ jobs:
   bootstrap:
     name: bootstrap
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
+    # INPUT: Change this environment to the one you want to bootstrap (cannot be set dynamically).
+    environment: "Production Single"
     steps:
       - uses: actions/checkout@v3
       - uses: oven-sh/setup-bun@v1
