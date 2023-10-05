@@ -16,9 +16,9 @@ jobs:
       fail-fast: false
       matrix:
         environment:
-          # - "Integration Test"
+          - "Integration Test"
           - "Production Single-tenant"
-          # - "Production Multi-tenant"
+          - "Production Multi-tenant"
     environment: ${{ matrix.environment }}
     steps:
       - uses: actions/checkout@v3
