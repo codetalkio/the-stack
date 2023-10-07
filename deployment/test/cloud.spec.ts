@@ -6,8 +6,8 @@
 import { describe, expect, test } from "bun:test";
 import { Capture, Match, Template } from "aws-cdk-lib/assertions";
 import * as cdk from "aws-cdk-lib";
-import { Stack as BaseStack } from "../lib/base/stack";
-import { Stack as DomainStack } from "../lib/base/domain";
+import { Stack as CloudStack } from "../lib/cloud/stack";
+import { Stack as DomainStack } from "../lib/cloud/domain";
 
 describe("Base Stack", () => {
   test("synthesizes the way we expect", () => {
@@ -18,10 +18,10 @@ describe("Base Stack", () => {
     const app = new cdk.App();
 
     // Create the base stack.
-    const baseStack = new BaseStack(app, "Base", {
+    const cloudStack = new CloudStack(app, "Base", {
       domain: domainEnv,
     });
-    const domainStack = new DomainStack(baseStack, "Base", {
+    const domainStack = new DomainStack(cloudStack, "Base", {
       domain: domainEnv,
     });
 
