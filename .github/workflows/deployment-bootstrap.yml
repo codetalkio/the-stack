@@ -11,10 +11,10 @@ jobs:
   bootstrap:
     name: bootstrap
     runs-on: ubuntu-latest
-    # INPUT: Change this environment to the one you want to bootstrap (cannot be set dynamically).
     strategy:
       fail-fast: false
       matrix:
+        # Add new environments to this list to run bootstrap on them when manually triggered.
         environment:
           - "Integration Test"
           - "Production Single-tenant"
