@@ -28,9 +28,10 @@ jobs:
         working-directory: ./deployment
         run: bun install
 
-      - name: Bootstrap account
+      - name: Deploy to ${{ matrix.environment }}
         working-directory: ./deployment
         env:
+          DOMAIN: ${{ vars.DOMAIN }}
           AWS_REGION: ${{ vars.AWS_REGION }}
           AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
