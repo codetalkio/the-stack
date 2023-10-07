@@ -82,7 +82,7 @@ Our process will go:
 Assuming you are ready for step 3., we can start the deployment:
 
 ```bash
-$ DOMAIN="your-domain.example.com" bun run cdk deploy 'Base'
+$ DOMAIN="your-domain.example.com" bun run cdk deploy 'Cloud'
 ```
 
 The `DOMAIN` environment variable is required here, since we need to know what domain we should use for the Hosted Zone.
