@@ -39,7 +39,7 @@ jobs:
 
   stage-2-single-check:
     name: "Stage 2: Check Single-tenant"
-    needs: [stage-2-multi]
+    needs: [stage-2-single]
     runs-on: ubuntu-latest
     steps:
       - name: "Check"
