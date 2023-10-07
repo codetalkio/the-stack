@@ -6,11 +6,6 @@ on:
       environment:
         required: true
         type: string
-    secrets:
-      AWS_ACCESS_KEY_ID:
-        required: true
-      AWS_SECRET_ACCESS_KEY:
-        required: true
 
 jobs:
   deploy:
@@ -46,7 +41,7 @@ jobs:
           AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
         run: bun test
 
-      - name: Deploy to ${{ matrix.environment }}
+      - name: Deploy to ${{ inputs.environment }}
         working-directory: ./deployment
         env:
           DOMAIN: ${{ vars.DOMAIN }}
