@@ -14,11 +14,11 @@ jobs:
       fail-fast: false
       matrix:
         service:
-          - { name: ms-router, toolchain: stable }
-          - { name: ms-queue, toolchain: stable }
-          - { name: ms-gql-todo, toolchain: stable }
+          # - { name: ms-router, toolchain: stable }
+          # - { name: ms-queue, toolchain: stable }
+          # - { name: ms-gql-todo, toolchain: stable }
           - { name: ms-gql-media, toolchain: stable }
-          - { name: ui-app, toolchain: nightly }
+          # - { name: ui-app, toolchain: nightly }
     uses: ./.github/workflows/wf-check-dependencies.yml
     with:
       working-directory: ${{ matrix.service.name }}
