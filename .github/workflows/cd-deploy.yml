@@ -2,6 +2,9 @@ name: "Deployment: Deploy to AWS"
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 defaults:
   run:
