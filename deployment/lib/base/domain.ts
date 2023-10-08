@@ -29,9 +29,10 @@ export class Stack extends cdk.NestedStack {
       zoneName: props.domain,
     });
 
-    // Set up an ACM certificate for the domain, and validate it using DNS.
+    // Set up an ACM certificate for the domain + subdomains, and validate it using DNS.
     new acm.Certificate(this, "Certificate", {
       domainName: props.domain,
+      subjectAlternativeNames: [`*.${props.domain}`],
       validation: acm.CertificateValidation.fromDns(hostedZone),
     });
   }
