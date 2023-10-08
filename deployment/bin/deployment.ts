@@ -6,8 +6,12 @@ import { Stack as CloudStack } from "../lib/cloud/stack";
 const app = new cdk.App();
 
 /**
- * Define our 'cloud' stack that provisions the infrastructure for our application, such
+ * Define our 'Cloud' stack that provisions the infrastructure for our application, such
  * as domain names, certificates, and other resources that are shared across all.
+ *
+ * ```bash
+ * bun run cdk deploy --concurrency 4 'Cloud' 'Cloud/**'
+ * ```
  */
 const cloudStackName = "Cloud";
 if (matchesStack(app, cloudStackName)) {

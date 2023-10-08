@@ -3,7 +3,7 @@ import { Construct } from "constructs";
 import * as route53 from "aws-cdk-lib/aws-route53";
 import * as acm from "aws-cdk-lib/aws-certificatemanager";
 
-export interface Props {
+export interface StackProps extends cdk.StackProps {
   /**
    * The domain name the application is hosted under.
    */
@@ -11,17 +11,12 @@ export interface Props {
 }
 
 /**
- * Combine our `Props` with the base `NestedStackProps`.
- */
-interface NestedStackProps extends cdk.NestedStackProps, Props {}
-
-/**
  * Set up a Hosted Zone to manage our domain names.
  *
  * https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_route53.HostedZone.html
  */
-export class Stack extends cdk.NestedStack {
-  constructor(scope: Construct, id: string, props: NestedStackProps) {
+export class Stack extends cdk.Stack {
+  constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
 
     // Set up the hosted zone.
