@@ -5,9 +5,9 @@ This repository accompanies the blog series ["The Stack": Everything you'll need
 Jump to branches:
 - [Part 0: The introduction and goals (blog post only)](https://codetalk.io/posts/2023-01-29-the-stack.html)
   - The goals of “The Stack” and architecture overview
-- Part 1: Setting up your AWS Account Structure (blog post only)
+- [Part 1: Setting up your AWS Account Structure (blog post only)](https://codetalk.io/posts/2023-10-07-the-stack-part-1.html)
   - Setting up Control Tower and all of our AWS Accounts
-- [Part 2: Automating Deployments via CI](https://github.com/codetalkio/the-stack/tree/part-2-automatic-deployments)
+- [Part 2: Automating Deployments via CI (branch)](https://github.com/codetalkio/the-stack/tree/part-2-automatic-deployments)
   - Bootstrapping CDK and deploying to all accounts via CI
 - Part 3: Creating our Frontend
   - Creating an SPA and deploying it to S3 + CloudFront
