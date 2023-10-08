@@ -13,7 +13,9 @@ export const matchesStack = (app: cdk.App, stackName: string): boolean => {
     "aws:cdk:bundling-stacks"
   ) as Array<string>;
   const buildAllStacks = bundlingStacks.includes("**");
-  const matches = buildAllStacks || bundlingStacks.includes(stackName);
+  const matches =
+    buildAllStacks ||
+    bundlingStacks.some((s) => s === stackName || s === `${stackName}/*`);
   if (matches && process.env.VERBOSE) {
     console.log(`Building stack: ${stackName}`);
   }
