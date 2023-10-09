@@ -1,0 +1,44 @@
+name: "CI: ui-internal"
+
+on:
+  push:
+    paths:
+      - "ui-internal/**"
+      - ".github/workflows/ci-ui-internal.yml"
+
+defaults:
+  run:
+    shell: bash # Set the default shell to bash.
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: oven-sh/setup-bun@v1
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: nightly
+          targets: wasm32-unknown-unknown
+
+      - name: Install trunk
+        uses: jaxxstorm/action-install-gh-release@v1.9.0
+        with:
+          repo: thedodd/trunk
+          platform: linux # Other valid options: 'windows' or 'darwin'.
+          arch: x86_64
+
+      - uses: actions/cache@v3
+        continue-on-error: false
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ui-internal/target
+          key: cargo-${{ hashFiles('Cargo.lock') }}-${{ hashFiles('ui-internal/Cargo.lock') }}-ui-internal
+          restore-keys: cargo-
+
+      - name: Build release
+        working-directory: ./ui-internal
+        run: trunk build --release

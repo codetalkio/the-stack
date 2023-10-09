@@ -11,8 +11,7 @@ defaults:
     shell: bash # Set the default shell to bash.
 
 jobs:
-  ci:
-    name: bootstrap
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -27,4 +26,21 @@ jobs:
 
       - name: Build Next.js project
         working-directory: ./ui-app
-        run: bun --bun run build
+        run: bun run build
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+      - uses: oven-sh/setup-bun@v1
+
+      - name: Install dependencies
+        working-directory: ./ui-app
+        run: bun install
+
+      - name: Build Next.js project
+        working-directory: ./ui-app
+        run: bun run lint
