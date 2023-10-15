@@ -39,38 +39,36 @@ jobs:
 
       - name: Validate artifacts
         working-directory: ./deployment/artifacts
-        run: |
-          [ -d "./ui-app" ] && echo "ui-app exists" || exit 1
-          [ -d "./ui-internal" ] && echo "ui-internal exists" || exit 1
+        run: just deploy-validate-artifacts
 
-      # - name: Install dependencies
-      #   working-directory: ./deployment
-      #   run: bun install
+      - name: Install dependencies
+        working-directory: ./deployment
+        run: bun install
 
-      # - name: Synthesize the whole stack
-      #   working-directory: ./deployment
-      #   env:
-      #     DOMAIN: ${{ vars.DOMAIN }}
-      #     AWS_REGION: ${{ vars.AWS_REGION }}
-      #     AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
-      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #   run: just test synth
+      - name: Synthesize the whole stack
+        working-directory: ./deployment
+        env:
+          DOMAIN: ${{ vars.DOMAIN }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: just test synth
 
-      # - name: Run tests
-      #   working-directory: ./deployment
-      #   env:
-      #     DOMAIN: ${{ vars.DOMAIN }}
-      #     AWS_REGION: ${{ vars.AWS_REGION }}
-      #     AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
-      #   run: just test deployment
+      - name: Run tests
+        working-directory: ./deployment
+        env:
+          DOMAIN: ${{ vars.DOMAIN }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
+        run: just test deployment
 
-      # - name: Deploy to ${{ inputs.environment }}
-      #   working-directory: ./deployment
-      #   env:
-      #     DOMAIN: ${{ vars.DOMAIN }}
-      #     AWS_REGION: ${{ vars.AWS_REGION }}
-      #     AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
-      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #   run: just deploy
+      - name: Deploy to ${{ inputs.environment }}
+        working-directory: ./deployment
+        env:
+          DOMAIN: ${{ vars.DOMAIN }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: just deploy

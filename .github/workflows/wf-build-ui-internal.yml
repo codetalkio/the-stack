@@ -11,7 +11,7 @@ on:
         default: false
 
 jobs:
-  build:
+  ui-internal:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -54,3 +54,4 @@ jobs:
           name: ui-internal
           path: ui-internal/dist
           if-no-files-found: error
+          retention-days: 1

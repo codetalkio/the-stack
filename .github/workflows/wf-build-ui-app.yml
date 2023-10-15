@@ -11,7 +11,7 @@ on:
         default: false
 
 jobs:
-  build:
+  ui-app:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -34,3 +34,4 @@ jobs:
           name: ui-app
           path: ui-app/out
           if-no-files-found: error
+          retention-days: 1

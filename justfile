@@ -76,6 +76,24 @@ deploy stack='--all':
   cd deployment
   bun run cdk deploy {{ if stack == "--all" { "--all" } else { stack } }}
 
+# Validate that all deployment artifacts are present.
+deploy-validate-artifacts:
+  @ [ -d "./deployment/artifacts/ui-app" ] && echo "ui-app exists" || exit 1
+  @ [ -d "./deployment/artifacts/ui-internal" ] && echo "ui-internal exists" || exit 1
+
+# Clean up deployment artifacts.
+deploy-clean:
+  @ rm -rf ./deployment/artifacts
+
+# Build all deployment artifacts and move them to deployment/artifacts/.
+deploy-build-all:
+  @ just deploy-clean
+  @ mkdir -p ./deployment/artifacts
+  just _build-ui-app
+  @ cp -r ./ui-app/out ./deployment/artifacts/ui-app
+  just _build-ui-internal
+  @ cp -r ./ui-internal/dist ./deployment/artifacts/ui-internal
+
 # Run tests for <project>, e.g. `just test deployment`.
 test project:
   just _test-{{project}}
