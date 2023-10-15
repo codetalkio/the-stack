@@ -19,7 +19,8 @@ jobs:
   # Stage 1 tests that the deployment is working correctly.
   stage-1:
     name: "Stage 1"
-    needs: [build]
+    # We need to refer to the inner names of the builds from the wf-build workflow.
+    needs: [ui-app, ui-internal]
     uses: ./.github/workflows/wf-deploy.yml
     with:
       environment: "Integration Test"

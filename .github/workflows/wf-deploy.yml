@@ -8,17 +8,6 @@ on:
         type: string
 
 jobs:
-  ui-app:
-    uses: ./.github/workflows/wf-build-ui-app.yml
-    with:
-      upload-artifact: true
-
-  ui-internal:
-    uses: ./.github/workflows/wf-build-ui-internal.yml
-    with:
-      release: true
-      upload-artifact: true
-
   deploy:
     name: "Deploy"
     runs-on: ubuntu-latest
