@@ -1,11 +1,11 @@
 {
-  "name": "tests-e2e",
+  "name": "end2end",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "setup": "playwright install",
-    "test": "playwright test"
+    "e2e": "playwright test"
   },
   "keywords": [],
   "author": "",

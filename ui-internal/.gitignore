@@ -10,4 +10,5 @@ ms-router/bin/*
 
 # Output files
 public/output.css
-tests-e2e/playwright-report
+playwright-report
+test-results

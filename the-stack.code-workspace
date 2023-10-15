@@ -62,6 +62,6 @@
     "css.validate": false
   },
   "extensions": {
-    "recommendations": ["bradlc.vscode-tailwindcss", "rust-lang.rust-analyzer"]
+    "recommendations": ["bradlc.vscode-tailwindcss", "rust-lang.rust-analyzer", "skellock.just"]
   }
 }

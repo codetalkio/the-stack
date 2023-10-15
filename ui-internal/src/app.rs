@@ -1,5 +1,5 @@
 use crate::i18n::*;
-use leptos::{logging::log, *};
+use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
 
