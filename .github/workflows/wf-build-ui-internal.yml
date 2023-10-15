@@ -53,3 +53,4 @@ jobs:
         with:
           name: ui-internal
           path: ui-internal/dist
+          if-no-files-found: error

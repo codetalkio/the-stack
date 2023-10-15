@@ -33,3 +33,4 @@ jobs:
         with:
           name: ui-app
           path: ui-app/out
+          if-no-files-found: error

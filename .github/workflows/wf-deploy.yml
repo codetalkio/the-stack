@@ -7,6 +7,10 @@ on:
         required: true
         type: string
 
+defaults:
+  run:
+    shell: bash # Set the default shell to bash.
+
 jobs:
   deploy:
     name: "Deploy"
@@ -36,8 +40,8 @@ jobs:
       - name: Validate artifacts
         working-directory: ./deployment/artifacts
         run: |
-          if [ -d "./ui-app"]; then echo "ui-app exists"; else exit 1; fi
-          if [ -d "./ui-internal"]; then echo "ui-internal exists"; else exit 1; fi
+          [ -d "./ui-app" ] && echo "ui-app exists" || exit 1
+          [ -d "./ui-internal" ] && echo "ui-internal exists" || exit 1
 
       # - name: Install dependencies
       #   working-directory: ./deployment
