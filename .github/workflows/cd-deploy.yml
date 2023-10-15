@@ -12,7 +12,7 @@ defaults:
 
 jobs:
   # Build deployment artifacts
-  build:
+  build-artifacts:
     name: "Build Artifacts"
     uses: ./.github/workflows/wf-build.yml
 
@@ -20,7 +20,7 @@ jobs:
   stage-1:
     name: "Stage 1"
     # We need to refer to the inner names of the builds from the wf-build workflow.
-    needs: [ui-app, ui-internal]
+    needs: [build-artifacts]
     uses: ./.github/workflows/wf-deploy.yml
     with:
       environment: "Integration Test"
