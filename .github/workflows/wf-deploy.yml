@@ -33,6 +33,12 @@ jobs:
         working-directory: ./deployment/artifacts/
         run: ls -R
 
+      - name: Validate artifacts
+        working-directory: ./deployment/artifacts
+        run: |
+          if [ -d "./ui-app"]; then echo "ui-app exists"; else exit 1; fi
+          if [ -d "./ui-internal"]; then echo "ui-internal exists"; else exit 1; fi
+
       # - name: Install dependencies
       #   working-directory: ./deployment
       #   run: bun install

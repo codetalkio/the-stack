@@ -41,15 +41,15 @@ jobs:
           restore-keys: cargo-
 
       - name: Build release build
-        if: ${{ github.event.inputs.release == 'true' }}
+        if: ${{ inputs.release }}
         run: just build ui-internal
 
       - name: Build debug build
-        if: ${{ github.event.inputs.release != 'true' }}
+        if: ${{ !inputs.release }}
         run: just build ui-internal true
 
       - uses: actions/upload-artifact@v3
-        if: ${{ github.event.inputs.upload-artifact == 'true' }}
+        if: ${{ inputs.upload-artifact }}
         with:
           name: ui-internal
           path: ui-internal/dist
