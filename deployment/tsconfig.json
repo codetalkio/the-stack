@@ -25,5 +25,5 @@
     // while prototyping
     "noImplicitAny": false
   },
-  "exclude": ["node_modules", "cdk.out"]
+  "exclude": ["node_modules", "cdk.out", "end2end"]
 }
