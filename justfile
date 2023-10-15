@@ -2,6 +2,39 @@
 help:
   @ just --list
 
+# Open project workspace in VS Code.
+code:
+  @ code the-stack.code-workspace
+
+# Install tooling for working with The Stack.
+[linux]
+install-tooling:
+  @ just _install-tooling-all-platforms
+
+# Install tooling for working with The Stack.
+[macos]
+install-tooling:
+  @ just _install-tooling-all-platforms
+
+# Not covered:
+# - brew install protobuf / sudo apt-get install protobuf
+# - python3 -m pip install localstack==1.3.0
+# - npm install --global sass
+
+_install-tooling-all-platforms:
+  # Install bun.
+  curl -fsSL https://bun.sh/install | bash
+  # Install the zig compiler for cross-compilation.
+  bun install --global zig
+  # Install cargo-binstall for installing binaries from crates.io.
+  curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+  # Install trunk for building Rust WebAssembly.
+  cargo binstall --no-confirm trunk
+  # Install cargo-edit for managing dependencies.
+  cargo binstall --no-confirm cargo-edit
+  # Install cargo-lambda for building Rust Lambda functions.
+  cargo binstall --no-confirm cargo-lambda
+
 # Setup dependencies and tooling for <project>, e.g. `just setup deployment`.
 setup project:
   just _setup-{{project}}
@@ -95,3 +128,19 @@ _dev-ui-internal:
   set -euxo pipefail
   cd ui-internal
   trunk serve
+
+# Build release artifact for <project>, e.g. `just dev ui-internal`.
+build project:
+  just _build-{{project}}
+
+_build-ui-app:
+  #!/usr/bin/env bash
+  set -euxo pipefail
+  cd ui-app
+  bun run build
+
+_build-ui-internal:
+  #!/usr/bin/env bash
+  set -euxo pipefail
+  cd ui-internal
+  trunk build --release

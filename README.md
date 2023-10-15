@@ -28,30 +28,9 @@ To do:
 
 Quick install:
 
-<details>
-<summary>on macOS</summary>
-
 ```bash
-$ curl -fsSL https://bun.sh/install | bash
-$ brew install protobuf
-$ npm install --global zig sass
-$ curl -L https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-$([[ "$(uname -m)" == "arm64" ]] && echo "aarch64" || uname -m)-apple-darwin.zip --output cargo-binstall.zip && unzip cargo-binstall.zip && rm cargo-binstall.zip && mv cargo-binstall ~/.cargo/bin/cargo-binstall
-$ cargo binstall trunk mprocs cargo-lambda cargo-edit
-$ python3 -m pip install localstack==1.3.0
-```
-
-</details>
-
-<details>
-<summary>on Linux</summary>
-
-```bash
-$ curl -fsSL https://bun.sh/install | bash
-$ sudo apt-get install protobuf
-$ npm install --global zig sass
-$ curl -L https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-$([[ "$(uname -m)" == "arm64" ]] && echo "aarch64" || uname -m)-unknown-linux-musl.tgz --output cargo-binstall.tgz && tar xf cargo-binstall.tgz && rm cargo-binstall.tgz && mv cargo-binstall ~/.cargo/bin/cargo-binstall
-$ cargo binstall trunk mprocs cargo-lambda cargo-edit
-$ python3 -m pip install localstack==1.3.0
+$ brew install just
+$ just install-tooling
 ```
 
 </details>

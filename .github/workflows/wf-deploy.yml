@@ -19,6 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: oven-sh/setup-bun@v1
+      - uses: extractions/setup-just@v1
 
       - name: Install dependencies
         working-directory: ./deployment
@@ -32,7 +33,7 @@ jobs:
           AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        run: bun run cdk synth --all
+        run: just test synth
 
       - name: Run tests
         working-directory: ./deployment
@@ -40,7 +41,7 @@ jobs:
           DOMAIN: ${{ vars.DOMAIN }}
           AWS_REGION: ${{ vars.AWS_REGION }}
           AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
-        run: bun test
+        run: just test deployment
 
       - name: Deploy to ${{ inputs.environment }}
         working-directory: ./deployment
@@ -50,4 +51,4 @@ jobs:
           AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        run: bun run cdk deploy --concurrency 4 --all --require-approval never
+        run: just deploy

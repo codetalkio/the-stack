@@ -16,6 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: oven-sh/setup-bun@v1
+      - uses: extractions/setup-just@v1
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -40,5 +41,42 @@ jobs:
           restore-keys: cargo-
 
       - name: Build release
-        working-directory: ./ui-internal
-        run: trunk build --release
+        run: just build ui-internal
+
+  end-to-end:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: oven-sh/setup-bun@v1
+      - uses: extractions/setup-just@v1
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: nightly
+          targets: wasm32-unknown-unknown
+
+      - name: Install trunk
+        uses: jaxxstorm/action-install-gh-release@v1.9.0
+        with:
+          repo: thedodd/trunk
+          platform: linux # Other valid options: 'windows' or 'darwin'.
+          arch: x86_64
+
+      - uses: actions/cache@v3
+        continue-on-error: false
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ui-internal/target
+          key: cargo-${{ hashFiles('Cargo.lock') }}-${{ hashFiles('ui-internal/Cargo.lock') }}-ui-internal
+          restore-keys: cargo-
+
+      - name: Install dependencies and setup Playwright
+        working-directory: ./ui-internal/end2end
+        run: |
+          bun install
+          bun run setup
+
+      - name: Build release
+        run: just e2e ui-internal
