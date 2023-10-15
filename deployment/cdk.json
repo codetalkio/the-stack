@@ -12,8 +12,10 @@
       "tsconfig.json",
       "package*.json",
       "yarn.lock",
+      "bun.lockdb",
       "node_modules",
-      "test"
+      "test",
+      "end2end"
     ]
   },
   "context": {
