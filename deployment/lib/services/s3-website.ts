@@ -1,6 +1,10 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
+import * as route53 from "aws-cdk-lib/aws-route53";
+import * as route53Patterns from "aws-cdk-lib/aws-route53-patterns";
+import * as route53Targets from "aws-cdk-lib/aws-route53-targets";
 import * as acm from "aws-cdk-lib/aws-certificatemanager";
+import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as s3deploy from "aws-cdk-lib/aws-s3-deployment";
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
 import * as cloudfrontOrigins from "aws-cdk-lib/aws-cloudfront-origins";
@@ -29,6 +33,11 @@ export interface StackProps extends cdk.StackProps {
   readonly domain: string;
 
   /**
+   * The hosted zone that controls the DNS for the domain.
+   */
+  readonly hostedZone: string;
+
+  /**
    * The billing group to associate with this stack.
    */
   readonly billingGroup: string;
@@ -37,6 +46,11 @@ export interface StackProps extends cdk.StackProps {
    * The ACM Certificate ARN.
    */
   readonly certificateArn: string;
+
+  /**
+   * Whether to rewrite URLs to /folder/ -> /folder/index.html.
+   */
+  readonly rewriteUrls?: boolean;
 }
 
 /**
@@ -64,6 +78,16 @@ export class Stack extends cdk.Stack {
     );
     bucket.grantRead(originAccessIdentity);
 
+    // Rewrite requests to /folder/ -> /folder/index.html.
+    let rewriteUrl: cloudfront.experimental.EdgeFunction | undefined;
+    if (props.rewriteUrls) {
+      rewriteUrl = new cloudfront.experimental.EdgeFunction(this, "RewriteFn", {
+        runtime: lambda.Runtime.NODEJS_LATEST,
+        handler: "rewrite-urls.handler",
+        code: lambda.Code.fromAsset(path.resolve("edge-functions")),
+      });
+    }
+
     // Configure our CloudFront distribution.
     const distribution = new cloudfront.Distribution(this, "Distribution", {
       domainNames: [props.domain],
@@ -83,17 +107,26 @@ export class Stack extends cdk.Stack {
         }),
         // Redirect users from HTTP to HTTPs.
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        edgeLambdas:
+          rewriteUrl !== undefined
+            ? [
+                {
+                  functionVersion: rewriteUrl.currentVersion,
+                  eventType: cloudfront.LambdaEdgeEventType.ORIGIN_REQUEST,
+                },
+              ]
+            : undefined,
       },
       // Set up redirects when a user hits a 404 or 403.
       errorResponses: [
         {
           httpStatus: 403,
-          responsePagePath: props.error,
+          responsePagePath: `/${props.error}`,
           responseHttpStatus: 200,
         },
         {
           httpStatus: 404,
-          responsePagePath: props.error,
+          responsePagePath: `/${props.error}`,
           responseHttpStatus: 200,
         },
       ],
@@ -111,6 +144,26 @@ export class Stack extends cdk.Stack {
       // Invalidate the cache for / and index.html when we deploy so that cloudfront serves latest site
       distribution,
       distributionPaths: ["/", `/${props.index}`],
+    });
+
+    // Set up our DNS records that points to our CloudFront distribution.
+    const hostedZone = route53.HostedZone.fromLookup(this, "HostedZone", {
+      domainName: props.hostedZone,
+    });
+
+    new route53.ARecord(this, "Alias", {
+      zone: hostedZone,
+      recordName: props.domain,
+      target: route53.RecordTarget.fromAlias(
+        new route53Targets.CloudFrontTarget(distribution)
+      ),
+    });
+
+    // Make www redirect to the root domain.
+    new route53Patterns.HttpsRedirect(this, "Redirect", {
+      zone: hostedZone,
+      recordNames: [`www.${props.domain}`],
+      targetDomain: props.domain,
     });
   }
 }

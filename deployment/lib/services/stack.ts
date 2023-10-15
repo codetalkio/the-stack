@@ -1,7 +1,6 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as s3Website from "./s3-website";
-import * as route53 from "aws-cdk-lib/aws-route53";
 import * as acm from "aws-cdk-lib/aws-certificatemanager";
 
 interface StackProps extends cdk.StackProps {
@@ -27,8 +26,10 @@ export class Stack extends cdk.Stack {
       index: "index.html",
       error: "404.html",
       domain: props.domain,
+      hostedZone: props.domain,
       certificateArn: props.certificate.certificateArn,
       billingGroup: "ui-app",
+      rewriteUrls: true,
     });
 
     // Set up our s3 website for ui-internal.
@@ -38,6 +39,7 @@ export class Stack extends cdk.Stack {
       index: "index.html",
       error: "index.html",
       domain: `internal.${props.domain}`,
+      hostedZone: props.domain,
       certificateArn: props.certificate.certificateArn,
       billingGroup: "ui-internal",
     });

@@ -1,8 +1,6 @@
 import type { PlaywrightTestConfig } from "@playwright/test";
 import { devices } from "@playwright/test";
 
-const SERVER = `http://${process.env.DOMAIN}`;
-
 const config: PlaywrightTestConfig = {
   testDir: "./tests",
   // Maximum time one test can run for.
@@ -27,8 +25,6 @@ const config: PlaywrightTestConfig = {
 
   reporter: "html",
   use: {
-    // Base URL to use in actions like `await page.goto('/')`.
-    baseURL: SERVER,
     // Maximum time each action such as `click()` can take. Defaults to 0 (no limit).
     actionTimeout: 0,
     // Collect trace when retrying the failed test.
@@ -43,7 +39,7 @@ const config: PlaywrightTestConfig = {
         ...devices["Desktop Chrome"],
       },
     },
-  ]
+  ],
 };
 
 export default config;

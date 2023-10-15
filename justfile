@@ -74,7 +74,7 @@ deploy stack='--all':
   #!/usr/bin/env bash
   set -euxo pipefail
   cd deployment
-  bun run cdk deploy {{ if stack == "--all" { "--all" } else { stack } }}
+  bun run cdk deploy --concurrency 4 --require-approval never {{ if stack == "--all" { "--all" } else { stack } }}
 
 # Validate that all deployment artifacts are present.
 deploy-validate-artifacts:
