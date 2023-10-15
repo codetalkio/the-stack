@@ -78,5 +78,8 @@ jobs:
           bun install
           bun run setup
 
+      - name: Build debug build
+        run: just build ui-internal true
+
       - name: Build release
         run: just e2e ui-internal

@@ -83,7 +83,7 @@ _test-deployment:
   #!/usr/bin/env bash
   set -euxo pipefail
   cd deployment
-  bun test
+  bun test "test/"
 
 _test-synth:
   #!/usr/bin/env bash
@@ -130,17 +130,18 @@ _dev-ui-internal:
   trunk serve
 
 # Build release artifact for <project>, e.g. `just dev ui-internal`.
-build project:
-  just _build-{{project}}
+build project debug="false":
+  just _build-{{project}} {{debug}}
 
-_build-ui-app:
+_build-ui-app debug="false":
   #!/usr/bin/env bash
   set -euxo pipefail
   cd ui-app
   bun run build
 
-_build-ui-internal:
+_build-ui-internal debug="false":
   #!/usr/bin/env bash
   set -euxo pipefail
   cd ui-internal
-  trunk build --release
+  echo "Debug {{debug}}"
+  trunk build {{ if debug == "true" { "" } else { "--release" } }}
