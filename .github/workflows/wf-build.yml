@@ -1,0 +1,17 @@
+name: Deploy
+
+on:
+  workflow_call:
+
+jobs:
+  ui-app:
+    uses: ./.github/workflows/wf-build-ui-app.yml
+    with:
+      release: true
+      upload-artifact: true
+
+  ui-internal:
+    uses: ./.github/workflows/wf-build-ui-internal.yml
+    with:
+      release: true
+      upload-artifact: true

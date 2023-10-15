@@ -5,6 +5,7 @@ on:
     paths:
       - "ui-app/**"
       - ".github/workflows/ci-ui-app.yml"
+      - ".github/workflows/wf-build-ui-app.yml"
 
 defaults:
   run:
@@ -12,21 +13,7 @@ defaults:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 20
-      - uses: oven-sh/setup-bun@v1
-      - uses: extractions/setup-just@v1
-
-      - name: Install dependencies
-        working-directory: ./ui-app
-        run: bun install
-
-      - name: Build Next.js project
-        run: just build ui-app
+    uses: ./.github/workflows/wf-build-ui-app.yml
 
   lint:
     runs-on: ubuntu-latest

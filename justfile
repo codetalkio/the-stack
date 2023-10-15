@@ -34,6 +34,7 @@ _install-tooling-all-platforms:
   cargo binstall --no-confirm cargo-edit
   # Install cargo-lambda for building Rust Lambda functions.
   cargo binstall --no-confirm cargo-lambda
+  # Install leptosfmt for formatting Leptos View macros.
 
 # Setup dependencies and tooling for <project>, e.g. `just setup deployment`.
 setup project:

@@ -1,21 +1,17 @@
-name: "CI: ui-internal"
+name: "Build: ui-internal"
 
 on:
-  push:
-    paths:
-      - "ui-internal/**"
-      - ".github/workflows/ci-ui-internal.yml"
-      - ".github/workflows/wf-build-ui-internal.yml"
-
-defaults:
-  run:
-    shell: bash # Set the default shell to bash.
+  workflow_call:
+    inputs:
+      release:
+        type: boolean
+        default: false
+      upload-artifact:
+        type: boolean
+        default: false
 
 jobs:
   build:
-    uses: ./.github/workflows/wf-build-ui-internal.yml
-
-  end-to-end:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -44,14 +40,16 @@ jobs:
           key: cargo-${{ hashFiles('Cargo.lock') }}-${{ hashFiles('ui-internal/Cargo.lock') }}-ui-internal
           restore-keys: cargo-
 
-      - name: Install dependencies and setup Playwright
-        working-directory: ./ui-internal/end2end
-        run: |
-          bun install
-          bun run setup
+      - name: Build release build
+        if: ${{ github.event.inputs.release }}
+        run: just build ui-internal
 
       - name: Build debug build
+        if: ${{ !github.event.inputs.release }}
         run: just build ui-internal true
 
-      - name: Run end-to-end tests
-        run: just e2e ui-internal
+      - uses: actions/upload-artifact@v3
+        if: ${{ github.event.inputs.upload-artifact }}
+        with:
+          name: ui-internal
+          path: ui-internal/dist

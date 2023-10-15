@@ -11,61 +11,67 @@ defaults:
     shell: bash # Set the default shell to bash.
 
 jobs:
+  # Build deployment artifacts
+  build:
+    name: "Build Artifacts"
+    uses: ./.github/workflows/wf-build.yml
+
   # Stage 1 tests that the deployment is working correctly.
   stage-1:
     name: "Stage 1"
+    needs: [build]
     uses: ./.github/workflows/wf-deploy.yml
     with:
       environment: "Integration Test"
     secrets: inherit
 
-  # Run tests against the environments from Stage 1.
-  stage-1-check:
-    name: "Stage 1: Check"
-    needs: [stage-1]
-    runs-on: ubuntu-latest
-    steps:
-      - name: "Check"
-        run: |
-          echo "Checking 'Integration Test'..."
-          # Run tests against the environment...
-          # Or alert/rollback if anything is wrong.
+  # # Run tests against the environments from Stage 1.
+  # stage-1-check:
+  #   name: "Stage 1: Check"
+  #   needs: [stage-1]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: "Check"
+  #       run: |
+  #         echo "Checking 'Integration Test'..."
+  #         # Run tests against the environment...
+  #         # Or alert/rollback if anything is wrong.
 
-  # Stage 2 is our more critical environments, and only proceeds if prior stages succeed.
-  stage-2-single:
-    name: "Stage 2: Single-tenant"
-    needs: [stage-1-check]
-    uses: ./.github/workflows/wf-deploy.yml
-    with:
-      environment: "Production Single-tenant"
-    secrets: inherit
+  # # Stage 2 is our more critical environments, and only proceeds if prior stages succeed.
+  # stage-2-single:
+  #   name: "Stage 2: Single-tenant"
+  #   needs: [stage-1-check]
+  #   uses: ./.github/workflows/wf-deploy.yml
+  #   with:
+  #     environment: "Production Single-tenant"
+  #   secrets: inherit
 
-  stage-2-single-check:
-    name: "Stage 2: Check Single-tenant"
-    needs: [stage-2-single]
-    runs-on: ubuntu-latest
-    steps:
-      - name: "Check"
-        run: |
-          echo "Checking 'Production Single-tenant'..."
-          # Run tests against the environment...
-          # Or alert/rollback if anything is wrong.
+  # stage-2-single-check:
+  #   name: "Stage 2: Check Single-tenant"
+  #   needs: [stage-2-single]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: "Check"
+  #       run: |
+  #         echo "Checking 'Production Single-tenant'..."
+  #         # Run tests against the environment...
+  #         # Or alert/rollback if anything is wrong.
 
-  stage-2-multi:
-    name: "Stage 2: Multi-tenant"
-    needs: [stage-1-check]
-    uses: ./.github/workflows/wf-deploy.yml
-    with:
-      environment: "Production Multi-tenant"
-    secrets: inherit
+  # stage-2-multi:
+  #   name: "Stage 2: Multi-tenant"
+  #   needs: [stage-1-check]
+  #   uses: ./.github/workflows/wf-deploy.yml
+  #   with:
+  #     environment: "Production Multi-tenant"
+  #   secrets: inherit
 
-  stage-2-multi-check:
-    name: "Stage 2: Check Multi-tenant"
-    needs: [stage-2-multi]
-    runs-on: ubuntu-latest
-    steps:
-      - name: "Check"
-        run: |
-          echo "Checking 'Production Multi-tenant'..."
-          # Run tests against the environment...
-          # Or alert/rollback if anything is wrong.
+  # stage-2-multi-check:
+  #   name: "Stage 2: Check Multi-tenant"
+  #   needs: [stage-2-multi]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: "Check"
+  #       run: |
+  #         echo "Checking 'Production Multi-tenant'..."
+  #         # Run tests against the environment...
+  #         # Or alert/rollback if anything is wrong.

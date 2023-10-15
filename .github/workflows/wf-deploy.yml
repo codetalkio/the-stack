@@ -8,6 +8,17 @@ on:
         type: string
 
 jobs:
+  ui-app:
+    uses: ./.github/workflows/wf-build-ui-app.yml
+    with:
+      upload-artifact: true
+
+  ui-internal:
+    uses: ./.github/workflows/wf-build-ui-internal.yml
+    with:
+      release: true
+      upload-artifact: true
+
   deploy:
     name: "Deploy"
     runs-on: ubuntu-latest
@@ -21,34 +32,46 @@ jobs:
       - uses: oven-sh/setup-bun@v1
       - uses: extractions/setup-just@v1
 
-      - name: Install dependencies
-        working-directory: ./deployment
-        run: bun install
+      - name: Setup artifact directory
+        run: mkdir -p ./deployment/artifacts
 
-      - name: Synthesize the whole stack
-        working-directory: ./deployment
-        env:
-          DOMAIN: ${{ vars.DOMAIN }}
-          AWS_REGION: ${{ vars.AWS_REGION }}
-          AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        run: just test synth
+      # Download all artifacts from previous jobs.
+      - uses: actions/download-artifact@v3
+        with:
+          path: ./deployment/artifacts/
 
-      - name: Run tests
-        working-directory: ./deployment
-        env:
-          DOMAIN: ${{ vars.DOMAIN }}
-          AWS_REGION: ${{ vars.AWS_REGION }}
-          AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
-        run: just test deployment
+      - name: Display structure of downloaded files
+        working-directory: ./deployment/artifacts/
+        run: ls -R
 
-      - name: Deploy to ${{ inputs.environment }}
-        working-directory: ./deployment
-        env:
-          DOMAIN: ${{ vars.DOMAIN }}
-          AWS_REGION: ${{ vars.AWS_REGION }}
-          AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        run: just deploy
+      # - name: Install dependencies
+      #   working-directory: ./deployment
+      #   run: bun install
+
+      # - name: Synthesize the whole stack
+      #   working-directory: ./deployment
+      #   env:
+      #     DOMAIN: ${{ vars.DOMAIN }}
+      #     AWS_REGION: ${{ vars.AWS_REGION }}
+      #     AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
+      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #   run: just test synth
+
+      # - name: Run tests
+      #   working-directory: ./deployment
+      #   env:
+      #     DOMAIN: ${{ vars.DOMAIN }}
+      #     AWS_REGION: ${{ vars.AWS_REGION }}
+      #     AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
+      #   run: just test deployment
+
+      # - name: Deploy to ${{ inputs.environment }}
+      #   working-directory: ./deployment
+      #   env:
+      #     DOMAIN: ${{ vars.DOMAIN }}
+      #     AWS_REGION: ${{ vars.AWS_REGION }}
+      #     AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
+      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #   run: just deploy

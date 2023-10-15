@@ -1,0 +1,35 @@
+name: "Build: ui-app"
+
+on:
+  workflow_call:
+    inputs:
+      release:
+        type: boolean
+        default: false
+      upload-artifact:
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+      - uses: oven-sh/setup-bun@v1
+      - uses: extractions/setup-just@v1
+
+      - name: Install dependencies
+        working-directory: ./ui-app
+        run: bun install
+
+      - name: Build Next.js project
+        run: just build ui-app
+
+      - uses: actions/upload-artifact@v3
+        if: ${{ github.event.inputs.upload-artifact }}
+        with:
+          name: ui-app
+          path: ui-app/out
