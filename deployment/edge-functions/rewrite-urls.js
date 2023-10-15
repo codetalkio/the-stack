@@ -1,14 +1,13 @@
-function handler(event) {
-  var request = event.request;
-  var uri = request.uri;
+exports.handler = (event, _, callback) => {
+  let request = event.Records[0].cf.request;
 
   // Check whether the URI is missing a file name.
-  if (uri.endsWith("/")) {
+  if (request.uri.endsWith("/")) {
     request.uri += "index.html";
-  } else if (!uri.includes(".")) {
+  } else if (!request.uri.includes(".")) {
     // Check whether the URI is missing a file extension.
     request.uri += "/index.html";
   }
 
-  return request;
-}
+  return callback(null, request);
+};

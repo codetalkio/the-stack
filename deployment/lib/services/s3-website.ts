@@ -112,7 +112,7 @@ export class Stack extends cdk.Stack {
             ? [
                 {
                   functionVersion: rewriteUrl.currentVersion,
-                  eventType: cloudfront.LambdaEdgeEventType.VIEWER_REQUEST,
+                  eventType: cloudfront.LambdaEdgeEventType.ORIGIN_REQUEST,
                 },
               ]
             : undefined,
