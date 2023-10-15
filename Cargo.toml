@@ -1,5 +1,5 @@
 [workspace]
 resolver = "2"
-members = ["ms-gql-media", "ms-gql-todo", "ms-queue", "ui-internal"]
+members = ["ms-gql-media", "ms-gql-todo", "ms-queue"]
 
-exclude = ["ms-router", "ms-apollo-router"]
+exclude = ["ui-internal", "ms-router", "ms-apollo-router"]

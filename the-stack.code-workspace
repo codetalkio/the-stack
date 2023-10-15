@@ -1,11 +1,24 @@
 {
   "folders": [
     {
+      "name": "deployment",
+      "path": "deployment"
+    },
+    {
+      "name": "services",
       "path": "."
     },
     {
-      "namer": "ms-router",
+      "name": "ms-router",
       "path": "ms-router"
+    },
+    {
+      "name": "ui-app",
+      "path": "ui-app"
+    },
+    {
+      "name": "ui-internal",
+      "path": "ui-internal"
     }
   ],
   "settings": {
@@ -20,7 +33,11 @@
       "**/node_modules": true,
       "**/Cargo.lock": true,
       "**/dist": true,
-      "ms-router": true
+      "**/.vscode": false,
+      "ms-router": true,
+      "deployment": true,
+      "ui-app": true,
+      "ui-internal": true
     },
     "editor.formatOnSave": true,
     "rust-analyzer.procMacro.ignored": {
