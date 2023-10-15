@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies and setup Playwright
         run: just setup deployment
 
-      - name: Synthesize the whole stack
+      - name: End-to-end tests
         working-directory: ./deployment
         env:
           DOMAIN: ${{ vars.DOMAIN }}
