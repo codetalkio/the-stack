@@ -1,5 +1,8 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
+import * as route53 from "aws-cdk-lib/aws-route53";
+import * as route53Patterns from "aws-cdk-lib/aws-route53-patterns";
+import * as route53Targets from "aws-cdk-lib/aws-route53-targets";
 import * as acm from "aws-cdk-lib/aws-certificatemanager";
 import * as s3deploy from "aws-cdk-lib/aws-s3-deployment";
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
@@ -27,6 +30,11 @@ export interface StackProps extends cdk.StackProps {
    * The domain name the application is hosted under.
    */
   readonly domain: string;
+
+  /**
+   * The hosted zone that controls the DNS for the domain.
+   */
+  readonly hostedZone: string;
 
   /**
    * The billing group to associate with this stack.
@@ -88,12 +96,12 @@ export class Stack extends cdk.Stack {
       errorResponses: [
         {
           httpStatus: 403,
-          responsePagePath: props.error,
+          responsePagePath: `/${props.error}`,
           responseHttpStatus: 200,
         },
         {
           httpStatus: 404,
-          responsePagePath: props.error,
+          responsePagePath: `/${props.error}`,
           responseHttpStatus: 200,
         },
       ],
@@ -111,6 +119,26 @@ export class Stack extends cdk.Stack {
       // Invalidate the cache for / and index.html when we deploy so that cloudfront serves latest site
       distribution,
       distributionPaths: ["/", `/${props.index}`],
+    });
+
+    // Set up our DNS records that points to our CloudFront distribution.
+    const hostedZone = route53.HostedZone.fromLookup(this, "HostedZone", {
+      domainName: props.hostedZone,
+    });
+
+    new route53.ARecord(this, "Alias", {
+      zone: hostedZone,
+      recordName: props.domain,
+      target: route53.RecordTarget.fromAlias(
+        new route53Targets.CloudFrontTarget(distribution)
+      ),
+    });
+
+    // Make www redirect to the root domain.
+    new route53Patterns.HttpsRedirect(this, "Redirect", {
+      zone: hostedZone,
+      recordNames: [`www.${props.domain}`],
+      targetDomain: props.domain,
     });
   }
 }

@@ -27,6 +27,7 @@ export class Stack extends cdk.Stack {
       index: "index.html",
       error: "404.html",
       domain: props.domain,
+      hostedZone: props.domain,
       certificateArn: props.certificate.certificateArn,
       billingGroup: "ui-app",
     });
@@ -38,6 +39,7 @@ export class Stack extends cdk.Stack {
       index: "index.html",
       error: "index.html",
       domain: `internal.${props.domain}`,
+      hostedZone: props.domain,
       certificateArn: props.certificate.certificateArn,
       billingGroup: "ui-internal",
     });

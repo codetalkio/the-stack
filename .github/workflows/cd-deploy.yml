@@ -29,13 +29,10 @@ jobs:
   stage-1-check:
     name: "Stage 1: Check"
     needs: [stage-1]
-    runs-on: ubuntu-latest
-    steps:
-      - name: "Check"
-        run: |
-          echo "Checking 'Integration Test'..."
-          # Run tests against the environment...
-          # Or alert/rollback if anything is wrong.
+    uses: ./.github/workflows/wf-check.yml
+    with:
+      environment: "Integration Test"
+    secrets: inherit
 
   # Stage 2 is our more critical environments, and only proceeds if prior stages succeed.
   stage-2-single:
@@ -49,13 +46,10 @@ jobs:
   stage-2-single-check:
     name: "Stage 2: Check Single-tenant"
     needs: [stage-2-single]
-    runs-on: ubuntu-latest
-    steps:
-      - name: "Check"
-        run: |
-          echo "Checking 'Production Single-tenant'..."
-          # Run tests against the environment...
-          # Or alert/rollback if anything is wrong.
+    uses: ./.github/workflows/wf-check.yml
+    with:
+      environment: "Production Single-tenant"
+    secrets: inherit
 
   stage-2-multi:
     name: "Stage 2: Multi-tenant"
@@ -68,10 +62,7 @@ jobs:
   stage-2-multi-check:
     name: "Stage 2: Check Multi-tenant"
     needs: [stage-2-multi]
-    runs-on: ubuntu-latest
-    steps:
-      - name: "Check"
-        run: |
-          echo "Checking 'Production Multi-tenant'..."
-          # Run tests against the environment...
-          # Or alert/rollback if anything is wrong.
+    uses: ./.github/workflows/wf-check.yml
+    with:
+      environment: "Production Multi-tenant"
+    secrets: inherit
