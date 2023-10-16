@@ -13,6 +13,9 @@ on:
 jobs:
   ui-internal:
     runs-on: ubuntu-latest
+    env:
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: "sccache"
     steps:
       - uses: actions/checkout@v3
       - uses: oven-sh/setup-bun@v1
@@ -34,11 +37,17 @@ jobs:
         continue-on-error: false
         with:
           path: |
-            ~/.cargo/registry
-            ~/.cargo/git
+            ~/.cargo/registry/cache/
+            ~/.cargo/registry/index/
+            ~/.cargo/bin/
+            ~/.cargo/git/db/
             ui-internal/target
-          key: cargo-${{ hashFiles('Cargo.lock') }}-${{ hashFiles('ui-internal/Cargo.lock') }}-ui-internal
-          restore-keys: cargo-
+          key: cargo-${{ hashFiles('ui-internal/Cargo.lock') }}-ui-internal
+          restore-keys: |
+            cargo-${{ inputs.release && 'release' || 'debug' }}-${{ hashFiles('ui-internal/Cargo.lock') }}-ui-internal
+            cargo-${{ inputs.release && 'release' || 'debug' }}
+      - uses: mozilla-actions/sccache-action@v0.0.3
+        name: "Setup sccache"
 
       - name: Build release build
         if: ${{ inputs.release }}
