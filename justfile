@@ -23,11 +23,11 @@ install-tooling:
 
 _install-tooling-all-platforms:
   # Install bun.
-  curl -fsSL https://bun.sh/install | bash
+  command -v bun >/dev/null 2>&1 || curl -fsSL https://bun.sh/install | bash
   # Install the zig compiler for cross-compilation.
-  bun install --global zig
+  command -v zig >/dev/null 2>&1 || bun install --global zig
   # Install cargo-binstall for installing binaries from crates.io.
-  curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+  command -v cargo-binstall >/dev/null 2>&1 || curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
   # Install trunk for building Rust WebAssembly.
   cargo binstall --no-confirm trunk
   # Install cargo-edit for managing dependencies.
@@ -35,6 +35,7 @@ _install-tooling-all-platforms:
   # Install cargo-lambda for building Rust Lambda functions.
   cargo binstall --no-confirm cargo-lambda
   # Install leptosfmt for formatting Leptos View macros.
+  cargo binstall --no-confirm leptosfmt
 
 # Setup dependencies and tooling for <project>, e.g. `just setup deployment`.
 setup project:
@@ -68,6 +69,15 @@ _setup-ui-internal:
   cd end2end
   bun install
   bun run setup
+
+_setup-ms-router:
+  #!/usr/bin/env bash
+  set -euxo pipefail
+  cd ms-router
+  # Download the Apollo Router binary.
+  cd bin
+  curl -sSL https://router.apollo.dev/download/nix/latest | sh
+
 
 # Deploy the specified <stack>, e.g. `just deploy Cloud`, defaulting to --all.
 deploy stack='--all':
@@ -147,6 +157,12 @@ _dev-ui-internal:
   set -euxo pipefail
   cd ui-internal
   trunk serve
+
+_dev-ms-router:
+  #!/usr/bin/env bash
+  set -euxo pipefail
+  cd ms-router/bin
+  ./router
 
 # Build release artifact for <project>, e.g. `just dev ui-internal`.
 build project debug="false":
