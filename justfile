@@ -28,8 +28,12 @@ _install-tooling-all-platforms:
   command -v zig >/dev/null 2>&1 || bun install --global zig
   # Install cargo-binstall for installing binaries from crates.io.
   command -v cargo-binstall >/dev/null 2>&1 || curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+  # Install the rover CLI tool to manage Apollo supergraphs.
+  command -v rover >/dev/null 2>&1 || curl -sSL https://rover.apollo.dev/nix/latest | sh
   # Install trunk for building Rust WebAssembly.
   cargo binstall --no-confirm trunk
+  # Install cargo-watch for watching Rust files.
+  cargo binstall --no-confirm cargo-watch
   # Install cargo-edit for managing dependencies.
   cargo binstall --no-confirm cargo-edit
   # Install cargo-lambda for building Rust Lambda functions.
@@ -59,32 +63,44 @@ _setup-ui-app:
   bun install
   bun run setup
 
-_setup-ui-internal:
+_setup-ui-internal: (_setup-rust-wasm "ui-internal")
   #!/usr/bin/env bash
   set -euxo pipefail
-  cd ui-internal
-  rustup toolchain install nightly
-  rustup default nightly
-  rustup target add wasm32-unknown-unknown
-  cd end2end
+  cd ui-internal/end2end
   bun install
   bun run setup
 
-_setup-ms-router:
+_setup-ms-router: (_setup-rust "ms-router")
   #!/usr/bin/env bash
   set -euxo pipefail
-  cd ms-router
+  cd ms-router/bin
   # Download the Apollo Router binary.
-  cd bin
   curl -sSL https://router.apollo.dev/download/nix/latest | sh
 
+_setup-ms-gql-users: (_setup-rust "ms-gql-users")
+
+_setup-ms-gql-products: (_setup-rust "ms-gql-products")
+
+_setup-ms-gql-reviews: (_setup-rust "ms-gql-reviews")
+
+_setup-rust-wasm project:
+  #!/usr/bin/env bash
+  set -euxo pipefail
+  cd {{project}}
+  rustup toolchain install nightly-2023-10-11
+  rustup default nightly-2023-10-11
+  rustup target add wasm32-unknown-unknown
+
+_setup-rust project:
+  #!/usr/bin/env bash
+  set -euxo pipefail
+  cd {{project}}
+  rustup toolchain install stable
+  rustup default stable
 
 # Deploy the specified <stack>, e.g. `just deploy Cloud`, defaulting to --all.
 deploy stack='--all':
-  #!/usr/bin/env bash
-  set -euxo pipefail
-  cd deployment
-  bun run cdk deploy --concurrency 4 --require-approval never {{ if stack == "--all" { "--all" } else { stack } }}
+  cd deployment && bun run cdk deploy --concurrency 4 --require-approval never {{ if stack == "--all" { "--all" } else { stack } }}
 
 # Validate that all deployment artifacts are present.
 deploy-validate-artifacts:
@@ -109,74 +125,67 @@ test project:
   just _test-{{project}}
 
 _test-deployment:
-  #!/usr/bin/env bash
-  set -euxo pipefail
-  cd deployment
-  bun test "test/"
+  cd deployment && bun test "test/"
 
 _test-synth:
-  #!/usr/bin/env bash
-  set -euxo pipefail
-  cd deployment
-  bun run cdk synth --all
+  cd deployment && bun run cdk synth --all
 
 # Run End-to-End tests for <project>, e.g. `just e2e ui-internal`.
 e2e project:
   just _e2e-{{project}}
 
 _e2e-deployment:
-  #!/usr/bin/env bash
-  set -euxo pipefail
-  cd deployment/end2end
-  bun run e2e
+  cd deployment/end2end && bun run e2e
 
 _e2e-ui-app:
-  #!/usr/bin/env bash
-  set -euxo pipefail
-  cd ui-app/end2end
-  bun run e2e
+  cd ui-app/end2end && bun run e2e
 
 _e2e-ui-internal:
-  #!/usr/bin/env bash
-  set -euxo pipefail
-  cd ui-internal/end2end
-  bun run e2e
+  cd ui-internal/end2end && bun run e2e
 
 # Run <project> development server, e.g. `just dev ui-app`.
 dev project:
   just _dev-{{project}}
 
 _dev-ui-app:
-  #!/usr/bin/env bash
-  set -euxo pipefail
-  cd ui-app
-  bun dev
+  cd ui-app && bun dev
 
 _dev-ui-internal:
-  #!/usr/bin/env bash
-  set -euxo pipefail
-  cd ui-internal
-  trunk serve
+  cd ui-internal && trunk serve
 
 _dev-ms-router:
-  #!/usr/bin/env bash
-  set -euxo pipefail
-  cd ms-router/bin
-  ./router
+  cd ms-router/bin && ./router --config ../router.yaml --supergraph=../supergraph.graphql --dev --hot-reload
+
+# cargo lambda watch --invoke-port 3055
+_dev-ms-gql-users:
+  cd ms-gql-users && cargo watch -x run --features local
+
+# cargo lambda watch --invoke-port 3065
+_dev-ms-gql-products:
+  cd ms-gql-products && cargo watch -x run --features local
+
+# cargo lambda watch --invoke-port 3075
+_dev-ms-gql-reviews:
+  cd ms-gql-reviews && cargo watch -x run --features local
 
 # Build release artifact for <project>, e.g. `just dev ui-internal`.
 build project debug="false":
   just _build-{{project}} {{debug}}
 
 _build-ui-app debug="false":
-  #!/usr/bin/env bash
-  set -euxo pipefail
-  cd ui-app
-  bun run build
+  cd ui-app && bun run build
 
 _build-ui-internal debug="false":
-  #!/usr/bin/env bash
-  set -euxo pipefail
-  cd ui-internal
-  echo "Debug {{debug}}"
-  trunk build {{ if debug == "true" { "" } else { "--release" } }}
+  cd ui-internal && trunk build {{ if debug == "true" { "" } else { "--release" } }}
+
+_build-ms-router debug="false":
+  cd ms-router && rover supergraph compose --config ./supergraph-config.yaml > supergraph.graphql
+
+_build-ms-gql-users debug="false":
+  cd ms-gql-users && cargo build
+
+_build-ms-gql-products debug="false":
+  cd ms-gql-products && cargo build
+
+_build-ms-gql-reviews debug="false":
+  cd ms-gql-reviews && cargo build

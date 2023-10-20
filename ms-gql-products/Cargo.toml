@@ -1,25 +1,29 @@
 [package]
-name = "ms-gql-media"
+name = "ms-gql-products"
 version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 
 [features]
 # Can be checked using: #[cfg(feature = "local")]
-local = ["dep:axum", "dep:async-graphql-axum"]
+local = ["lib-handler/local", "dep:axum", "dep:async-graphql-axum"]
 
 [dependencies]
 # Local development.
-axum = { version = "0.6.18", features = ["headers"], optional = true }
-async-graphql-axum = { version = "5.0.10", optional = true }
+lib-handler = { path = "../lib-handler" }
+axum = { version = "0.6", features = ["headers"], optional = true }
+async-graphql-axum = { version = "6", optional = true }
+
 # Serving our GraphQL API.
-async-graphql = "5.0.10"
+async-graphql = "6"
+
 # Using AWS services.
 tokio = { version = "1", features = ["macros"] }
 lambda_http = "0.8.1"
 lambda_runtime = "0.8.1"
-aws-sdk-dynamodb = "0.28.0"
-aws-config = "0.55"
+aws-sdk-dynamodb = "0.33.0"
+aws-config = "0.56"
+
 # Utilities.
 simple-error = "0.3.0"
 serde_json = "1"

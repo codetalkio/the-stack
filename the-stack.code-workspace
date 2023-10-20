@@ -9,16 +9,36 @@
       "path": "deployment"
     },
     {
-      "name": "ms-router",
-      "path": "ms-router"
-    },
-    {
       "name": "ui-app",
       "path": "ui-app"
     },
     {
       "name": "ui-internal",
       "path": "ui-internal"
+    },
+    {
+      "name": "lib-handler",
+      "path": "lib-handler"
+    },
+    {
+      "name": "ms-gql-users",
+      "path": "ms-gql-users"
+    },
+    {
+      "name": "ms-gql-products",
+      "path": "ms-gql-products"
+    },
+    {
+      "name": "ms-gql-reviews",
+      "path": "ms-gql-reviews"
+    },
+    {
+      "name": "ms-router",
+      "path": "ms-router"
+    },
+    {
+      "name": "ms-queue",
+      "path": "ms-queue"
     }
   ],
   "settings": {
@@ -35,6 +55,10 @@
       "**/dist": true,
       "**/.vscode": false,
       "ms-router": true,
+      "ms-queue": true,
+      "ms-gql-users": true,
+      "ms-gql-products": true,
+      "ms-gql-reviews": true,
       "deployment": true,
       "ui-app": true,
       "ui-internal": true

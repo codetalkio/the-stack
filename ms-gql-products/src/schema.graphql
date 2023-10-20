@@ -1,0 +1,21 @@
+type Query {
+  # Retrive a specific product by ID.
+  product(id: ID!): Product!
+
+  # Retrive a list of all products.
+  products: [Product!]!
+}
+
+# Products simply have a name and price.
+type Product @key(fields: "id") {
+  id: ID!
+  name: String!
+  price: String!
+}
+
+# External Type: User.
+type User @key(fields: "id") {
+  id: ID!
+  # Extend the Users type with a purchases field.
+  purchases: [Product!]!
+}

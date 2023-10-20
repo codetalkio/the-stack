@@ -1,0 +1,29 @@
+type Query {
+  # Retrive a specific review by ID.
+  review(id: ID!): Review!
+
+  # Retrive a list of all reviews.
+  reviews: [Review!]!
+}
+
+# Reviews are written by a User and are about a Product.
+type Review @key(fields: "id") {
+  id: ID!
+  body: String!
+  author: User!
+  product: Product!
+}
+
+# External Type: User.
+type User @key(fields: "id") {
+  id: ID!
+  # Extend the Users type with a reviews field.
+  reviews: [Review!]!
+}
+
+# External Type: Product.
+type Product @key(fields: "id") {
+  id: ID!
+  # Extend the Product type with a reviews field.
+  reviews: [Review!]!
+}

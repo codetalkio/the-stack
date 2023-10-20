@@ -52,8 +52,7 @@ async fn handle_request(db_client: &Client, event: Request) -> Result<Response<B
     Ok(resp)
 }
 
-#[tokio::main]
-async fn main() -> Result<(), Error> {
+async fn test_main() -> Result<(), Error> {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         // disabling time is handy because CloudWatch will add the ingestion time.
@@ -65,10 +64,7 @@ async fn main() -> Result<(), Error> {
     //Create the DynamoDB client.
     let client = Client::new(&config);
 
-    run(service_fn(|event: Request| async {
-        handle_request(&client, event).await
-    }))
-    .await
+    run(service_fn(|event: Request| async { handle_request(&client, event).await })).await
 }
 
 // Add an item to a table.

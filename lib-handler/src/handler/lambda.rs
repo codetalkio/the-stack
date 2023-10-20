@@ -1,15 +1,17 @@
-use async_graphql::{EmptyMutation, EmptySubscription, Schema};
+use async_graphql::{ObjectType, Schema, SubscriptionType};
 use lambda_http::Error;
-
-#[cfg(not(feature = "local"))]
 use lambda_http::{run, service_fn, Body, Request, Response};
-#[cfg(not(feature = "local"))]
 use tracing::info;
 
-use crate::schema::*;
-
-#[cfg(not(feature = "local"))]
-async fn handle_request(schema: &SubgraphSchema, event: Request) -> Result<Response<Body>, Error> {
+async fn handle_request<Query, Mutation, Subscription>(
+    schema: &Schema<Query, Mutation, Subscription>,
+    event: Request,
+) -> Result<Response<Body>, Error>
+where
+    Query: ObjectType + 'static,
+    Mutation: ObjectType + 'static,
+    Subscription: SubscriptionType + 'static,
+{
     // Extract the body from the Lambda event.
     let body = event.body();
     let payload = std::str::from_utf8(body).expect("invalid utf-8 sequence");
@@ -32,12 +34,17 @@ async fn handle_request(schema: &SubgraphSchema, event: Request) -> Result<Respo
     Ok(resp)
 }
 
-#[cfg(not(feature = "local"))]
-pub async fn handler() -> Result<(), Error> {
-    let schema = Schema::new(Query, EmptyMutation, EmptySubscription);
+pub async fn handler<Query, Mutation, Subscription>(
+    query: Query,
+    mutation: Mutation,
+    subscription: Subscription,
+) -> Result<(), Error>
+where
+    Query: ObjectType + 'static,
+    Mutation: ObjectType + 'static,
+    Subscription: SubscriptionType + 'static,
+{
+    let schema = Schema::new(query, mutation, subscription);
 
-    run(service_fn(|event: Request| async {
-        handle_request(&schema, event).await
-    }))
-    .await
+    run(service_fn(|event: Request| async { handle_request(&schema, event).await })).await
 }

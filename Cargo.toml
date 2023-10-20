@@ -1,5 +1,30 @@
 [workspace]
 resolver = "2"
-members = ["ms-gql-media", "ms-gql-todo", "ms-queue"]
+members = [
+  "lib-handler",
+  "ms-gql-users",
+  "ms-gql-products",
+  "ms-gql-reviews",
+  "ms-queue"
+]
 
-exclude = ["ui-internal", "ms-router", "ms-apollo-router"]
+exclude = [
+  "ui-internal",
+  "ms-router"
+]
+
+[profile.release]
+# Configurations explicitly listed here for clarity.
+# Using the best options for performance.
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+strip = "symbols"
+debug = false
+
+# Use the `--profile release-debug` flag to show symbols in release mode.
+# e.g. `cargo build --profile release-debug`
+[profile.release-debug]
+inherits = "release"
+strip = false
+debug = true

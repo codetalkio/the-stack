@@ -1,0 +1,13 @@
+type Query {
+  # Get the currently logged in user.
+  me: User
+
+  # List all users.
+  users: [User!]!
+}
+
+# Users have a name and nothing more.
+type User @key(fields: "id") {
+  id: ID!
+  name: String!
+}
