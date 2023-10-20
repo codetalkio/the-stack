@@ -36,7 +36,7 @@ jobs:
         with:
           repo: cargo-lambda/cargo-lambda
           platform: linux
-          arch: aarch64 # Other valid options for linux: 'x86_64'
+          arch: x86_64
 
       - uses: mozilla-actions/sccache-action@v0.0.3
         name: "Setup sccache"

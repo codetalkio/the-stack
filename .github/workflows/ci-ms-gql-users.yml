@@ -1,11 +1,11 @@
-name: "CI: ui-internal"
+name: "CI: ms-gql-users"
 
 on:
   push:
     paths:
-      - ".github/workflows/ci-ui-internal.yml"
-      - ".github/workflows/wf-build-ui-internal.yml"
-      - "ui-internal/**"
+      - ".github/workflows/ci-ms-gql-users.yml"
+      - ".github/workflows/wf-build-lambda.yml"
+      - "ms-gql-users/**"
 
 defaults:
   run:
