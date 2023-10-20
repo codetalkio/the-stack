@@ -1,8 +1,11 @@
-name: "Build: ui-internal"
+name: "Build: ms-gql"
 
 on:
   workflow_call:
     inputs:
+      project:
+          type: string
+          required: true
       release:
         type: boolean
         default: false
@@ -18,39 +21,38 @@ jobs:
       RUSTC_WRAPPER: "sccache"
     steps:
       - uses: actions/checkout@v3
-      - uses: oven-sh/setup-bun@v1
       - uses: extractions/setup-just@v1
+
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          toolchain: nightly-2023-10-11
-          target: wasm32-unknown-unknown
-          cache: false
-
-      - name: Install trunk
+          toolchain: stable
+          cache: true
+      - name: Install Zig toolchain
+        uses: korandoru/setup-zig@v1
+        with:
+          zig-version: 0.11.0
+      - name: Install Cargo Lambda
         uses: jaxxstorm/action-install-gh-release@v1.9.0
         with:
-          repo: thedodd/trunk
-          platform: linux # Other valid options: 'windows' or 'darwin'.
-          arch: x86_64
+          repo: cargo-lambda/cargo-lambda
+          platform: linux
+          arch: aarch64 # Other valid options for linux: 'x86_64'
 
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: ui-internal
       - uses: mozilla-actions/sccache-action@v0.0.3
         name: "Setup sccache"
 
       - name: Build release build
         if: ${{ inputs.release }}
-        run: just build ui-internal
+        run: just build ${{ inputs.project }}
 
       - name: Build debug build
         if: ${{ !inputs.release }}
-        run: just build ui-internal true
+        run: just build ${{ inputs.project }} true
 
       - uses: actions/upload-artifact@v3
         if: ${{ inputs.upload-artifact }}
         with:
-          name: ui-internal
-          path: ui-internal/dist
+          name: ${{ inputs.project }}
+          path: target/lambda/${{ inputs.project }}
           if-no-files-found: error
           retention-days: 1

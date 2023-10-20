@@ -1,0 +1,18 @@
+name: "CI: ui-internal"
+
+on:
+  push:
+    paths:
+      - ".github/workflows/ci-ui-internal.yml"
+      - ".github/workflows/wf-build-ui-internal.yml"
+      - "ui-internal/**"
+
+defaults:
+  run:
+    shell: bash # Set the default shell to bash.
+
+jobs:
+  build:
+    uses: ./.github/workflows/wf-build-lambda.yml
+    with:
+      project: ms-gql-users

@@ -15,3 +15,10 @@ jobs:
     with:
       release: true
       upload-artifact: true
+
+  ms-gql-users:
+    uses: ./.github/workflows/wf-build-lambda.yml
+    with:
+      project: ms-gql-users
+      release: true
+      upload-artifact: true

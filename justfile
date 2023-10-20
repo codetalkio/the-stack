@@ -182,10 +182,10 @@ _build-ms-router debug="false":
   cd ms-router && rover supergraph compose --config ./supergraph-config.yaml > supergraph.graphql
 
 _build-ms-gql-users debug="false":
-  cd ms-gql-users && cargo build
+  cd ms-gql-users && cargo lambda build --arm64 {{ if debug == "true" { "" } else { "--release" } }}
 
 _build-ms-gql-products debug="false":
-  cd ms-gql-products && cargo build
+  cd ms-gql-products && cargo lambda build --arm64 {{ if debug == "true" { "" } else { "--release" } }}
 
 _build-ms-gql-reviews debug="false":
-  cd ms-gql-reviews && cargo build
+  cd ms-gql-reviews && cargo lambda build --arm64 {{ if debug == "true" { "" } else { "--release" } }}
