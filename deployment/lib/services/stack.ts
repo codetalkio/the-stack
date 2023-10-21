@@ -4,6 +4,7 @@ import * as acm from "aws-cdk-lib/aws-certificatemanager";
 
 import * as s3Website from "./s3-website";
 import * as lambdaFn from "./lambda";
+import * as routerFn from "./router";
 
 interface StackProps extends cdk.StackProps {
   /**
@@ -46,25 +47,38 @@ export class Stack extends cdk.Stack {
       billingGroup: "ui-internal",
     });
 
-    new lambdaFn.Stack(this, "MsGqlUsers", {
+    const usersFn = new lambdaFn.Stack(this, "MsGqlUsers", {
       ...props,
       functionName: "ms-gql-users",
       assets: "artifacts/ms-gql-users",
       billingGroup: "ms-gql-users",
     });
 
-    new lambdaFn.Stack(this, "MsGqlProducts", {
+    const productsFn = new lambdaFn.Stack(this, "MsGqlProducts", {
       ...props,
       functionName: "ms-gql-products",
       assets: "artifacts/ms-gql-products",
       billingGroup: "ms-gql-products",
     });
 
-    new lambdaFn.Stack(this, "MsGqlReviews", {
+    const reviewsFn = new lambdaFn.Stack(this, "MsGqlReviews", {
       ...props,
       functionName: "ms-gql-reviews",
       assets: "artifacts/ms-gql-reviews",
       billingGroup: "ms-gql-reviews",
+    });
+
+    // Set up our router that pieces together the microservices.
+    new routerFn.Stack(this, "MsRouter", {
+      ...props,
+      functionName: "ms-router",
+      assets: "artifacts/ms-router",
+      billingGroup: "ms-router",
+      environment: {
+        SUBGRAPH_USERS_URL: usersFn.functionUrl,
+        SUBGRAPH_PRODUCTS_URL: productsFn.functionUrl,
+        SUBGRAPH_REVIEWS_URL: reviewsFn.functionUrl,
+      },
     });
   }
 }

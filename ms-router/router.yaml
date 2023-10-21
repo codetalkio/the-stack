@@ -2,7 +2,7 @@ supergraph:
   listen: 127.0.0.1:4000
 
 homepage:
-  enabled: false
+  enabled: true # false
 
 plugins:
   # Enable with the header, Apollo-Expose-Query-Plan: true
@@ -12,8 +12,13 @@ experimental_batching:
   enabled: true
   mode: batch_http_link
 
+# We are running the server in a Lambda, so we have no need for a health check endpoint.
+health_check:
+  enabled: false
+
+# Propogate all headers to the subgraphs.
 headers:
-  all: # Header rules for all subgraphs
+  all:
     request:
       - propagate:
           matching: .*
@@ -27,6 +32,8 @@ traffic_shaping:
       retry_percent: 0.2 # defines the proportion of available retries to the current number of tokens
       retry_mutations: false # allows retries on mutations. This should only be enabled if mutations are idempotent
 
+# Support setting the path to each subgraph via environment variables. This will override
+# the ones defined in the composed supergraph.graphql schema.
 override_subgraph_url:
   users: "${env.SUBGRAPH_USERS_URL:-http://localhost:3065/}"
   products: "${env.SUBGRAPH_PRODUCTS_URL:-http://localhost:3075/}"
