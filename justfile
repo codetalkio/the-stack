@@ -103,7 +103,7 @@ _setup-ms-router: (_setup-rust "ms-router")
   ./router config schema > ../configuration_schema.json
 
   # Download the Cosmo Router binary that we will use for local development.
-  export TMP_DIR=$(mktemp -d -t cosmo)
+  export TMP_DIR=$(mktemp -d)
   curl -sSfL https://github.com/wundergraph/cosmo/releases/download/router%40{{cosmo-version}}/router-router@{{cosmo-version}}-{{ if os() == "macos" { "darwin" } else { os() } }}-{{ if arch() == "aarch64" { "arm64" } else { "amd64" } }}.tar.gz -o $TMP_DIR/cosmo.tar.gz
   tar xf $TMP_DIR/cosmo.tar.gz -C $TMP_DIR
   mv $TMP_DIR/router ./cosmo
@@ -111,14 +111,14 @@ _setup-ms-router: (_setup-rust "ms-router")
 
   cd ../../deployment/layers
   # Download the Apollo Router binary that we will use for AWS Lambda.
-  export TMP_DIR=$(mktemp -d -t router)
+  export TMP_DIR=$(mktemp -d)
   curl -sSfL https://github.com/apollographql/router/releases/download/v{{router-version}}/router-v{{router-version}}-aarch64-unknown-linux-gnu.tar.gz -o $TMP_DIR/router.tar.gz
   tar xf $TMP_DIR/router.tar.gz --strip-components 1 -C $TMP_DIR
   mv $TMP_DIR/router ./router/router
   rm -r $TMP_DIR
 
   # Download the Cosmo Router binary that we will use for AWS Lambda.
-  export TMP_DIR=$(mktemp -d -t cosmo)
+  export TMP_DIR=$(mktemp -d)
   curl -sSfL https://github.com/wundergraph/cosmo/releases/download/router%40{{cosmo-version}}/router-router@{{cosmo-version}}-linux-arm64.tar.gz -o $TMP_DIR/cosmo.tar.gz
   tar xf $TMP_DIR/cosmo.tar.gz -C $TMP_DIR
   mv $TMP_DIR/router ./cosmo/cosmo
