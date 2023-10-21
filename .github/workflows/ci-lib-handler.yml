@@ -1,0 +1,20 @@
+name: "CI: lib-handler"
+
+on:
+  push:
+    paths:
+      - ".github/workflows/ci-lib-handler.yml"
+      - ".github/workflows/wf-build-crate.yml"
+      - "lib-handler/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+
+defaults:
+  run:
+    shell: bash # Set the default shell to bash.
+
+jobs:
+  build:
+    uses: ./.github/workflows/wf-build-crate.yml
+    with:
+      project: lib-handler
