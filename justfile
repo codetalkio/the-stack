@@ -182,12 +182,12 @@ build project build="release":
 _build-ui-app build="release":
   cd ui-app && bun run build
   @ rm -r ./deployment/artifacts/ui-app || true
-  @ cp -r ./ui-app/out ./deployment/artifacts/ui-app
+  @ mkdir -p ./deployment/artifacts && cp -r ./ui-app/out ./deployment/artifacts/ui-app
 
 _build-ui-internal build="release":
   cd ui-internal && trunk build {{ if build == "debug" { "" } else { "--release" } }}
   @ rm -r ./deployment/artifacts/ui-internal || true
-  @ cp -r ./ui-internal/dist ./deployment/artifacts/ui-internal
+  @ mkdir -p ./deployment/artifacts && cp -r ./ui-internal/dist ./deployment/artifacts/ui-internal
 
 _build-ms-router build="release":
   cd ms-router/bin && ./router config schema > ../configuration_schema.json
@@ -196,14 +196,14 @@ _build-ms-router build="release":
 _build-ms-gql-users build="release":
   cd ms-gql-users && cargo lambda build --arm64 {{ if build == "debug" { "" } else { "--release" } }}
   @ rm -r ./deployment/artifacts/ms-gql-users || true
-  @ cp -r ./target/lambda/ms-gql-users ./deployment/artifacts/ms-gql-users
+  @ mkdir -p ./deployment/artifacts && cp -r ./target/lambda/ms-gql-users ./deployment/artifacts/ms-gql-users
 
 _build-ms-gql-products build="release":
   cd ms-gql-products && cargo lambda build --arm64 {{ if build == "debug" { "" } else { "--release" } }}
   @ rm -r ./deployment/artifacts/ms-gql-products || true
-  @ cp -r ./target/lambda/ms-gql-products ./deployment/artifacts/ms-gql-products
+  @ mkdir -p ./deployment/artifacts && cp -r ./target/lambda/ms-gql-products ./deployment/artifacts/ms-gql-products
 
 _build-ms-gql-reviews build="release":
   cd ms-gql-reviews && cargo lambda build --arm64 {{ if build == "debug" { "" } else { "--release" } }}
   @ rm -r ./deployment/artifacts/ms-gql-reviews || true
-  @ cp -r ./target/lambda/ms-gql-reviews ./deployment/artifacts/ms-gql-reviews
+  @ mkdir -p ./deployment/artifacts && cp -r ./target/lambda/ms-gql-reviews ./deployment/artifacts/ms-gql-reviews
