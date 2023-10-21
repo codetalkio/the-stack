@@ -55,6 +55,17 @@ _install-tooling-all-platforms:
 setup project:
   just _setup-{{project}}
 
+# Setup all projects.
+setup-all:
+  @ just deploy-clean
+  @ mkdir -p ./deployment/artifacts
+  just _setup-ui-app
+  just _setup-ui-internal
+  just _setup-ms-gql-users
+  just _setup-ms-gql-product
+  just _setup-ms-gql-reviews
+  just _setup-ms-router
+
 _setup-deployment:
   #!/usr/bin/env bash
   set -euxo pipefail
@@ -153,16 +164,6 @@ _deploy-validate-artifacts project:
 deploy-clean:
   @ rm -rf ./deployment/artifacts
 
-# Build all deployment artifacts and move them to deployment/artifacts/.
-deploy-build-all:
-  @ just deploy-clean
-  @ mkdir -p ./deployment/artifacts
-  just _build-ui-app
-  just _build-ui-internal
-  just _build-ms-gql-users
-  just _build-ms-gql-product
-  just _build-ms-gql-reviews
-
 # Compose the supergraph from all of our subgraphs (requires them to be running).
 compose:
   cd ms-router && rover supergraph compose --config supergraph-config.yaml --output supergraph.graphql
@@ -227,6 +228,16 @@ _dev-ms-gql-reviews:
 # Build release artifact for <project>, e.g. `just dev ui-internal`.
 build project build="release":
   just _build-{{project}} {{build}}
+
+# Build all deployment artifacts and move them to deployment/artifacts/.
+build-all:
+  @ just deploy-clean
+  @ mkdir -p ./deployment/artifacts
+  just _build-ui-app
+  just _build-ui-internal
+  just _build-ms-gql-users
+  just _build-ms-gql-product
+  just _build-ms-gql-reviews
 
 _build-ui-app build="release":
   cd ui-app && bun run build
