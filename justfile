@@ -1,3 +1,5 @@
+set dotenv-load
+
 # Display help information.
 help:
   @ just --list
@@ -104,8 +106,14 @@ deploy stack='--all':
 
 # Validate that all deployment artifacts are present.
 deploy-validate-artifacts:
-  @ [ -d "./deployment/artifacts/ui-app" ] && echo "ui-app exists" || exit 1
-  @ [ -d "./deployment/artifacts/ui-internal" ] && echo "ui-internal exists" || exit 1
+  @ just _deploy-validate-artifacts ui-app
+  @ just _deploy-validate-artifacts ui-internal
+  @ just _deploy-validate-artifacts ms-gql-users
+  @ just _deploy-validate-artifacts ms-gql-products
+  @ just _deploy-validate-artifacts ms-gql-reviews
+
+_deploy-validate-artifacts project:
+  @ [ -d "./deployment/artifacts/{{project}}" ] && echo "✅ {{project}} exists" || (echo "❌ {{project}} missing" && exit 1)
 
 # Clean up deployment artifacts.
 deploy-clean:
@@ -116,9 +124,8 @@ deploy-build-all:
   @ just deploy-clean
   @ mkdir -p ./deployment/artifacts
   just _build-ui-app
-  @ cp -r ./ui-app/out ./deployment/artifacts/ui-app
   just _build-ui-internal
-  @ cp -r ./ui-internal/dist ./deployment/artifacts/ui-internal
+  just _build-ms-gql-users
 
 # Run tests for <project>, e.g. `just test deployment`.
 test project:
@@ -154,7 +161,7 @@ _dev-ui-internal:
   cd ui-internal && trunk serve
 
 _dev-ms-router:
-  cd ms-router/bin && ./router --config ../router.yaml --supergraph=../supergraph.graphql --dev --hot-reload
+  cd ms-router/bin && ./router --anonymous-telemetry-disabled --config ../router.yaml --supergraph=../supergraph.graphql --dev --hot-reload --log debug
 
 # cargo lambda watch --invoke-port 3055
 _dev-ms-gql-users:
@@ -169,23 +176,34 @@ _dev-ms-gql-reviews:
   cd ms-gql-reviews && cargo watch -x run --features local
 
 # Build release artifact for <project>, e.g. `just dev ui-internal`.
-build project debug="false":
-  just _build-{{project}} {{debug}}
+build project build="release":
+  just _build-{{project}} {{build}}
 
-_build-ui-app debug="false":
+_build-ui-app build="release":
   cd ui-app && bun run build
+  @ rm -r ./deployment/artifacts/ui-app || true
+  @ cp -r ./ui-app/out ./deployment/artifacts/ui-app
 
-_build-ui-internal debug="false":
-  cd ui-internal && trunk build {{ if debug == "true" { "" } else { "--release" } }}
+_build-ui-internal build="release":
+  cd ui-internal && trunk build {{ if build == "debug" { "" } else { "--release" } }}
+  @ rm -r ./deployment/artifacts/ui-internal || true
+  @ cp -r ./ui-internal/dist ./deployment/artifacts/ui-internal
 
-_build-ms-router debug="false":
-  cd ms-router && rover supergraph compose --config ./supergraph-config.yaml > supergraph.graphql
+_build-ms-router build="release":
+  cd ms-router/bin && ./router config schema > ../configuration_schema.json
+  cd ms-router && rover supergraph compose --config ./supergraph-config.yaml --output supergraph.graphql
 
-_build-ms-gql-users debug="false":
-  cd ms-gql-users && cargo lambda build --arm64 {{ if debug == "true" { "" } else { "--release" } }}
+_build-ms-gql-users build="release":
+  cd ms-gql-users && cargo lambda build --arm64 {{ if build == "debug" { "" } else { "--release" } }}
+  @ rm -r ./deployment/artifacts/ms-gql-users || true
+  @ cp -r ./target/lambda/ms-gql-users ./deployment/artifacts/ms-gql-users
 
-_build-ms-gql-products debug="false":
-  cd ms-gql-products && cargo lambda build --arm64 {{ if debug == "true" { "" } else { "--release" } }}
+_build-ms-gql-products build="release":
+  cd ms-gql-products && cargo lambda build --arm64 {{ if build == "debug" { "" } else { "--release" } }}
+  @ rm -r ./deployment/artifacts/ms-gql-products || true
+  @ cp -r ./target/lambda/ms-gql-products ./deployment/artifacts/ms-gql-products
 
-_build-ms-gql-reviews debug="false":
-  cd ms-gql-reviews && cargo lambda build --arm64 {{ if debug == "true" { "" } else { "--release" } }}
+_build-ms-gql-reviews build="release":
+  cd ms-gql-reviews && cargo lambda build --arm64 {{ if build == "debug" { "" } else { "--release" } }}
+  @ rm -r ./deployment/artifacts/ms-gql-reviews || true
+  @ cp -r ./target/lambda/ms-gql-reviews ./deployment/artifacts/ms-gql-reviews

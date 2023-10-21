@@ -41,6 +41,7 @@ enum link__Purpose {
   EXECUTION
 }
 
+"""Define the Product entity so that we can extend it."""
 type Product
   @join__type(graph: PRODUCTS, key: "id")
   @join__type(graph: REVIEWS, key: "id")
@@ -73,6 +74,7 @@ type Review
   product: Product!
 }
 
+"""Define the User entity so that we can extend it."""
 type User
   @join__type(graph: PRODUCTS, key: "id")
   @join__type(graph: REVIEWS, key: "id")

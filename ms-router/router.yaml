@@ -1,9 +1,33 @@
-sandbox:
-  enabled: true
-
 supergraph:
   listen: 127.0.0.1:4000
-  introspection: true
 
 homepage:
   enabled: false
+
+plugins:
+  # Enable with the header, Apollo-Expose-Query-Plan: true
+  experimental.expose_query_plan: true
+
+experimental_batching:
+  enabled: true
+  mode: batch_http_link
+
+headers:
+  all: # Header rules for all subgraphs
+    request:
+      - propagate:
+          matching: .*
+
+traffic_shaping:
+  all:
+    deduplicate_query: true # Enable query deduplication for all subgraphs.
+    experimental_retry:
+      min_per_sec: 10 # minimal number of retries per second (`min_per_sec`, default is 10 retries per second)
+      ttl: 10s # for each successful request, we register a token, that expires according to this option (default: 10s)
+      retry_percent: 0.2 # defines the proportion of available retries to the current number of tokens
+      retry_mutations: false # allows retries on mutations. This should only be enabled if mutations are idempotent
+
+override_subgraph_url:
+  users: "${env.SUBGRAPH_USERS_URL:-http://localhost:3065/}"
+  products: "${env.SUBGRAPH_PRODUCTS_URL:-http://localhost:3075/}"
+  reviews: "${env.SUBGRAPH_REVIEWS_URL:-http://localhost:3085/}"

@@ -8,3 +8,5 @@ ms-router/bin/*
 **/*.rs.bk
 **/node_modules
 deployment/artifacts
+.env
+configuration_schema.json

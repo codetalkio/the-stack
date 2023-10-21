@@ -45,7 +45,7 @@ jobs:
 
       - name: Build debug build
         if: ${{ !inputs.release }}
-        run: just build ui-internal true
+        run: just build ui-internal debug
 
       - uses: actions/upload-artifact@v3
         if: ${{ inputs.upload-artifact }}

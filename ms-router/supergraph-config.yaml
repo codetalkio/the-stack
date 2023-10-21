@@ -1,4 +1,4 @@
-federation_version: 2
+federation_version: =2.5.4
 subgraphs:
   users:
     routing_url: http://localhost:3065/

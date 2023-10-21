@@ -1,11 +1,11 @@
-name: "CI: ms-gql-users"
+name: "CI: ms-gql-products"
 
 on:
   push:
     paths:
-      - ".github/workflows/ci-ms-gql-users.yml"
+      - ".github/workflows/ci-ms-gql-products.yml"
       - ".github/workflows/wf-build-lambda.yml"
-      - "ms-gql-users/**"
+      - "ms-gql-products/**"
       - "Cargo.toml"
       - "Cargo.lock"
 
@@ -17,4 +17,4 @@ jobs:
   build:
     uses: ./.github/workflows/wf-build-lambda.yml
     with:
-      project: ms-gql-users
+      project: ms-gql-products

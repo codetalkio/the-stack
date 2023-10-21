@@ -13,6 +13,8 @@ async fn main() -> Result<(), Error> {
         .with_max_level(tracing::Level::INFO)
         // disabling time is handy because CloudWatch will add the ingestion time.
         .without_time()
+        // disable coloring.
+        .with_ansi(false)
         .init();
     lib_handler::handler(3075, Query, EmptyMutation, EmptySubscription).await
 }

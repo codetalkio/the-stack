@@ -5,13 +5,10 @@ members = [
   "ms-gql-users",
   "ms-gql-products",
   "ms-gql-reviews",
-  "ms-queue"
+  "ms-queue",
 ]
 
-exclude = [
-  "ui-internal",
-  "ms-router"
-]
+exclude = ["ui-internal", "ms-router"]
 
 [profile.release]
 # Configurations explicitly listed here for clarity.
@@ -19,8 +16,8 @@ exclude = [
 opt-level = 3
 lto = "fat"
 codegen-units = 1
-strip = "symbols"
-debug = false
+strip = false     # "symbols"
+debug = true      # false
 
 # Use the `--profile release-debug` flag to show symbols in release mode.
 # e.g. `cargo build --profile release-debug`

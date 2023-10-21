@@ -22,3 +22,17 @@ jobs:
       project: ms-gql-users
       release: true
       upload-artifact: true
+
+  ms-gql-products:
+    uses: ./.github/workflows/wf-build-lambda.yml
+    with:
+      project: ms-gql-products
+      release: true
+      upload-artifact: true
+
+  ms-gql-reviews:
+    uses: ./.github/workflows/wf-build-lambda.yml
+    with:
+      project: ms-gql-reviews
+      release: true
+      upload-artifact: true

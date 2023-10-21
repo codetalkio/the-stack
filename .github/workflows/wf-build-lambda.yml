@@ -1,4 +1,4 @@
-name: "Build: ms-gql"
+name: "Build: lambda"
 
 on:
   workflow_call:
@@ -14,7 +14,8 @@ on:
         default: false
 
 jobs:
-  ui-internal:
+  build:
+    name: ${{ inputs.project }}
     runs-on: ubuntu-latest
     env:
       SCCACHE_GHA_ENABLED: "true"
@@ -47,7 +48,7 @@ jobs:
 
       - name: Build debug build
         if: ${{ !inputs.release }}
-        run: just build ${{ inputs.project }} true
+        run: just build ${{ inputs.project }} debug
 
       - uses: actions/upload-artifact@v3
         if: ${{ inputs.upload-artifact }}
