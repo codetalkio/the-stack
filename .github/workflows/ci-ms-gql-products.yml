@@ -6,6 +6,7 @@ on:
       - ".github/workflows/ci-ms-gql-products.yml"
       - ".github/workflows/wf-build-lambda.yml"
       - "ms-gql-products/**"
+      - "lib-handler/**"
       - "Cargo.toml"
       - "Cargo.lock"
 

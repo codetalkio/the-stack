@@ -1,10 +1,6 @@
 use async_graphql::{ObjectType, Schema, SubscriptionType};
 use lambda_http::Error;
-use lambda_http::{
-    http::header::CONTENT_TYPE, http::StatusCode, run, service_fn, Body, IntoResponse, Request,
-    Response,
-};
-use serde_json::json;
+use lambda_http::{run, service_fn, IntoResponse, Request};
 use tracing::info;
 
 async fn handle_request<Query, Mutation, Subscription>(
