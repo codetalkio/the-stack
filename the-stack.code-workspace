@@ -33,12 +33,16 @@
       "path": "ms-gql-reviews"
     },
     {
+      "name": "ms-queue",
+      "path": "ms-queue"
+    },
+    {
       "name": "ms-router",
       "path": "ms-router"
     },
     {
-      "name": "ms-queue",
-      "path": "ms-queue"
+      "name": "ms-gateway",
+      "path": "ms-gateway"
     }
   ],
   "settings": {
@@ -55,6 +59,7 @@
       "**/dist": true,
       "**/.vscode": false,
       "ms-router": true,
+      "ms-gateway": true,
       "ms-queue": true,
       "ms-gql-users": true,
       "ms-gql-products": true,
