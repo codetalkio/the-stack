@@ -14,6 +14,10 @@ defaults:
   run:
     shell: bash # Set the default shell to bash.
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     uses: ./.github/workflows/wf-build-lambda.yml

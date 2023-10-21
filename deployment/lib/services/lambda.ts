@@ -49,12 +49,18 @@ export class Stack extends cdk.Stack {
     cdk.Tags.of(lambdaFn).add("billing", `${props.billingGroup}-lambda`);
     cdk.Tags.of(lambdaFn).add("billing-group", `${props.billingGroup}`);
 
+    // const alias = lambdaFn.addAlias("live", {});
+
     // Make our Lambda function accessible from the internet. We make it publicly accessible.
     const fnUrl = lambdaFn.addFunctionUrl({
       authType: lambda.FunctionUrlAuthType.NONE,
     });
 
-    new cdk.CfnOutput(this, `FunctionUrl`, { value: fnUrl.url });
+    new cdk.CfnOutput(this, `FunctionUrl`, {
+      value: fnUrl.url,
+      exportName: `${id}FunctionUrl`,
+      description: "The HTTP URL for the Lambda Function.",
+    });
     this.functionUrl = fnUrl.url;
   }
 }

@@ -126,6 +126,8 @@ deploy-build-all:
   just _build-ui-app
   just _build-ui-internal
   just _build-ms-gql-users
+  just _build-ms-gql-product
+  just _build-ms-gql-reviews
 
 # Run tests for <project>, e.g. `just test deployment`.
 test project:

@@ -11,6 +11,8 @@ import * as cloudfrontOrigins from "aws-cdk-lib/aws-cloudfront-origins";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as path from "path";
 
+import { CloudFrontInvalidation } from "./cloudfront";
+
 export interface StackProps extends cdk.StackProps {
   /**
    * The path to the assets we are deploying.
@@ -137,12 +139,28 @@ export class Stack extends cdk.Stack {
     );
     cdk.Tags.of(distribution).add("billing-group", `${props.billingGroup}`);
 
+    // Output the distribution ID.
+    new cdk.CfnOutput(this, `WebsiteDistributionId`, {
+      value: distribution.distributionId,
+      exportName: `${id}DistributionId`,
+      description:
+        "The ID of the CloudFront distribution used to serve the website.",
+    });
+
     // Upload our assets to our bucket, and connect it to our distribution.
     new s3deploy.BucketDeployment(this, "WebsiteDeployment", {
       destinationBucket: bucket,
       sources: [s3deploy.Source.asset(path.resolve(props.assets))],
-      // Invalidate the cache for / and index.html when we deploy so that cloudfront serves latest site
+      // NOTE: We do not use the standard invalidation since it slows down the deployment
+      // and is flaky causing the deployment to fail.
+    });
+
+    // Create a CloudFront invalidation using our own construct which avoids waiting
+    // for the invalidation to complete.
+    new CloudFrontInvalidation(this, "CloudFrontInvalidation", {
+      ...props,
       distribution,
+      // Only invalidate / and index.html since all other files are hashed.
       distributionPaths: ["/", `/${props.index}`],
     });
 
