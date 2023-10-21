@@ -62,7 +62,7 @@ setup-all:
   just _setup-ui-app
   just _setup-ui-internal
   just _setup-ms-gql-users
-  just _setup-ms-gql-product
+  just _setup-ms-gql-products
   just _setup-ms-gql-reviews
   just _setup-ms-router
 
@@ -236,7 +236,7 @@ build-all:
   just _build-ui-app
   just _build-ui-internal
   just _build-ms-gql-users
-  just _build-ms-gql-product
+  just _build-ms-gql-products
   just _build-ms-gql-reviews
 
 _build-ui-app build="release":
