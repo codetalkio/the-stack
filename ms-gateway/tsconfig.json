@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
-    "lib": ["ESNext"],
     "module": "esnext",
-    "target": "esnext",
-    "moduleResolution": "bundler",
+    "target": "es2020",
+    "moduleResolution": "node",
     "moduleDetection": "force",
     "allowImportingTsExtensions": true,
     "noEmit": true,
+    "preserveConstEnums": true,
     "composite": true,
     "strict": true,
     "downlevelIteration": true,
@@ -15,8 +15,10 @@
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "allowJs": true,
+    "isolatedModules": true,
     "types": [
       "bun-types" // add Bun global
     ]
-  }
+  },
+  "exclude": ["node_modules", "**/*.test.ts"]
 }

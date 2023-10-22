@@ -1,22 +1,27 @@
 {
   "name": "ms-gateway",
   "module": "src/lambda.ts",
-  "type": "module",
   "scripts": {
     "start": "bun run src/lambda.ts",
-    "build": "bun build ./src/lambda.ts --target=node --minify --outdir ./dist",
+    "build:rspack": "rspack build -c rspack.config.js",
+    "build:esbuild": "NODE_ENV=production esbuild src/lambda.ts --bundle --minify --tree-shaking=true --platform=node --loader:.graphql=text --target=node18 --outfile=dist/lambda.js",
+    "build:bun": "bun build ./src/lambda.ts --target=node --minify --outdir ./dist",
+    "build": "bun run build:esbuild",
     "dev": "bun run --hot src/local.ts"
   },
   "devDependencies": {
-    "bun-types": "latest"
+    "bun-types": "latest",
+    "esbuild": "^0.19.5"
   },
   "peerDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "@rspack/cli": "^0.3.7"
   },
   "dependencies": {
     "@apollo/gateway": "^2.5.6",
     "@apollo/server": "^4.9.4",
     "@as-integrations/aws-lambda": "^3.1.0",
+    "aws-xray-sdk": "^3.5.2",
     "graphql": "^16.8.1"
   }
 }

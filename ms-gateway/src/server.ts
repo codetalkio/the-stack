@@ -1,26 +1,39 @@
 import { ApolloServer } from "@apollo/server";
-import { ApolloGateway } from "@apollo/gateway";
+import { ApolloGateway, RemoteGraphQLDataSource } from "@apollo/gateway";
 import sdl from "./supergraph.graphql";
+import AWSXRay from "aws-xray-sdk";
+import http from "http";
+import https from "https";
+
+// Set up Xray to capture all HTTP/HTTPS requests.
+AWSXRay.captureHTTPsGlobal(http);
+AWSXRay.captureHTTPsGlobal(https);
+
+/**
+ * Support overriding our subgraph URLs via environment variables.
+ */
+const serviceList: { [key: string]: { url?: string } } = {
+  users: {
+    url: process.env.SUBGRAPH_USERS_URL,
+  },
+  products: {
+    url: process.env.SUBGRAPH_PRODUCTS_URL,
+  },
+  reviews: {
+    url: process.env.SUBGRAPH_REVIEWS_URL,
+  },
+};
 
 /**
  * Initialize an ApolloGateway instance and pass it the supergraph schema as a string.
  */
 export const gateway = new ApolloGateway({
   supergraphSdl: sdl,
-  serviceList: [
-    {
-      name: "users",
-      url: process.env.SUBGRAPH_USERS_URL ?? "http://127.0.0.1:3065",
-    },
-    {
-      name: "products",
-      url: process.env.SUBGRAPH_PRODUCTS_URL ?? "http://127.0.0.1:3075",
-    },
-    {
-      name: "reviews",
-      url: process.env.SUBGRAPH_REVIEWS_URL ?? "http://127.0.0.1:3085",
-    },
-  ],
+  // Dynamically override our subgraph URLs based on the service name.
+  buildService: ({ url, name }) =>
+    new RemoteGraphQLDataSource({
+      url: serviceList[name.toLowerCase()]?.url ?? url,
+    }),
 });
 
 /**
