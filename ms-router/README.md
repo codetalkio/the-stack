@@ -1,4 +1,4 @@
-# Microservice: Apollo Router
+# Microservice: Router
 
 💡 This approach will currently not work with the Apollo Router because it is built with GLIBC (gnu) which is not compatible with the Lambda runtime environment which uses a different version of GLIBC.
 
@@ -10,7 +10,9 @@ You will currently get the following error at runtime in the Lambda:
 /lib64/libc.so.6: version `GLIBC_2.28' not found
 ```
 
-AWS Lambda is based on Amazon Linux 2 which seems to currently use GLIBC 2.26. We will most likely need to wait until https://github.com/apollographql/router/issues/3186 is solved, which is blocked by deno via https://github.com/denoland/deno/issues/3711.
+AWS Lambda is based on Amazon Linux 2 which seems to currently use GLIBC 2.26 (see the [Q. What are the core components of Amazon Linux 2?](https://aws.amazon.com/amazon-linux-2/faqs/#Long_Term_Support) entry).
+
+We will most likely need to wait until [router#3186](https://github.com/apollographql/router/issues/3186) is solved, which is blocked by deno via [deno#3711](https://github.com/denoland/deno/issues/3711). The only alternative atm is using the JavaScript based Gateway for federation, see an example in [/ms-gateway](/ms-gateway).
 
 ---
 
