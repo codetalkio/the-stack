@@ -23,31 +23,6 @@ export class Stack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
 
-    // Set up our s3 website for ui-app.
-    new s3Website.Stack(this, "WebsiteUiApp", {
-      ...props,
-      assets: "artifacts/ui-app",
-      index: "index.html",
-      error: "404.html",
-      domain: props.domain,
-      hostedZone: props.domain,
-      certificateArn: props.certificate.certificateArn,
-      billingGroup: "ui-app",
-      rewriteUrls: true,
-    });
-
-    // Set up our s3 website for ui-internal.
-    new s3Website.Stack(this, "WebsiteUiInternal", {
-      ...props,
-      assets: "artifacts/ui-internal",
-      index: "index.html",
-      error: "index.html",
-      domain: `internal.${props.domain}`,
-      hostedZone: props.domain,
-      certificateArn: props.certificate.certificateArn,
-      billingGroup: "ui-internal",
-    });
-
     const usersFn = new lambdaFn.Stack(this, "MsGqlUsers", {
       ...props,
       functionName: "ms-gql-users",
@@ -84,7 +59,7 @@ export class Stack extends cdk.Stack {
       },
     });
 
-    new lambdaFn.Stack(this, "MsMesh", {
+    const supergraph = new lambdaFn.Stack(this, "MsMesh", {
       ...props,
       functionName: "ms-mesh",
       handler: "lambda.graphqlHandler",
@@ -108,6 +83,37 @@ export class Stack extends cdk.Stack {
         SUBGRAPH_USERS_URL: usersFn.functionUrl,
         SUBGRAPH_PRODUCTS_URL: productsFn.functionUrl,
         SUBGRAPH_REVIEWS_URL: reviewsFn.functionUrl,
+      },
+    });
+
+    // Set up our s3 website for ui-app.
+    new s3Website.Stack(this, "WebsiteUiApp", {
+      ...props,
+      assets: "artifacts/ui-app",
+      index: "index.html",
+      error: "404.html",
+      domain: props.domain,
+      hostedZone: props.domain,
+      certificateArn: props.certificate.certificateArn,
+      billingGroup: "ui-app",
+      rewriteUrls: true,
+      redirectPathToUrl: {
+        "graphql/*": supergraph.functionUrl,
+      },
+    });
+
+    // Set up our s3 website for ui-internal.
+    new s3Website.Stack(this, "WebsiteUiInternal", {
+      ...props,
+      assets: "artifacts/ui-internal",
+      index: "index.html",
+      error: "index.html",
+      domain: `internal.${props.domain}`,
+      hostedZone: props.domain,
+      certificateArn: props.certificate.certificateArn,
+      billingGroup: "ui-internal",
+      redirectPathToUrl: {
+        "graphql/*": supergraph.functionUrl,
       },
     });
   }

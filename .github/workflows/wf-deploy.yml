@@ -15,7 +15,9 @@ jobs:
   deploy:
     name: "Deploy"
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
+    environment:
+      name: ${{ inputs.environment }}
+      url: https://${{ vars.DOMAIN }}
     # Limit to only one concurrent deployment per environment.
     concurrency:
       group: ${{ inputs.environment }}

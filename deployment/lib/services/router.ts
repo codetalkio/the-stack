@@ -72,7 +72,6 @@ export class Stack extends cdk.Stack {
 
     new cdk.CfnOutput(this, `FunctionUrl`, {
       value: fnUrl.url,
-      exportName: `${id}FunctionUrl`,
       description: "The HTTP URL for the Lambda Function.",
     });
     this.functionUrl = fnUrl.url;

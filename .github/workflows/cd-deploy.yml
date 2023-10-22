@@ -13,12 +13,12 @@ defaults:
 jobs:
   # Build deployment artifacts
   build-artifacts:
-    name: "Build Artifacts"
+    name: "Stage 0: Build Artifacts"
     uses: ./.github/workflows/wf-build.yml
 
   # Stage 1 tests that the deployment is working correctly.
   stage-1:
-    name: "Stage 1"
+    name: "Stage 1: Integration"
     needs: [build-artifacts]
     uses: ./.github/workflows/wf-deploy.yml
     with:
@@ -27,7 +27,7 @@ jobs:
 
   # Run tests against the environments from Stage 1.
   stage-1-check:
-    name: "Stage 1: Check"
+    name: "Stage 1: Check Integration"
     needs: [stage-1]
     uses: ./.github/workflows/wf-check.yml
     with:

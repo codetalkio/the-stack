@@ -53,6 +53,11 @@ export interface StackProps extends cdk.StackProps {
    * Whether to rewrite URLs to /folder/ -> /folder/index.html.
    */
   readonly rewriteUrls?: boolean;
+
+  /**
+   * Paths that the CloudFront distribution should set up redirects for.
+   */
+  readonly redirectPathToUrl?: { [path: string]: string };
 }
 
 /**
@@ -90,6 +95,22 @@ export class Stack extends cdk.Stack {
       });
     }
 
+    const additionalBehaviors: {
+      [key: string]: cloudfront.BehaviorOptions & cloudfront.AddBehaviorOptions;
+    } = {};
+    const redirectPathToUrl = props.redirectPathToUrl ?? {};
+    // Iterate over the keys and values of redirectPathToUrl.
+    for (const key in redirectPathToUrl) {
+      const url = redirectPathToUrl[key];
+      const domainPart = cdk.Fn.select(2, cdk.Fn.split("/", url));
+      additionalBehaviors[key] = {
+        origin: new cloudfrontOrigins.HttpOrigin(domainPart),
+        allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+      };
+    }
+
     // Configure our CloudFront distribution.
     const distribution = new cloudfront.Distribution(this, "Distribution", {
       domainNames: [props.domain],
@@ -119,6 +140,7 @@ export class Stack extends cdk.Stack {
               ]
             : undefined,
       },
+      additionalBehaviors,
       // Set up redirects when a user hits a 404 or 403.
       errorResponses: [
         {
@@ -142,7 +164,6 @@ export class Stack extends cdk.Stack {
     // Output the distribution ID.
     new cdk.CfnOutput(this, `WebsiteDistributionId`, {
       value: distribution.distributionId,
-      exportName: `${id}DistributionId`,
       description:
         "The ID of the CloudFront distribution used to serve the website.",
     });
@@ -182,6 +203,12 @@ export class Stack extends cdk.Stack {
       zone: hostedZone,
       recordNames: [`www.${props.domain}`],
       targetDomain: props.domain,
+    });
+
+    // Output the distribution ID.
+    new cdk.CfnOutput(this, `WebsiteUrl`, {
+      value: props.domain,
+      description: "The URL of the website.",
     });
   }
 }
