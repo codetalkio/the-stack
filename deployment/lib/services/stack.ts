@@ -1,6 +1,7 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as acm from "aws-cdk-lib/aws-certificatemanager";
+import * as lambda from "aws-cdk-lib/aws-lambda";
 
 import * as s3Website from "./s3-website";
 import * as lambdaFn from "./lambda";
@@ -68,7 +69,22 @@ export class Stack extends cdk.Stack {
       billingGroup: "ms-gql-reviews",
     });
 
-    // Set up our router that pieces together the microservices.
+    // Set up our Apollo Gateway that pieces together the microservices.
+    new lambdaFn.Stack(this, "MsGateway", {
+      ...props,
+      functionName: "ms-gateway",
+      handler: "lambda.graphqlHandler",
+      runtime: lambda.Runtime.NODEJS_LATEST,
+      assets: "artifacts/ms-gateway",
+      billingGroup: "ms-gateway",
+      environment: {
+        SUBGRAPH_USERS_URL: usersFn.functionUrl,
+        SUBGRAPH_PRODUCTS_URL: productsFn.functionUrl,
+        SUBGRAPH_REVIEWS_URL: reviewsFn.functionUrl,
+      },
+    });
+
+    // Set up our Apollo Router that pieces together the microservices.
     new routerFn.Stack(this, "MsRouter", {
       ...props,
       functionName: "ms-router",

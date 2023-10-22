@@ -1,9 +1,11 @@
 {
   "name": "ms-gateway",
-  "module": "index.ts",
+  "module": "src/lambda.ts",
   "type": "module",
   "scripts": {
-    "start": "bun run index.ts"
+    "start": "bun run src/lambda.ts",
+    "build": "bun build ./src/lambda.ts --target=node --minify --outdir ./dist",
+    "dev": "bun run --hot src/local.ts"
   },
   "devDependencies": {
     "bun-types": "latest"
@@ -14,6 +16,7 @@
   "dependencies": {
     "@apollo/gateway": "^2.5.6",
     "@apollo/server": "^4.9.4",
+    "@as-integrations/aws-lambda": "^3.1.0",
     "graphql": "^16.8.1"
   }
 }

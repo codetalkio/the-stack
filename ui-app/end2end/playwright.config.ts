@@ -1,7 +1,7 @@
 import type { PlaywrightTestConfig } from "@playwright/test";
 import { devices } from "@playwright/test";
 
-const SERVER = `http://localhost:3000`;
+const SERVER = `http://127.0.0.1:3000`;
 
 const config: PlaywrightTestConfig = {
   testDir: "./tests",

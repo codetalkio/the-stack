@@ -1,0 +1,3 @@
+[loader]
+# when a .graphql file is imported, treat it like a text file
+".graphql" = "text"

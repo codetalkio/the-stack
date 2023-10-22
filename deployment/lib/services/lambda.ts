@@ -10,6 +10,16 @@ export interface StackProps extends cdk.StackProps {
   readonly assets: string;
 
   /**
+   * The handler for the function.
+   */
+  readonly handler?: string;
+
+  /**
+   * The runtime for the function.
+   */
+  readonly runtime?: lambda.Runtime;
+
+  /**
    * The name we want to give the function.
    */
   readonly environment?: { [key: string]: string };
@@ -42,9 +52,9 @@ export class Stack extends cdk.Stack {
       functionName: props.functionName,
       code: lambda.Code.fromAsset(path.resolve(props.assets)),
       memorySize: 1024,
-      runtime: lambda.Runtime.PROVIDED_AL2,
+      runtime: props.runtime ?? lambda.Runtime.PROVIDED_AL2,
       architecture: lambda.Architecture.ARM_64,
-      handler: "not.required",
+      handler: props.handler ?? "not.required",
       environment: {
         RUST_BACKTRACE: "1",
         ...props.environment,

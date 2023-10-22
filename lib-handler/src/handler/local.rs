@@ -44,7 +44,7 @@ where
         .route("/", get(graphiql).post(graphql_handler::<Query, Mutation, Subscription>))
         .layer(Extension(schema));
 
-    println!("GraphiQL IDE: http://localhost:{port}");
+    println!("GraphiQL IDE: http://127.0.0.1:{port}");
 
     let addr = format!("127.0.0.1:{port}");
     Server::bind(&addr.parse::<SocketAddr>().unwrap())

@@ -1,14 +1,14 @@
 federation_version: =2.5.4
 subgraphs:
   users:
-    routing_url: http://localhost:3065/
+    routing_url: http://127.0.0.1:3065/
     schema:
-      subgraph_url: http://localhost:3065/
+      subgraph_url: http://127.0.0.1:3065/
   products:
-    routing_url: http://localhost:3075/
+    routing_url: http://127.0.0.1:3075/
     schema:
-      subgraph_url: http://localhost:3075/
+      subgraph_url: http://127.0.0.1:3075/
   reviews:
-    routing_url: http://localhost:3085/
+    routing_url: http://127.0.0.1:3085/
     schema:
-      subgraph_url: http://localhost:3085/
+      subgraph_url: http://127.0.0.1:3085/

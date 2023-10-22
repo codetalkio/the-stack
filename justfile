@@ -65,24 +65,17 @@ setup-all:
   just _setup-ms-gql-products
   just _setup-ms-gql-reviews
   just _setup-ms-router
+  just _setup-ms-gateway
 
 _setup-deployment:
-  #!/usr/bin/env bash
-  set -euxo pipefail
-  cd deployment
-  bun install
-  cd end2end
-  bun install
-  bun run setup
+  cd deployment && bun install
+  cd deployment/end2end && bun install
+  cd deployment/end2end && bun run setup
 
 _setup-ui-app:
-  #!/usr/bin/env bash
-  set -euxo pipefail
-  cd ui-app
-  bun install
-  cd end2end
-  bun install
-  bun run setup
+  cd ui-app && bun install
+  cd ui-app/end2end && bun install
+  cd ui-app/end2end && bun run setup
 
 _setup-ui-internal: (_setup-rust-wasm "ui-internal")
   #!/usr/bin/env bash
@@ -90,6 +83,9 @@ _setup-ui-internal: (_setup-rust-wasm "ui-internal")
   cd ui-internal/end2end
   bun install
   bun run setup
+
+_setup-ms-gateway:
+  cd ms-gateway && bun install
 
 _setup-ms-router: (_setup-rust "ms-router")
   #!/usr/bin/env bash
@@ -147,7 +143,7 @@ _setup-rust project:
 
 # Deploy the specified <stack>, e.g. `just deploy Cloud`, defaulting to --all.
 deploy stack='--all':
-  cd deployment && bun run cdk deploy --concurrency 4 --require-approval never {{ if stack == "--all" { "--all" } else { stack } }}
+  cd deployment && bun run cdk deploy --concurrency 6 --require-approval never {{ if stack == "--all" { "--all" } else { stack } }}
 
 # Validate that all deployment artifacts are present.
 deploy-validate-artifacts:
@@ -156,6 +152,7 @@ deploy-validate-artifacts:
   @ just _deploy-validate-artifacts ms-gql-users
   @ just _deploy-validate-artifacts ms-gql-products
   @ just _deploy-validate-artifacts ms-gql-reviews
+  @ just _deploy-validate-artifacts ms-gateway
 
 _deploy-validate-artifacts project:
   @ [ -d "./deployment/artifacts/{{project}}" ] && echo "✅ {{project}} exists" || (echo "❌ {{project}} missing" && exit 1)
@@ -167,6 +164,7 @@ deploy-clean:
 # Compose the supergraph from all of our subgraphs (requires them to be running).
 compose:
   cd ms-router && rover supergraph compose --config supergraph-config.yaml --output supergraph.graphql
+  cp ms-router/supergraph.graphql ms-gateway/src/supergraph.graphql
   cd ms-router && bunx wgc router compose -i supergraph-cosmo.yaml > config.json
 
 # Run tests for <project>, e.g. `just test deployment`.
@@ -205,6 +203,9 @@ _dev-ui-internal:
 _dev-ms-router:
   cd ms-router/bin && ./router --anonymous-telemetry-disabled --config ../router.yaml --supergraph=../supergraph.graphql --dev --hot-reload --log debug
 
+_dev-ms-gateway:
+  cd ms-gateway && bun dev
+
 _dev-ms-router-cosmo:
   cd ms-router/bin && CONFIG_PATH=../config.yaml ./cosmo
 
@@ -238,6 +239,7 @@ build-all:
   just _build-ms-gql-users
   just _build-ms-gql-products
   just _build-ms-gql-reviews
+  just _build-ms-gateway
 
 _build-ui-app build="release":
   cd ui-app && bun run build
@@ -255,6 +257,11 @@ _build-ms-router build="release":
   @ mkdir -p ./deployment/artifacts && cp -r ./target/lambda/ms-router ./deployment/artifacts/ms-router
   @ cp ms-router/router.yaml ./deployment/artifacts/ms-router/router.yaml
   @ cp ms-router/supergraph.graphql ./deployment/artifacts/ms-router/supergraph.graphql
+
+_build-ms-gateway build="release":
+  cd ms-gateway && bun run build
+  @ rm -r ./deployment/artifacts/ms-gateway || true
+  @ mkdir -p ./deployment/artifacts && cp -r ./ms-gateway/dist ./deployment/artifacts/ms-gateway
 
 _build-ms-gql-users build="release":
   cd ms-gql-users && cargo lambda build --arm64 {{ if build == "debug" { "" } else { "--release" } }}

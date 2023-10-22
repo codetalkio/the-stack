@@ -1,39 +1,60 @@
 # Microservice: Apollo Router
 
+💡 This approach will currently not work with the Apollo Router because it is built with GLIBC (gnu) which is not compatible with the Lambda runtime environment which uses a different version of GLIBC.
+
+You will currently get the following error at runtime in the Lambda:
+
+```
+/lib64/libm.so.6: version `GLIBC_2.27' not found
+/lib64/libm.so.6: version `GLIBC_2.29' not found
+/lib64/libc.so.6: version `GLIBC_2.28' not found
+```
+
+AWS Lambda is based on Amazon Linux 2 which seems to currently use GLIBC 2.26. We will most likely need to wait until https://github.com/apollographql/router/issues/3186 is solved, which is blocked by deno via https://github.com/denoland/deno/issues/3711.
+
+---
+
 Until there's [better support](https://github.com/apollographql/router/issues/364) our strategy will be as follows:
-- Download the router binary from `curl -sSL https://router.apollo.dev/download/nix/latest | sh`
-- For local development we can point the router directly to our local subgraphs that are serving via HTTP
-- For Lambda the ms-router service itself will expose endpoints that proxy HTTP requests to Lambda endpoints
+1. Download the router binary into the `bin/`
+2. For local development we can point the router directly to our local subgraphs that are serving via HTTP
+   1. Set as the default values in `supergraph-config.yaml`
+3. For Lambda the router will be reaching the services at their Lambda Function URLs so that it doesn't need to care about them being Lambda Functions
+   1. Supported by letting subgraph URls be overwritten in `router.yaml` via `SUBGRAPH_<subgraph-name>_URL` (e.g. `SUBGRAPH_USERS_URL`)
 
-Ideas:
-- Consider making this an App Runner instead?
-- Test cold start with no provisioned App Runner instances to see if we can "scale to 0"
-- Set max requests super high
+Set up our dependencies (check out `_setup-ms-router` in our [justfile](/justfile)):
 
-Rhai is not an option since it cannot make network requests.
-
-Previously based it on a combination of [the embedded example from apollo-router](https://github.com/apollographql/router/tree/dev/examples/embedded/rust) and the [http-basic-lambda example from aws-lambda-rust-runtime](https://github.com/awslabs/aws-lambda-rust-runtime/tree/main/examples/http-basic-lambda).
-
-Develop:
 ```bash
-$ cargo lambda watch
+# Download the router binary for local dev and for AWS Lambda.
+$ just setup ms-router
 ```
 
-Test:
+Build the project and its dependencies (check out `_build-ms-router` in our [justfile](/justfile)):
+
 ```bash
-$ cargo lambda invoke --data-ascii '{"command": "hi"}'
+# Run cargo lambda build --arm64 --release
+$ just build ms-router
 ```
 
-Build:
+Run a local development server using the router binary directly (check out `_dev-ms-router` in our [justfile](/justfile)):
+
 ```bash
-$ cargo lambda build --arm64 --release
-# or, for x86 builds
-$ cargo lambda build --release
+$ just dev ms-router
 ```
 
-cargo-lambda uses [cargo-zigbuild to cross-compile](https://www.cargo-lambda.info/commands/build.html#compiler-backends), which uses the Zig compiler underneath. This removes the need to any virtualization when e.g. compiling ARM binaries from x86.
+Simulate a Lambda server (check out `_dev-ms-router-lambda` in our [justfile](/justfile)) running the router which does the following:
 
+- Starts the `bin/router` binary
+- Handles incoming Lambda events
+- Converts the Lambda event to an HTTP request to the locally running router at `http://localhost:4000`
+- Responds to the Lambda request with the response from the router
 
-Check out the [CDK Construct made for cargo-lambda](https://github.com/cargo-lambda/cargo-lambda-cdk).
+```bash
+$ just dev ms-router-lambda
+```
 
-NOTE: We rely on https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting.
+Test the Lambda server locally:
+
+```bash
+$ cargo lambda invoke --invoke-port 3035 --data-ascii '{ "body": "{\"query\":\"{me { name } }\"}" }'
+{"statusCode":200,"headers":{},"multiValueHeaders":{},"body":"{\"data\":{\"me\":{\"name\":\"John Deere\"}}}","isBase64Encoded":false}
+```

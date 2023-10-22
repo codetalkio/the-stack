@@ -12,7 +12,7 @@ const app = new cdk.App();
  * as domain names, certificates, and other resources that are shared across all.
  *
  * ```bash
- * bun run cdk deploy --concurrency 4 'Cloud' 'Cloud/**'
+ * bun run cdk deploy --concurrency 6 'Cloud' 'Cloud/**'
  * ```
  */
 const cloudStackName = "Cloud";
@@ -34,7 +34,7 @@ if (matchesStack(app, cloudStackName)) {
  * UI applications and APIs.
  *
  * ```bash
- * bun run cdk deploy --concurrency 4 'Services' 'Services/**'
+ * bun run cdk deploy --concurrency 6 'Services' 'Services/**'
  * ```
  */
 const servicesStackName = "Services";
