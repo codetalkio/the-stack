@@ -1,15 +1,25 @@
 # Microservice: Gateway
 
-To install dependencies:
+Set up tooling:
 
 ```bash
-bun install
+# General tools needed:
+$ just install-tooling
+# Bun dependencies:
+$ just setup ms-gateway
 ```
 
-To run:
+Develop:
 
 ```bash
-bun run index.ts
+$ just dev ms-gateway
 ```
 
-This project was created using `bun init` in bun v1.0.6. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+Which spins up a HTTP server along with a GraphiQL IDE at [http://127.0.0.1:4000](http://127.0.0.1:4000).
+
+Build:
+
+```bash
+# Release builds:
+$ just build ms-gateway
+```

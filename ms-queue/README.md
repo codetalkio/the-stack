@@ -1,25 +1,27 @@
 # Microservice: Queue
 
-Develop:
+Set up tooling:
+
 ```bash
-$ cargo lambda watch
+# General tools needed:
+$ just install-tooling
+# Rust toolchain:
+$ just setup ms-queue
 ```
 
-Test:
+Develop:
+
 ```bash
-$ cargo lambda invoke --data-ascii '{"command": "hi"}'
+$ just dev ms-queue
 ```
 
 Build:
+
 ```bash
-$ cargo lambda build --arm64 --release
-# or, for x86 builds
-$ cargo lambda build --release
+# Release builds for ARM:
+$ just build ms-queue
+# Debug builds for ARM:
+$ just build ms-queue debug
 ```
 
 cargo-lambda uses [cargo-zigbuild to cross-compile](https://www.cargo-lambda.info/commands/build.html#compiler-backends), which uses the Zig compiler underneath. This removes the need to any virtualization when e.g. compiling ARM binaries from x86.
-
-
-Check out the [CDK Construct made for cargo-lambda](https://github.com/cargo-lambda/cargo-lambda-cdk).
-
-NOTE: We rely on https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting.
