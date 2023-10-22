@@ -68,6 +68,12 @@ export class Stack extends cdk.Stack {
     // Make our Lambda function accessible from the internet. We make it publicly accessible.
     const fnUrl = lambdaFn.addFunctionUrl({
       authType: lambda.FunctionUrlAuthType.NONE,
+      cors: {
+        allowedOrigins: ["*"],
+        allowedMethods: [lambda.HttpMethod.ALL],
+        allowCredentials: true,
+        maxAge: cdk.Duration.minutes(1),
+      },
     });
 
     new cdk.CfnOutput(this, `FunctionUrl`, {
