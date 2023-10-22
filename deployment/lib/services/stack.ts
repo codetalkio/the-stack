@@ -45,7 +45,7 @@ export class Stack extends cdk.Stack {
     });
 
     // Set up our Apollo Gateway that pieces together the microservices.
-    new lambdaFn.Stack(this, "MsGateway", {
+    const supergraphGateway = new lambdaFn.Stack(this, "MsGateway", {
       ...props,
       functionName: "ms-gateway",
       handler: "lambda.graphqlHandler",
@@ -59,7 +59,7 @@ export class Stack extends cdk.Stack {
       },
     });
 
-    const supergraph = new lambdaFn.Stack(this, "MsMesh", {
+    const supergraphMesh = new lambdaFn.Stack(this, "MsMesh", {
       ...props,
       functionName: "ms-mesh",
       handler: "lambda.graphqlHandler",
@@ -74,7 +74,7 @@ export class Stack extends cdk.Stack {
     });
 
     // Set up our Apollo Router that pieces together the microservices.
-    new routerFn.Stack(this, "MsRouter", {
+    const supergraphRouter = new routerFn.Stack(this, "MsRouter", {
       ...props,
       functionName: "ms-router",
       assets: "artifacts/ms-router",
@@ -85,6 +85,15 @@ export class Stack extends cdk.Stack {
         SUBGRAPH_REVIEWS_URL: reviewsFn.functionUrl,
       },
     });
+
+    const redirectPathToUrl = {
+      // Primary supergraph.
+      ["graphql"]: supergraphMesh.functionUrl,
+      // Direct supergraph routes.
+      ["graphql-mesh"]: supergraphMesh.functionUrl,
+      ["graphql-router"]: supergraphRouter.functionUrl,
+      ["graphql-gateway"]: supergraphGateway.functionUrl,
+    };
 
     // Set up our s3 website for ui-app.
     new s3Website.Stack(this, "WebsiteUiApp", {
@@ -97,9 +106,7 @@ export class Stack extends cdk.Stack {
       certificateArn: props.certificate.certificateArn,
       billingGroup: "ui-app",
       rewriteUrls: true,
-      redirectPathToUrl: {
-        "graphql/*": supergraph.functionUrl,
-      },
+      redirectPathToUrl,
     });
 
     // Set up our s3 website for ui-internal.
@@ -112,9 +119,7 @@ export class Stack extends cdk.Stack {
       hostedZone: props.domain,
       certificateArn: props.certificate.certificateArn,
       billingGroup: "ui-internal",
-      redirectPathToUrl: {
-        "graphql/*": supergraph.functionUrl,
-      },
+      redirectPathToUrl,
     });
   }
 }
