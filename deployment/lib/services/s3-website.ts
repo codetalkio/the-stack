@@ -99,15 +99,29 @@ export class Stack extends cdk.Stack {
       [key: string]: cloudfront.BehaviorOptions & cloudfront.AddBehaviorOptions;
     } = {};
     const redirectPathToUrl = props.redirectPathToUrl ?? {};
+    const originRequestPolicy = new cloudfront.OriginRequestPolicy(
+      this,
+      "OriginRequestPolicy",
+      {
+        queryStringBehavior: cloudfront.OriginRequestQueryStringBehavior.all(),
+        headerBehavior: cloudfront.OriginRequestHeaderBehavior.all(),
+        cookieBehavior: cloudfront.OriginRequestCookieBehavior.all(),
+        comment: "Allow all headers, cookies, and query strings.",
+      }
+    );
     // Iterate over the keys and values of redirectPathToUrl.
     for (const key in redirectPathToUrl) {
       const url = redirectPathToUrl[key];
       const domainPart = cdk.Fn.select(2, cdk.Fn.split("/", url));
       additionalBehaviors[key] = {
-        origin: new cloudfrontOrigins.HttpOrigin(domainPart),
+        // NOTE: The trailing slash is an important part of the path.
+        origin: new cloudfrontOrigins.HttpOrigin(domainPart, {
+          originPath: "/",
+        }),
         allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+        originRequestPolicy,
       };
     }
 
@@ -142,6 +156,7 @@ export class Stack extends cdk.Stack {
       },
       additionalBehaviors,
       // Set up redirects when a user hits a 404 or 403.
+      // TODO: Are these causing the other pages to be inaccessible?
       errorResponses: [
         {
           httpStatus: 403,

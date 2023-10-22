@@ -88,11 +88,11 @@ export class Stack extends cdk.Stack {
 
     const redirectPathToUrl = {
       // Primary supergraph.
-      ["graphql"]: supergraphMesh.functionUrl,
+      ["/graphql"]: supergraphMesh.functionUrl,
       // Direct supergraph routes.
-      ["graphql-mesh"]: supergraphMesh.functionUrl,
-      ["graphql-router"]: supergraphRouter.functionUrl,
-      ["graphql-gateway"]: supergraphGateway.functionUrl,
+      ["/graphql-mesh"]: supergraphMesh.functionUrl,
+      ["/graphql-router"]: supergraphRouter.functionUrl,
+      ["/graphql-gateway"]: supergraphGateway.functionUrl,
     };
 
     // Set up our s3 website for ui-app.
