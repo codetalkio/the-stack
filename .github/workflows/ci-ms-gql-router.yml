@@ -1,0 +1,25 @@
+name: "CI: ms-router"
+
+on:
+  push:
+    paths:
+      - ".github/workflows/ci-ms-router.yml"
+      - ".github/workflows/wf-build-lambda.yml"
+      - "ms-router/**"
+      - "lib-handler/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+
+defaults:
+  run:
+    shell: bash # Set the default shell to bash.
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: ./.github/workflows/wf-build-lambda.yml
+    with:
+      project: ms-router
