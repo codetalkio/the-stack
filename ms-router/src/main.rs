@@ -1,6 +1,6 @@
 use lambda_http::Error;
 use lambda_http::{run, service_fn, IntoResponse, Request};
-use reqwest::{header::CONTENT_TYPE, Client, Response, StatusCode};
+use reqwest::{header::CONTENT_TYPE, Client, Response};
 use std::env;
 use tokio::process::Command;
 use tracing::debug;
