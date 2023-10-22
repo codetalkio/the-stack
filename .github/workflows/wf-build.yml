@@ -36,3 +36,22 @@ jobs:
       project: ms-gql-reviews
       release: true
       upload-artifact: true
+
+  ms-router:
+    uses: ./.github/workflows/wf-build-lambda.yml
+    with:
+      project: ms-router
+      release: true
+      upload-artifact: true
+
+  ms-gateway:
+    uses: ./.github/workflows/wf-build-ms-gateway.yml
+    with:
+      release: true
+      upload-artifact: true
+
+  ms-mesh:
+    uses: ./.github/workflows/wf-build-ms-mesh.yml
+    with:
+      release: true
+      upload-artifact: true

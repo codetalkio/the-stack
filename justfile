@@ -66,6 +66,7 @@ setup-all:
   just _setup-ms-gql-reviews
   just _setup-ms-router
   just _setup-ms-gateway
+  just _setup-ms-mesh
 
 _setup-deployment:
   cd deployment && bun install
@@ -87,7 +88,15 @@ _setup-ui-internal: (_setup-rust-wasm "ui-internal")
 _setup-ms-gateway:
   cd ms-gateway && bun install
 
-_setup-ms-router: (_setup-rust "ms-router")
+[macos]
+_setup-ms-mesh:
+  cd ms-mesh && npm_config_curl_include_dirs="$(xcrun --show-sdk-path)/usr/include" npm install
+
+[linux]
+_setup-ms-mesh:
+  cd ms-mesh && npm install
+
+_setup-ms-router: (_setup-rust "ms-router") deploy-setup-layers
   #!/usr/bin/env bash
   set -euxo pipefail
   cd ms-router/bin
@@ -97,28 +106,6 @@ _setup-ms-router: (_setup-rust "ms-router")
 
   # Generate schema to validate our configuration against.
   ./router config schema > ../configuration_schema.json
-
-  # Download the Cosmo Router binary that we will use for local development.
-  export TMP_DIR=$(mktemp -d)
-  curl -sSfL https://github.com/wundergraph/cosmo/releases/download/router%40{{cosmo-version}}/router-router@{{cosmo-version}}-{{ if os() == "macos" { "darwin" } else { os() } }}-{{ if arch() == "aarch64" { "arm64" } else { "amd64" } }}.tar.gz -o $TMP_DIR/cosmo.tar.gz
-  tar xf $TMP_DIR/cosmo.tar.gz -C $TMP_DIR
-  mv $TMP_DIR/router ./cosmo
-  rm -r $TMP_DIR
-
-  cd ../../deployment/layers
-  # Download the Apollo Router binary that we will use for AWS Lambda.
-  export TMP_DIR=$(mktemp -d)
-  curl -sSfL https://github.com/apollographql/router/releases/download/v{{router-version}}/router-v{{router-version}}-aarch64-unknown-linux-gnu.tar.gz -o $TMP_DIR/router.tar.gz
-  tar xf $TMP_DIR/router.tar.gz --strip-components 1 -C $TMP_DIR
-  mv $TMP_DIR/router ./router/router
-  rm -r $TMP_DIR
-
-  # Download the Cosmo Router binary that we will use for AWS Lambda.
-  export TMP_DIR=$(mktemp -d)
-  curl -sSfL https://github.com/wundergraph/cosmo/releases/download/router%40{{cosmo-version}}/router-router@{{cosmo-version}}-linux-arm64.tar.gz -o $TMP_DIR/cosmo.tar.gz
-  tar xf $TMP_DIR/cosmo.tar.gz -C $TMP_DIR
-  mv $TMP_DIR/router ./cosmo/cosmo
-  rm -r $TMP_DIR
 
 _setup-ms-gql-users: (_setup-rust "ms-gql-users")
 
@@ -145,6 +132,18 @@ _setup-rust project:
 deploy stack='--all':
   cd deployment && bun run cdk deploy --concurrency 6 --require-approval never {{ if stack == "--all" { "--all" } else { stack } }}
 
+# Download the Apollo Router binary that we will use for AWS Lambda.
+deploy-setup-layers:
+  #!/usr/bin/env bash
+  set -euxo pipefail
+  cd deployment/layers
+  # Download the Apollo Router binary that we will use for AWS Lambda.
+  export TMP_DIR=$(mktemp -d)
+  curl -sSfL https://github.com/apollographql/router/releases/download/v{{router-version}}/router-v{{router-version}}-aarch64-unknown-linux-gnu.tar.gz -o $TMP_DIR/router.tar.gz
+  tar xf $TMP_DIR/router.tar.gz --strip-components 1 -C $TMP_DIR
+  mv $TMP_DIR/router ./router/router
+  rm -r $TMP_DIR
+
 # Validate that all deployment artifacts are present.
 deploy-validate-artifacts:
   @ just _deploy-validate-artifacts ui-app
@@ -152,7 +151,9 @@ deploy-validate-artifacts:
   @ just _deploy-validate-artifacts ms-gql-users
   @ just _deploy-validate-artifacts ms-gql-products
   @ just _deploy-validate-artifacts ms-gql-reviews
+  @ just _deploy-validate-artifacts ms-router
   @ just _deploy-validate-artifacts ms-gateway
+  @ just _deploy-validate-artifacts ms-mesh
 
 _deploy-validate-artifacts project:
   @ [ -d "./deployment/artifacts/{{project}}" ] && echo "✅ {{project}} exists" || (echo "❌ {{project}} missing" && exit 1)
@@ -163,9 +164,9 @@ deploy-clean:
 
 # Compose the supergraph from all of our subgraphs (requires them to be running).
 compose:
-  cd ms-router && rover supergraph compose --config supergraph-config.yaml --output supergraph.graphql
+  cd ms-router && rover supergraph compose --config ../supergraph-config.yaml --output ../supergraph.graphql
   cp ms-router/supergraph.graphql ms-gateway/src/supergraph.graphql
-  cd ms-router && bunx wgc router compose -i supergraph-cosmo.yaml > config.json
+  cp ms-router/supergraph.graphql ms-mesh/supergraph.graphql
 
 # Run tests for <project>, e.g. `just test deployment`.
 test project:
@@ -206,8 +207,8 @@ _dev-ms-router:
 _dev-ms-gateway:
   cd ms-gateway && bun dev
 
-_dev-ms-router-cosmo:
-  cd ms-router/bin && CONFIG_PATH=../config.yaml ./cosmo
+_dev-ms-mesh:
+  cd ms-mesh && bun devh
 
 # Can be invoked with:
 # cargo lambda invoke --invoke-port 3035 --data-ascii '{ "body": "{\"query\":\"{me { name } }\"}" }'
@@ -240,6 +241,7 @@ build-all:
   just _build-ms-gql-products
   just _build-ms-gql-reviews
   just _build-ms-gateway
+  just _build-ms-mesh
 
 _build-ui-app build="release":
   cd ui-app && bun run build
@@ -262,6 +264,11 @@ _build-ms-gateway build="release":
   cd ms-gateway && bun run build
   @ rm -r ./deployment/artifacts/ms-gateway || true
   @ mkdir -p ./deployment/artifacts && cp -r ./ms-gateway/dist ./deployment/artifacts/ms-gateway
+
+_build-ms-mesh build="release":
+  cd ms-mesh && bun run build
+  @ rm -r ./deployment/artifacts/ms-mesh || true
+  @ mkdir -p ./deployment/artifacts && cp -r ./ms-mesh/dist ./deployment/artifacts/ms-mesh
 
 _build-ms-gql-users build="release":
   cd ms-gql-users && cargo lambda build --arm64 {{ if build == "debug" { "" } else { "--release" } }}

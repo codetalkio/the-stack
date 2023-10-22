@@ -1,0 +1,28 @@
+{
+  "name": "ms-mesh",
+  "module": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "mesh": "mesh",
+    "esbuild": "esbuild",
+    "start": "mesh start",
+    "dev": "mesh dev",
+    "prebuild": "mesh build --fileType js",
+    "build:esbuild": "NODE_ENV=production esbuild src/lambda.ts --bundle --minify --tree-shaking=true --platform=node --loader:.graphql=text --target=node18 --outfile=dist/lambda.js",
+    "build": "NODE_ENV=production bun run esbuild.config.mjs"
+  },
+  "devDependencies": {
+    "@graphql-mesh/cli": "^0.87.15",
+    "@types/aws-lambda": "^8.10.125",
+    "esbuild": "^0.19.5"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@graphql-mesh/graphql": "^0.95.7",
+    "@graphql-mesh/supergraph": "^0.0.7",
+    "aws-xray-sdk": "^3.5.2",
+    "graphql": "^16.8.1"
+  }
+}

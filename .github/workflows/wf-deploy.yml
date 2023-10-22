@@ -37,6 +37,9 @@ jobs:
         working-directory: ./deployment/artifacts/
         run: ls -R
 
+      - name: Set layers
+        run: just deploy-setup-layers
+
       - name: Validate artifacts
         working-directory: ./deployment/artifacts
         run: just deploy-validate-artifacts

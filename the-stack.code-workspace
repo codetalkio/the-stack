@@ -43,6 +43,10 @@
     {
       "name": "ms-gateway",
       "path": "ms-gateway"
+    },
+    {
+      "name": "ms-mesh",
+      "path": "ms-mesh"
     }
   ],
   "settings": {
@@ -60,6 +64,7 @@
       "**/.vscode": false,
       "ms-router": true,
       "ms-gateway": true,
+      "ms-mesh": true,
       "ms-queue": true,
       "ms-gql-users": true,
       "ms-gql-products": true,
@@ -67,6 +72,13 @@
       "deployment": true,
       "ui-app": true,
       "ui-internal": true
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/bower_components": true,
+      "**/*.code-search": true,
+      "**/.ruby-lsp": true,
+      "deployment/artifacts": true
     },
     "editor.formatOnSave": true,
     "rust-analyzer.procMacro.ignored": {

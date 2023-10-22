@@ -1,0 +1,20 @@
+name: "CI: ms-gateway"
+
+on:
+  push:
+    paths:
+      - "ms-gateway/**"
+      - ".github/workflows/ci-ms-gateway.yml"
+      - ".github/workflows/wf-build-ms-gateway.yml"
+
+defaults:
+  run:
+    shell: bash # Set the default shell to bash.
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: ./.github/workflows/wf-build-ms-gateway.yml

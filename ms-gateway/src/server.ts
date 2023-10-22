@@ -1,13 +1,6 @@
 import { ApolloServer } from "@apollo/server";
 import { ApolloGateway, RemoteGraphQLDataSource } from "@apollo/gateway";
 import sdl from "./supergraph.graphql";
-import AWSXRay from "aws-xray-sdk";
-import http from "http";
-import https from "https";
-
-// Set up Xray to capture all HTTP/HTTPS requests.
-AWSXRay.captureHTTPsGlobal(http);
-AWSXRay.captureHTTPsGlobal(https);
 
 /**
  * Support overriding our subgraph URLs via environment variables.

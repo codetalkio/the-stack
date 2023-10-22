@@ -1,0 +1,35 @@
+schema {
+  query: Query
+}
+
+type Query {
+  product(id: ID!): Product!
+  products: [Product!]!
+  review(id: ID!): Review!
+  reviews: [Review!]!
+  me: User!
+  users: [User!]!
+}
+
+"""Define the Product entity so that we can extend it."""
+type Product {
+  id: ID!
+  name: String!
+  price: String!
+  reviews: [Review!]!
+}
+
+"""Define the User entity so that we can extend it."""
+type User {
+  id: ID!
+  purchases: [Product!]!
+  reviews: [Review!]!
+  name: String!
+}
+
+type Review {
+  id: ID!
+  body: String!
+  author: User!
+  product: Product!
+}

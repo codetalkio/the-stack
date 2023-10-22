@@ -84,6 +84,20 @@ export class Stack extends cdk.Stack {
       },
     });
 
+    new lambdaFn.Stack(this, "MsMesh", {
+      ...props,
+      functionName: "ms-mesh",
+      handler: "lambda.graphqlHandler",
+      runtime: lambda.Runtime.NODEJS_LATEST,
+      assets: "artifacts/ms-mesh",
+      billingGroup: "ms-mesh",
+      environment: {
+        SUBGRAPH_USERS_URL: usersFn.functionUrl,
+        SUBGRAPH_PRODUCTS_URL: productsFn.functionUrl,
+        SUBGRAPH_REVIEWS_URL: reviewsFn.functionUrl,
+      },
+    });
+
     // Set up our Apollo Router that pieces together the microservices.
     new routerFn.Stack(this, "MsRouter", {
       ...props,
