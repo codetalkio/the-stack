@@ -9,7 +9,7 @@ members = [
   "ms-router",
 ]
 
-exclude = ["ui-internal"]
+exclude = ["ui-internal", "ms-apollo", "ms-apollo2"]
 
 [profile.release]
 # Configurations explicitly listed here for clarity.

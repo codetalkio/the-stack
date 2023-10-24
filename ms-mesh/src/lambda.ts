@@ -20,11 +20,11 @@ interface ServerContext {
 
 const meshHTTP = createBuiltMeshHTTPHandler<ServerContext>();
 
-export async function graphqlHandler(
+const invoke = async (
   event: APIGatewayProxyEventV2,
   lambdaContext: Context
-): Promise<APIGatewayProxyResult> {
-  const url = new URL(event.rawPath, "http://localhost");
+): Promise<APIGatewayProxyResult> => {
+  const url = new URL("http://localhost/");
   if (event.queryStringParameters != null) {
     for (const name in event.queryStringParameters) {
       const value = event.queryStringParameters[name];
@@ -34,21 +34,17 @@ export async function graphqlHandler(
     }
   }
 
-  const response = await meshHTTP.fetch(
-    url,
-    {
-      // For v1.0 you should use event.httpMethod
-      method: event.requestContext.http.method,
-      headers: event.headers as HeadersInit,
-      body: event.body
-        ? Buffer.from(event.body, event.isBase64Encoded ? "base64" : "utf8")
-        : undefined,
-    },
-    {
-      event,
-      lambdaContext,
-    }
-  );
+  const request = {
+    method: event.requestContext.http.method,
+    headers: event.headers as HeadersInit,
+    body: event.body
+      ? Buffer.from(event.body, event.isBase64Encoded ? "base64" : "utf8")
+      : undefined,
+  };
+  const response = await meshHTTP.fetch(url, request, {
+    event,
+    lambdaContext,
+  });
 
   const responseHeaders: Record<string, string> = Object.fromEntries(
     response.headers.entries()
@@ -60,4 +56,20 @@ export async function graphqlHandler(
     body: await response.text(),
     isBase64Encoded: false,
   };
+};
+
+export async function graphqlHandler(
+  event: APIGatewayProxyEventV2,
+  lambdaContext: Context
+): Promise<APIGatewayProxyResult> {
+  try {
+    return await invoke(event, lambdaContext);
+  } catch (error) {
+    console.error(error);
+    return {
+      statusCode: 500,
+      body: "Internal Server Error",
+      isBase64Encoded: false,
+    };
+  }
 }

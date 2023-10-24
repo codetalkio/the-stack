@@ -50,6 +50,8 @@ _install-tooling-all-platforms:
   cargo binstall --no-confirm cargo-lambda
   # Install leptosfmt for formatting Leptos View macros.
   cargo binstall --no-confirm leptosfmt
+  # Install cargo-xtask for running tasks.
+  cargo binstall --no-confirm cargo-xtask
 
 # Setup dependencies and tooling for <project>, e.g. `just setup deployment`.
 setup project:
@@ -167,6 +169,7 @@ compose:
   cd ms-router && rover supergraph compose --config ../supergraph-config.yaml --output ../supergraph.graphql
   cp ms-router/supergraph.graphql ms-gateway/src/supergraph.graphql
   cp ms-router/supergraph.graphql ms-mesh/supergraph.graphql
+  cp ms-router/supergraph.graphql ms-apollo/supergraph.graphql
 
 # Run tests for <project>, e.g. `just test deployment`.
 test project:
@@ -204,6 +207,11 @@ _dev-ui-internal:
 _dev-ms-router:
   cd ms-router/bin && ./router --anonymous-telemetry-disabled --config ../router.yaml --supergraph=../supergraph.graphql --dev --hot-reload --log debug
 
+# Can be invoked with:
+# cargo lambda invoke --invoke-port 3035 --data-ascii '{ "body": "{\"query\":\"{me { name } }\"}" }'
+_dev-ms-router-lambda:
+  cd ms-router && cargo lambda watch --invoke-port 3035
+
 _dev-ms-gateway:
   cd ms-gateway && bun dev
 
@@ -211,9 +219,14 @@ _dev-ms-mesh:
   cd ms-mesh && bun devh
 
 # Can be invoked with:
-# cargo lambda invoke --invoke-port 3035 --data-ascii '{ "body": "{\"query\":\"{me { name } }\"}" }'
-_dev-ms-router-lambda:
-  cd ms-router && cargo lambda watch --invoke-port 3035
+# cargo lambda invoke --invoke-port 3034 --data-ascii '{ "body": "{\"query\":\"{me { name } }\"}" }'
+_dev-ms-apollo:
+  cd ms-apollo && cargo watch -x run --features local
+
+# Can be invoked with:
+# cargo lambda invoke --invoke-port 3034 --data-ascii '{ "body": "{\"query\":\"{me { name } }\"}" }'
+_dev-ms-apollo-lambda:
+  cd ms-apollo && cargo lambda watch --invoke-port 3034
 
 # Alternative: cargo lambda watch --invoke-port 3065
 _dev-ms-gql-users:
@@ -259,6 +272,13 @@ _build-ms-router build="release":
   @ mkdir -p ./deployment/artifacts && cp -r ./target/lambda/ms-router ./deployment/artifacts/ms-router
   @ cp ms-router/router.yaml ./deployment/artifacts/ms-router/router.yaml
   @ cp ms-router/supergraph.graphql ./deployment/artifacts/ms-router/supergraph.graphql
+
+_build-ms-apollo build="release":
+  cd ms-apollo && cargo lambda build --arm64 {{ if build == "debug" { "" } else { "--release" } }}
+  @ rm -r ./deployment/artifacts/ms-apollo || true
+  @ mkdir -p ./deployment/artifacts && cp -r ./target/lambda/ms-apollo ./deployment/artifacts/ms-apollo
+  @ cp ms-apollo/router.yaml ./deployment/artifacts/ms-apollo/router.yaml
+  @ cp ms-apollo/supergraph.graphql ./deployment/artifacts/ms-apollo/supergraph.graphql
 
 _build-ms-gateway build="release":
   cd ms-gateway && bun run build

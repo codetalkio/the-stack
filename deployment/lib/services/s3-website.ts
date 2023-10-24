@@ -95,28 +95,33 @@ export class Stack extends cdk.Stack {
       });
     }
 
-    const additionalBehaviors: {
-      [key: string]: cloudfront.BehaviorOptions & cloudfront.AddBehaviorOptions;
-    } = {};
-    const redirectPathToUrl = props.redirectPathToUrl ?? {};
     const originRequestPolicy = new cloudfront.OriginRequestPolicy(
       this,
       "OriginRequestPolicy",
       {
+        // NOTE: We cannot forward the HOST header, it will cause a 403.
+        // See note in https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/controlling-origin-requests.html#origin-request-understand-origin-request-policy.
+        headerBehavior: cloudfront.OriginRequestHeaderBehavior.denyList("Host"),
         queryStringBehavior: cloudfront.OriginRequestQueryStringBehavior.all(),
-        headerBehavior: cloudfront.OriginRequestHeaderBehavior.all(),
         cookieBehavior: cloudfront.OriginRequestCookieBehavior.all(),
-        comment: "Allow all headers, cookies, and query strings.",
+        comment: "Allow all headers (except HOST), cookies, and query strings.",
       }
     );
+    const additionalBehaviors: {
+      [key: string]: cloudfront.BehaviorOptions & cloudfront.AddBehaviorOptions;
+    } = {};
+
+    // Content-Type
+    const redirectPathToUrl = props.redirectPathToUrl ?? {};
     // Iterate over the keys and values of redirectPathToUrl.
     for (const key in redirectPathToUrl) {
       const url = redirectPathToUrl[key];
       const domainPart = cdk.Fn.select(2, cdk.Fn.split("/", url));
       additionalBehaviors[key] = {
-        // NOTE: The trailing slash is an important part of the path.
         origin: new cloudfrontOrigins.HttpOrigin(domainPart, {
-          originPath: "/",
+          customHeaders: {
+            "X-Forwarded-Host": props.domain,
+          },
         }),
         allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
@@ -158,11 +163,11 @@ export class Stack extends cdk.Stack {
       // Set up redirects when a user hits a 404 or 403.
       // TODO: Are these causing the other pages to be inaccessible?
       errorResponses: [
-        {
-          httpStatus: 403,
-          responsePagePath: `/${props.error}`,
-          responseHttpStatus: 200,
-        },
+        // {
+        //   httpStatus: 403,
+        //   responsePagePath: `/${props.error}`,
+        //   responseHttpStatus: 200,
+        // },
         {
           httpStatus: 404,
           responsePagePath: `/${props.error}`,
@@ -196,8 +201,11 @@ export class Stack extends cdk.Stack {
     new CloudFrontInvalidation(this, "CloudFrontInvalidation", {
       ...props,
       distribution,
-      // Only invalidate / and index.html since all other files are hashed.
-      distributionPaths: ["/", `/${props.index}`],
+      // Only invalidate / and index.html since all other files are hashed, except if we are
+      // using the rewriteUrl functionality, which means we are serving files without hashes
+      // at various paths.
+      distributionPaths:
+        rewriteUrl !== undefined ? ["/*"] : ["/", `/${props.index}`],
     });
 
     // Set up our DNS records that points to our CloudFront distribution.

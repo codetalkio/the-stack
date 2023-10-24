@@ -20,7 +20,7 @@ export interface StackProps extends cdk.StackProps {
   readonly runtime?: lambda.Runtime;
 
   /**
-   * The name we want to give the function.
+   * The environment variables for the function.
    */
   readonly environment?: { [key: string]: string };
 
