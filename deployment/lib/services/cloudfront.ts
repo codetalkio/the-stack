@@ -25,7 +25,7 @@ export class CloudFrontInvalidation extends Construct {
       this,
       `${Date.now().toString()}`,
       {
-        onCreate: {
+        onUpdate: {
           physicalResourceId: cr.PhysicalResourceId.of(Date.now().toString()),
           service: "CloudFront",
           action: "createInvalidation",

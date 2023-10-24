@@ -27,6 +27,22 @@ export interface StackProps extends cdk.StackProps {
 
 /**
  * Set up an a Lambda Function.
+ *
+ * Example:
+ * ```ts
+ * // Set up our Apollo Router that pieces together the microservices.
+ * const supergraphRouter = new routerFn.Stack(this, "MsRouter", {
+ *   ...props,
+ *   functionName: "ms-router",
+ *   assets: "artifacts/ms-router",
+ *   billingGroup: "ms-router",
+ *   environment: {
+ *     SUBGRAPH_USERS_URL: usersFn.functionUrl,
+ *     SUBGRAPH_PRODUCTS_URL: productsFn.functionUrl,
+ *     SUBGRAPH_REVIEWS_URL: reviewsFn.functionUrl,
+ *   },
+ * });
+ * ```
  */
 export class Stack extends cdk.Stack {
   /**

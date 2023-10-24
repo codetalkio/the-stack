@@ -41,6 +41,11 @@ export interface StackProps extends cdk.StackProps {
 export class Stack extends cdk.Stack {
   /**
    * The URL to access the Lambda Function.
+   *
+   * NOTE: The function URL includes `https://`. To get only the domain you can do:
+   * ```ts
+   * cdk.Fn.select(2, cdk.Fn.split("/", functionUrl))
+   * ```
    */
   public readonly functionUrl: string;
 

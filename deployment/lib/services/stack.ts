@@ -5,7 +5,8 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 
 import * as s3Website from "./s3-website";
 import * as lambdaFn from "./lambda";
-import * as routerFn from "./router";
+import * as routerLambdaFn from "./router";
+import * as routerAppRunner from "./app-runner";
 
 interface StackProps extends cdk.StackProps {
   /**
@@ -45,39 +46,39 @@ export class Stack extends cdk.Stack {
     });
 
     // Set up our Apollo Gateway that pieces together the microservices.
-    const supergraphGateway = new lambdaFn.Stack(this, "MsGateway", {
-      ...props,
-      functionName: "ms-gateway",
-      handler: "lambda.graphqlHandler",
-      runtime: lambda.Runtime.NODEJS_LATEST,
-      assets: "artifacts/ms-gateway",
-      billingGroup: "ms-gateway",
-      environment: {
-        SUBGRAPH_USERS_URL: usersFn.functionUrl,
-        SUBGRAPH_PRODUCTS_URL: productsFn.functionUrl,
-        SUBGRAPH_REVIEWS_URL: reviewsFn.functionUrl,
-      },
-    });
+    // const supergraphGateway = new lambdaFn.Stack(this, "MsGateway", {
+    //   ...props,
+    //   functionName: "ms-gateway",
+    //   handler: "lambda.graphqlHandler",
+    //   runtime: lambda.Runtime.NODEJS_LATEST,
+    //   assets: "artifacts/ms-gateway",
+    //   billingGroup: "ms-gateway",
+    //   environment: {
+    //     SUBGRAPH_USERS_URL: usersFn.functionUrl,
+    //     SUBGRAPH_PRODUCTS_URL: productsFn.functionUrl,
+    //     SUBGRAPH_REVIEWS_URL: reviewsFn.functionUrl,
+    //   },
+    // });
 
-    const supergraphMesh = new lambdaFn.Stack(this, "MsMesh", {
-      ...props,
-      functionName: "ms-mesh",
-      handler: "lambda.graphqlHandler",
-      runtime: lambda.Runtime.NODEJS_LATEST,
-      assets: "artifacts/ms-mesh",
-      billingGroup: "ms-mesh",
-      environment: {
-        SUBGRAPH_USERS_URL: usersFn.functionUrl,
-        SUBGRAPH_PRODUCTS_URL: productsFn.functionUrl,
-        SUBGRAPH_REVIEWS_URL: reviewsFn.functionUrl,
-      },
-    });
+    // Set up our GraphQL Mesh that pieces together the microservices.
+    // const supergraphMesh = new lambdaFn.Stack(this, "MsMesh", {
+    //   ...props,
+    //   functionName: "ms-mesh",
+    //   handler: "lambda.graphqlHandler",
+    //   runtime: lambda.Runtime.NODEJS_LATEST,
+    //   assets: "artifacts/ms-mesh",
+    //   billingGroup: "ms-mesh",
+    //   environment: {
+    //     SUBGRAPH_USERS_URL: usersFn.functionUrl,
+    //     SUBGRAPH_PRODUCTS_URL: productsFn.functionUrl,
+    //     SUBGRAPH_REVIEWS_URL: reviewsFn.functionUrl,
+    //   },
+    // });
 
     // Set up our Apollo Router that pieces together the microservices.
-    const supergraphRouter = new routerFn.Stack(this, "MsRouter", {
+    const supergraphRouter = new routerAppRunner.Stack(this, "MsRouterApp", {
       ...props,
-      functionName: "ms-router",
-      assets: "artifacts/ms-router",
+      tag: `latest`,
       billingGroup: "ms-router",
       environment: {
         SUBGRAPH_USERS_URL: usersFn.functionUrl,
@@ -86,13 +87,11 @@ export class Stack extends cdk.Stack {
       },
     });
 
+    // Make the API accessible on a path on the App domains.
     const redirectPathToUrl = {
-      // Primary supergraph.
-      ["/graphql"]: supergraphMesh.functionUrl,
-      // Direct supergraph routes.
-      ["/graphql-mesh"]: supergraphMesh.functionUrl,
-      ["/graphql-router"]: supergraphRouter.functionUrl,
-      ["/graphql-gateway"]: supergraphGateway.functionUrl,
+      ["/graphql"]: supergraphRouter.serviceUrl,
+      // ["/graphql"]: cdk.Fn.select(2, cdk.Fn.split("/", supergraphMesh.functionUrl)),
+      // ["/graphql"]: cdk.Fn.select(2, cdk.Fn.split("/", supergraphGateway.functionUrl)),
     };
 
     // Set up our s3 website for ui-app.

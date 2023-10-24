@@ -130,9 +130,9 @@ _setup-rust project:
   rustup toolchain install stable
   rustup default stable
 
-# Deploy the specified <stack>, e.g. `just deploy Cloud`, defaulting to --all.
+# Deploy the specified <stack>, e.g. `just deploy 'Cloud/**'`, defaulting to --all.
 deploy stack='--all':
-  cd deployment && bun run cdk deploy --concurrency 6 --outputs-file artifacts/outputs.json --require-approval never {{ if stack == "--all" { "--all" } else { stack } }}
+  cd deployment && bun run cdk deploy --concurrency 6 --no-rollback --outputs-file artifacts/outputs.json --require-approval never {{ if stack == "--all" { "--all" } else { stack } }}
 
 # Download the Apollo Router binary that we will use for AWS Lambda.
 deploy-setup-layers:
@@ -272,6 +272,17 @@ _build-ms-router build="release":
   @ mkdir -p ./deployment/artifacts && cp -r ./target/lambda/ms-router ./deployment/artifacts/ms-router
   @ cp ms-router/router.yaml ./deployment/artifacts/ms-router/router.yaml
   @ cp ms-router/supergraph.graphql ./deployment/artifacts/ms-router/supergraph.graphql
+
+_build-ms-router-docker build="release":
+  #!/usr/bin/env bash
+  set -euxo pipefail
+  cd ms-router
+  export ACCOUNT=$(aws sts get-caller-identity | jq .Account -r)
+  export ECR_URL=$(aws cloudformation list-exports --query "Exports[?Name=='EcrMsRouter'].Value" --no-paginate --output text)
+  aws ecr get-login-password --region "${AWS_REGION:-$AWS_DEFAULT_REGION}" | docker login --username AWS --password-stdin "$ACCOUNT.dkr.ecr.${AWS_REGION:-$AWS_DEFAULT_REGION}.amazonaws.com"
+  docker buildx build --platform linux/amd64,linux/arm64 -t ms-router:latest --build-arg ROUTER_VERSION="v{{router-version}}" .
+  docker tag ms-router:latest "$ECR_URL:latest"
+  docker push "$ECR_URL:latest"
 
 _build-ms-apollo build="release":
   cd ms-apollo && cargo lambda build --arm64 {{ if build == "debug" { "" } else { "--release" } }}

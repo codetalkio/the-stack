@@ -115,10 +115,9 @@ export class Stack extends cdk.Stack {
     const redirectPathToUrl = props.redirectPathToUrl ?? {};
     // Iterate over the keys and values of redirectPathToUrl.
     for (const key in redirectPathToUrl) {
-      const url = redirectPathToUrl[key];
-      const domainPart = cdk.Fn.select(2, cdk.Fn.split("/", url));
+      const domain = redirectPathToUrl[key];
       additionalBehaviors[key] = {
-        origin: new cloudfrontOrigins.HttpOrigin(domainPart, {
+        origin: new cloudfrontOrigins.HttpOrigin(domain, {
           customHeaders: {
             "X-Forwarded-Host": props.domain,
           },

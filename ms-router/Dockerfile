@@ -1,0 +1,73 @@
+FROM debian:bullseye-slim AS downloader
+ARG ROUTER_RELEASE=latest
+ARG ARTIFACT_URL=
+
+# Install curl
+RUN \
+  apt-get update -y \
+  && apt-get install -y \
+  curl
+
+WORKDIR /dist
+
+# Run the Router downloader which puts Router into current working directory
+RUN if [ -z "${ARTIFACT_URL}"]; then \
+  curl -sSL https://router.apollo.dev/download/nix/${ROUTER_RELEASE}/ | sh; \
+  else \
+  cd /; \
+  curl -sSL -o - ${ARTIFACT_URL} | tar -xzf -; \
+  cd -; \
+  fi
+
+FROM debian:bullseye-slim AS distro
+ARG DEBUG_IMAGE=false
+
+WORKDIR /dist
+
+COPY --from=downloader /dist/router /dist
+
+# Update apt and install ca-certificates
+RUN \
+  apt-get update -y \
+  && apt-get install -y \
+  ca-certificates
+
+# If debug image, install heaptrack and make a data directory
+RUN \
+  if [ "${DEBUG_IMAGE}" = "true" ]; then \
+  apt-get install -y heaptrack && \
+  mkdir data; \
+  fi
+
+# Clean up apt lists
+RUN rm -rf /var/lib/apt/lists/*
+
+# Make directories for config and schema
+RUN mkdir config schema
+
+# Copy configuration for docker image
+COPY ./router.yaml config
+COPY ./supergraph.graphql config
+
+ENV APOLLO_ROUTER_CONFIG_PATH="/dist/config/router.yaml"
+ENV APOLLO_ROUTER_SUPERGRAPH_PATH="/dist/config/supergraph.graphql"
+ENV APOLLO_TELEMETRY_DISABLED="true"
+ENV APOLLO_ROUTER_LISTEN_ADDRESS="0.0.0.0:4000"
+
+# Create a wrapper script to run the router, use exec to ensure signals are handled correctly
+RUN \
+  echo '#!/usr/bin/env bash \
+  \nset -e \
+  \n \
+  \nif [ -f "/usr/bin/heaptrack" ]; then \
+  \n    exec heaptrack -o /dist/data/router_heaptrack /dist/router "$@" \
+  \nelse \
+  \n    exec /dist/router "$@" \
+  \nfi \
+  ' > /dist/router_wrapper.sh
+
+# Make sure we can run our wrapper
+RUN chmod 755 /dist/router_wrapper.sh
+
+# Default executable is the wrapper script
+ENTRYPOINT ["/dist/router_wrapper.sh"]

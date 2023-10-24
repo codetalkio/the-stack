@@ -1,0 +1,4 @@
+*
+!bin/router
+!router.yaml
+!supergraph.graphql

@@ -17,7 +17,7 @@
     "bun-types": "latest"
   },
   "dependencies": {
-    "@aws-cdk/aws-apprunner-alpha": "2.102.0-alpha.0",
+    "@aws-cdk/aws-apprunner-alpha": "2.100.0-alpha.0",
     "aws-cdk-lib": "2.100.0",
     "constructs": "10.3.0"
   }
