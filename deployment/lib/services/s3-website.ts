@@ -167,11 +167,11 @@ export class Stack extends cdk.Stack {
         //   responsePagePath: `/${props.error}`,
         //   responseHttpStatus: 200,
         // },
-        {
-          httpStatus: 404,
-          responsePagePath: `/${props.error}`,
-          responseHttpStatus: 200,
-        },
+        // {
+        //   httpStatus: 404,
+        //   responsePagePath: `/${props.error}`,
+        //   responseHttpStatus: 200,
+        // },
       ],
     });
     cdk.Tags.of(distribution).add(

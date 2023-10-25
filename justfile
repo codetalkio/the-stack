@@ -132,7 +132,7 @@ _setup-rust project:
 
 # Deploy the specified <stack>, e.g. `just deploy 'Cloud/**'`, defaulting to --all.
 deploy stack='--all':
-  cd deployment && bun run cdk deploy --concurrency 6 --no-rollback --outputs-file artifacts/outputs.json --require-approval never {{ if stack == "--all" { "--all" } else { stack } }}
+  cd deployment && bun run cdk deploy --concurrency 6 --outputs-file artifacts/outputs.json --require-approval never {{ stack }}
 
 # Download the Apollo Router binary that we will use for AWS Lambda.
 deploy-setup-layers:
