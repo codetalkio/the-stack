@@ -1,9 +1,9 @@
-import * as cdk from "aws-cdk-lib";
-import { Construct } from "constructs";
-import * as ecr from "aws-cdk-lib/aws-ecr";
-import * as cfnAppRunner from "aws-cdk-lib/aws-apprunner";
-import * as cr from "aws-cdk-lib/custom-resources";
-import * as appRunner from "@aws-cdk/aws-apprunner-alpha";
+import * as cdk from 'aws-cdk-lib';
+import { Construct } from 'constructs';
+import * as ecr from 'aws-cdk-lib/aws-ecr';
+import * as cfnAppRunner from 'aws-cdk-lib/aws-apprunner';
+import * as cr from 'aws-cdk-lib/custom-resources';
+import * as appRunner from '@aws-cdk/aws-apprunner-alpha';
 
 export interface StackProps extends cdk.StackProps {
   /**
@@ -36,7 +36,7 @@ export class Stack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
 
-    const app = new appRunner.Service(this, "Service", {
+    const app = new appRunner.Service(this, 'Service', {
       cpu: appRunner.Cpu.QUARTER_VCPU,
       memory: appRunner.Memory.HALF_GB,
       source: appRunner.Source.fromEcr({
@@ -46,17 +46,17 @@ export class Stack extends cdk.Stack {
             ...props.environment,
           },
         },
-        repository: ecr.Repository.fromRepositoryName(
-          this,
-          "MsRouterRepo",
-          "ms-router"
-        ),
+        repository: ecr.Repository.fromRepositoryName(this, 'MsRouterRepo', 'ms-router'),
         tagOrDigest: props.tag,
       }),
     });
-    cdk.Tags.of(app).add("billing", `${props.billingGroup}-app-runner`);
-    cdk.Tags.of(app).add("billing-group", `${props.billingGroup}`);
+    cdk.Tags.of(app).add('billing', `${props.billingGroup}-app-runner`);
+    cdk.Tags.of(app).add('billing-group', `${props.billingGroup}`);
 
+    new cdk.CfnOutput(this, `ServiceUrl`, {
+      value: app.serviceUrl,
+      description: 'The HTTP URL for the App Runner service.',
+    });
     this.serviceUrl = app.serviceUrl;
 
     // // We have to manually construct the AutoScalingConfiguration as a Custom Resource.

@@ -1,7 +1,7 @@
-import * as cdk from "aws-cdk-lib";
-import { Construct } from "constructs";
-import * as route53 from "aws-cdk-lib/aws-route53";
-import * as acm from "aws-cdk-lib/aws-certificatemanager";
+import * as cdk from 'aws-cdk-lib';
+import { Construct } from 'constructs';
+import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 
 export interface StackProps extends cdk.StackProps {
   /**
@@ -20,12 +20,12 @@ export class Stack extends cdk.Stack {
     super(scope, id, props);
 
     // Set up the hosted zone.
-    const hostedZone = new route53.HostedZone(this, "HostedZone", {
+    const hostedZone = new route53.HostedZone(this, 'HostedZone', {
       zoneName: props.domain,
     });
 
     // Set up an ACM certificate for the domain + subdomains, and validate it using DNS.
-    new acm.Certificate(this, "Certificate", {
+    new acm.Certificate(this, 'Certificate', {
       domainName: props.domain,
       subjectAlternativeNames: [`*.${props.domain}`],
       validation: acm.CertificateValidation.fromDns(hostedZone),

@@ -1,7 +1,7 @@
-import * as cdk from "aws-cdk-lib";
-import { Construct } from "constructs";
-import * as lambda from "aws-cdk-lib/aws-lambda";
-import * as path from "path";
+import * as cdk from 'aws-cdk-lib';
+import { Construct } from 'constructs';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as path from 'path';
 
 export interface StackProps extends cdk.StackProps {
   /**
@@ -59,16 +59,16 @@ export class Stack extends cdk.Stack {
       memorySize: 1024,
       runtime: props.runtime ?? lambda.Runtime.PROVIDED_AL2,
       architecture: lambda.Architecture.ARM_64,
-      handler: props.handler ?? "not.required",
+      handler: props.handler ?? 'not.required',
       environment: {
-        RUST_BACKTRACE: "1",
+        RUST_BACKTRACE: '1',
         ...props.environment,
       },
       logRetention: cdk.aws_logs.RetentionDays.ONE_WEEK,
       tracing: lambda.Tracing.ACTIVE,
     });
-    cdk.Tags.of(lambdaFn).add("billing", `${props.billingGroup}-lambda`);
-    cdk.Tags.of(lambdaFn).add("billing-group", `${props.billingGroup}`);
+    cdk.Tags.of(lambdaFn).add('billing', `${props.billingGroup}-lambda`);
+    cdk.Tags.of(lambdaFn).add('billing-group', `${props.billingGroup}`);
 
     // TODO: Set up alias so each deployment is versioned and can live next to the live one.
     // const alias = lambdaFn.addAlias("live", {});
@@ -77,7 +77,7 @@ export class Stack extends cdk.Stack {
     const fnUrl = lambdaFn.addFunctionUrl({
       authType: lambda.FunctionUrlAuthType.NONE,
       cors: {
-        allowedOrigins: ["*"],
+        allowedOrigins: ['*'],
         allowedMethods: [lambda.HttpMethod.ALL],
         allowCredentials: true,
         maxAge: cdk.Duration.minutes(1),
@@ -86,7 +86,7 @@ export class Stack extends cdk.Stack {
 
     new cdk.CfnOutput(this, `FunctionUrl`, {
       value: fnUrl.url,
-      description: "The HTTP URL for the Lambda Function.",
+      description: 'The HTTP URL for the Lambda Function.',
     });
     this.functionUrl = fnUrl.url;
   }

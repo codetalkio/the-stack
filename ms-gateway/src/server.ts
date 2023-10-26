@@ -1,6 +1,6 @@
-import { ApolloServer } from "@apollo/server";
-import { ApolloGateway, RemoteGraphQLDataSource } from "@apollo/gateway";
-import sdl from "./supergraph.graphql";
+import { ApolloServer } from '@apollo/server';
+import { ApolloGateway, RemoteGraphQLDataSource } from '@apollo/gateway';
+import sdl from './supergraph.graphql';
 
 /**
  * Support overriding our subgraph URLs via environment variables.

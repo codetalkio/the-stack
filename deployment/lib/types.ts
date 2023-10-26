@@ -71,40 +71,25 @@ export type Config = {
 export type Subgraph = {
   name: string;
   project: string;
-  runtime?: "lambda";
-  memory?:
-    | 128
-    | 256
-    | 512
-    | 1024
-    | 2048
-    | 3072
-    | 4096
-    | 5120
-    | 6144
-    | 7168
-    | 8192
-    | 9216
-    | 10240;
+  runtime?: 'lambda';
+  memory?: 128 | 256 | 512 | 1024 | 2048 | 3072 | 4096 | 5120 | 6144 | 7168 | 8192 | 9216 | 10240;
 };
 
-export type App =
-  | { service: "internal"; subdomain: string }
-  | { service: "app" };
+export type App = { service: 'internal'; subdomain: string } | { service: 'app' };
 
 export type Supergraph =
   | {
-      service: "mesh";
-      runtime: "lambda";
+      service: 'mesh';
+      runtime: 'lambda';
       path: string;
     }
   | {
-      service: "gateway";
-      runtime: "lambda";
+      service: 'gateway';
+      runtime: 'lambda';
       path: string;
     }
   | {
-      service: "router";
-      runtime: "app-runner" | "lambda";
+      service: 'router';
+      runtime: 'app-runner' | 'lambda';
       path: string;
     };

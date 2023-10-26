@@ -1,6 +1,6 @@
-import { startStandaloneServer } from "@apollo/server/standalone";
+import { startStandaloneServer } from '@apollo/server/standalone';
 
-import { server } from "./server";
+import { server } from './server';
 
 // Run the local server.
 const { url } = await startStandaloneServer(server);

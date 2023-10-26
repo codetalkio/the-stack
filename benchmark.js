@@ -1,14 +1,14 @@
-import http from "k6/http";
-import { sleep } from "k6";
+import http from 'k6/http';
+import { sleep } from 'k6';
 
 export default function () {
   const payload = JSON.stringify({
-    query: "query { __typename }",
+    query: 'query { __typename }',
   });
 
   const params = {
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
   };
 
