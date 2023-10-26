@@ -129,6 +129,17 @@ export class Stack extends cdk.Stack {
       };
     }
 
+    // Set up a bucket for access logging.
+    const logBucket = new s3.Bucket(this, `DistributionLogBucket`, {
+      objectOwnership: s3.ObjectOwnership.OBJECT_WRITER,
+      publicReadAccess: false,
+    });
+    logBucket.addLifecycleRule({
+      enabled: true,
+      expiration: cdk.Duration.days(14),
+      id: "expiration-rule",
+    });
+
     // Configure our CloudFront distribution.
     const distribution = new cloudfront.Distribution(this, "Distribution", {
       domainNames: [props.domain],
@@ -137,6 +148,8 @@ export class Stack extends cdk.Stack {
         "Certificate",
         props.certificateArn
       ),
+      logBucket,
+      enableLogging: false,
       // Allow both HTTP 2 and 3.
       httpVersion: cloudfront.HttpVersion.HTTP2_AND_3,
       // Our default behavior is to redirect to our index page.
@@ -161,18 +174,18 @@ export class Stack extends cdk.Stack {
       additionalBehaviors,
       // Set up redirects when a user hits a 404 or 403.
       // TODO: Are these causing the other pages to be inaccessible?
-      errorResponses: [
-        // {
-        //   httpStatus: 403,
-        //   responsePagePath: `/${props.error}`,
-        //   responseHttpStatus: 200,
-        // },
-        // {
-        //   httpStatus: 404,
-        //   responsePagePath: `/${props.error}`,
-        //   responseHttpStatus: 200,
-        // },
-      ],
+      // errorResponses: [
+      //   {
+      //     httpStatus: 403,
+      //     responsePagePath: `/${props.error}`,
+      //     responseHttpStatus: 200,
+      //   },
+      //   {
+      //     httpStatus: 404,
+      //     responsePagePath: `/${props.error}`,
+      //     responseHttpStatus: 200,
+      //   },
+      // ],
     });
     cdk.Tags.of(distribution).add(
       "billing",
