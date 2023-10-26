@@ -96,6 +96,8 @@ export class Stack extends cdk.Stack {
       value: fnUrl.url,
       description: 'The HTTP URL for the Lambda Function.',
     });
+    // Keep cross-stack references stable via `exportValue`.
+    this.exportValue(fnUrl.url);
     this.functionUrl = fnUrl.url;
   }
 }

@@ -32,6 +32,8 @@ export class Stack extends cdk.Stack {
       value: cert.certificateArn,
       description: 'The ARN of the ACM Certificate to be used with CloudFront.',
     });
+    // Keep cross-stack references stable via `exportValue`.
+    this.exportValue(cert.certificateArn);
     this.certificateArn = cert.certificateArn;
   }
 }

@@ -225,5 +225,7 @@ export class Stack extends cdk.Stack {
       value: props.domain,
       description: 'The URL of the website.',
     });
+    // Keep cross-stack references stable via `exportValue`.
+    this.exportValue(props.domain);
   }
 }

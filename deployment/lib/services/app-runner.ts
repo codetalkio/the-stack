@@ -57,6 +57,8 @@ export class Stack extends cdk.Stack {
       value: app.serviceUrl,
       description: 'The HTTP URL for the App Runner service.',
     });
+    // Keep cross-stack references stable via `exportValue`.
+    this.exportValue(app.serviceUrl);
     this.serviceUrl = app.serviceUrl;
 
     // // We have to manually construct the AutoScalingConfiguration as a Custom Resource.
