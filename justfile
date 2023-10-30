@@ -134,6 +134,10 @@ _setup-rust project:
 deploy stack='--all':
   cd deployment && bun run cdk deploy --concurrency 6 --outputs-file artifacts/outputs.json --require-approval never {{ stack }}
 
+# Deploy the specified <stack> with --no-rolback, e.g. `just deploy 'Cloud/**'`, defaulting to --all.
+deploy-debug stack='--all':
+  cd deployment && bun run cdk deploy --no-rolback --concurrency 6 --outputs-file artifacts/outputs.json --require-approval never {{ stack }}
+
 # Download the Apollo Router binary that we will use for AWS Lambda.
 deploy-setup-layers:
   #!/usr/bin/env bash
@@ -290,6 +294,12 @@ _build-ms-apollo build="release":
   @ mkdir -p ./deployment/artifacts && cp -r ./target/lambda/ms-apollo ./deployment/artifacts/ms-apollo
   @ cp ms-apollo/router.yaml ./deployment/artifacts/ms-apollo/router.yaml
   @ cp ms-apollo/supergraph.graphql ./deployment/artifacts/ms-apollo/supergraph.graphql
+
+_build-ms-apollo-docker build="release":
+  #!/usr/bin/env bash
+  set -euxo pipefail
+  cd ms-apollo
+  docker build -f Dockerfile -t ms-apollo:latest .
 
 _build-ms-gateway build="release":
   cd ms-gateway && bun run build

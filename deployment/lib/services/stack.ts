@@ -76,7 +76,7 @@ export class Stack extends cdk.Stack {
     // });
 
     // Set up our Apollo Router that pieces together the microservices.
-    const supergraphRouter = new routerAppRunner.Stack(this, 'MsRouterApp', {
+    const supergraphRouter = new routerAppRunner.Stack(this, 'MsRouter', {
       ...props,
       tag: `latest`,
       billingGroup: 'ms-router',
