@@ -95,6 +95,7 @@
     "rust-analyzer.procMacro.ignored": {
       "leptos_macro": ["server", "component"]
     },
+    "rust-analyzer.cargo.features": [],
     "emmet.includeLanguages": {
       "rust": "html",
       "*.rs": "html"
@@ -114,10 +115,6 @@
     "css.validate": false
   },
   "extensions": {
-    "recommendations": [
-      "bradlc.vscode-tailwindcss",
-      "rust-lang.rust-analyzer",
-      "skellock.just"
-    ]
+    "recommendations": ["bradlc.vscode-tailwindcss", "rust-lang.rust-analyzer", "skellock.just"]
   }
 }

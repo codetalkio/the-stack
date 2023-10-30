@@ -299,7 +299,12 @@ _build-ms-apollo-docker build="release":
   #!/usr/bin/env bash
   set -euxo pipefail
   cd ms-apollo
-  docker build -f Dockerfile -t ms-apollo:latest .
+  export ACCOUNT=$(aws sts get-caller-identity | jq .Account -r)
+  export ECR_URL=$(aws cloudformation list-exports --query "Exports[?Name=='EcrMsRouter'].Value" --no-paginate --output text)
+  aws ecr get-login-password --region "${AWS_REGION:-$AWS_DEFAULT_REGION}" | docker login --username AWS --password-stdin "$ACCOUNT.dkr.ecr.${AWS_REGION:-$AWS_DEFAULT_REGION}.amazonaws.com"
+  docker build -t ms-router:lambda .
+  docker tag ms-router:lambda "$ECR_URL:lambda"
+  docker push "$ECR_URL:lambda"
 
 _build-ms-gateway build="release":
   cd ms-gateway && bun run build
