@@ -22,9 +22,9 @@ directive @link(url: String, as: String, for: link__Purpose, import: [link__Impo
 scalar join__FieldSet
 
 enum join__Graph {
-  PRODUCTS @join__graph(name: "products", url: "http://127.0.0.1:3075/")
-  REVIEWS @join__graph(name: "reviews", url: "http://127.0.0.1:3085/")
-  USERS @join__graph(name: "users", url: "http://127.0.0.1:3065/")
+  PRODUCTS @join__graph(name: "products", url: "https://ckvmnxg6sssbvn76ghbjfoyg3y0prbgg.lambda-url.eu-west-1.on.aws/")
+  REVIEWS @join__graph(name: "reviews", url: "https://hxrh4uag3p5i5ggc26lteupgky0xsatc.lambda-url.eu-west-1.on.aws/")
+  USERS @join__graph(name: "users", url: "https://obmvoif6nn6vbuzughnafrx4ba0gtyce.lambda-url.eu-west-1.on.aws/")
 }
 
 scalar link__Import

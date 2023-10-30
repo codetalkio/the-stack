@@ -21,58 +21,35 @@ RUN curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v3.15
   && mv bin/protoc /usr/local/bin/protoc \
   && mv include /usr/local/bin/include
 
+# Fetch the cargo-lambda binary.
+RUN curl -LO https://github.com/cargo-lambda/cargo-lambda/releases/download/v0.22.0/cargo-lambda-v0.22.0.x86_64-unknown-linux-musl.tar.gz \
+  && tar -xvf cargo-lambda-v0.22.0.x86_64-unknown-linux-musl.tar.gz \
+  && chmod +x cargo-lambda \
+  && mv cargo-lambda $HOME/.cargo/bin/cargo-lambda
+
 # Create blank project so we can build our dependencies, and copy over our
 # Cargo files.
-WORKDIR /dist
-RUN $HOME/.cargo/bin/cargo new ms-router
-COPY Cargo.toml Cargo.lock /dist/ms-router/
+# WORKDIR /dist
+# RUN $HOME/.cargo/bin/cargo new ms-router
+# COPY Cargo.toml Cargo.lock /dist/ms-router/
 
-# Build and cache our dependencies.
+# # Build and cache our dependencies.
+# WORKDIR /dist/ms-router
+# RUN export PATH="$HOME/.cargo/bin:$PATH"; cargo lambda build --compiler cargo --release
+
+# # Copy over the rest of our source code.
+# RUN rm -rf src \
+#   && rm -rf /dist/ms-router/target/lambda/ms-apollo
+# COPY src /dist/ms-router/src
+
 WORKDIR /dist/ms-router
-# TODO: Add --release flag.
-RUN $HOME/.cargo/bin/cargo build --features local
-
-# Copy over the rest of our source code.
-COPY src /dist/ms-router/src
+COPY . /dist/ms-router
 
 # Copy configurations into our docker image.
+# FIXME: The boostrap file should fetch these from local file env.
 COPY ./router.yaml /dist/ms-router
 COPY ./supergraph.graphql /dist/ms-router
 
-# Build our router binary.
-# TODO: Add --release flag.
-RUN $HOME/.cargo/bin/cargo build --features local
-RUN cp /dist/ms-router/target/debug/ms-apollo /dist/router
-
-# Build our lambda bootstrap binary.
-# TODO: Add --release flag.
-RUN $HOME/.cargo/bin/cargo build
-RUN cp /dist/ms-router/target/debug/ms-apollo /dist/bootstrap
-
-###############################################################################################
-###############################################################################################
-###############################################################################################
-FROM amazon/aws-lambda-provided:al2 AS distro
-
-WORKDIR /dist
-
-COPY --from=builder /dist/bootstrap /var/runtime/bootstrap
-COPY --from=builder /dist/router /dist/router
-# COPY --from=builder /usr/local/bin/protoc /usr/local/bin/protoc
-# COPY --from=builder /usr/local/bin/include /usr/local/bin/include
-
-
-# Copy configurations into our docker image.
-COPY ./router.yaml /dist
-COPY ./supergraph.graphql /dist
-
-ENV APOLLO_ROUTER_CONFIG_PATH="/dist/router.yaml"
-ENV APOLLO_ROUTER_SUPERGRAPH_PATH="/dist/supergraph.graphql"
-ENV APOLLO_TELEMETRY_DISABLED="true"
-ENV APOLLO_ROUTER_LISTEN_ADDRESS="0.0.0.0:4000"
-
-# Make sure our bootstrap and router are executable.
-RUN chmod 755 /var/runtime/bootstrap \
-  && chmod 755 /dist/router
-
-ENTRYPOINT ["/var/runtime/bootstrap"]
+# Build our lambda bootstrap binary. The release artifact can be found at:
+# /dist/ms-router/target/lambda/ms-apollo/bootstrap
+RUN export PATH="$HOME/.cargo/bin:$PATH"; cargo lambda build --compiler cargo --release

@@ -299,12 +299,11 @@ _build-ms-apollo-docker build="release":
   #!/usr/bin/env bash
   set -euxo pipefail
   cd ms-apollo
-  export ACCOUNT=$(aws sts get-caller-identity | jq .Account -r)
-  export ECR_URL=$(aws cloudformation list-exports --query "Exports[?Name=='EcrMsRouter'].Value" --no-paginate --output text)
-  aws ecr get-login-password --region "${AWS_REGION:-$AWS_DEFAULT_REGION}" | docker login --username AWS --password-stdin "$ACCOUNT.dkr.ecr.${AWS_REGION:-$AWS_DEFAULT_REGION}.amazonaws.com"
-  docker build -t ms-router:lambda .
-  docker tag ms-router:lambda "$ECR_URL:lambda"
-  docker push "$ECR_URL:lambda"
+  docker build -t ms-apollo:lambda .
+  # Copy the binary from the Docker image to the local filesystem.
+  export TMP_IMAGE_ID=$(docker create ms-apollo:lambda)
+  docker cp $TMP_IMAGE_ID:/dist/ms-router/target/lambda/ms-apollo/bootstrap bootstrap
+  docker rm -v $TMP_IMAGE_ID
 
 _build-ms-gateway build="release":
   cd ms-gateway && bun run build

@@ -34,7 +34,7 @@ traffic_shaping:
 
 # Support setting the path to each subgraph via environment variables. This will override
 # the ones defined in the composed supergraph.graphql schema.
-override_subgraph_url:
-  users: '${env.SUBGRAPH_USERS_URL:-http://127.0.0.1:3065/}'
-  products: '${env.SUBGRAPH_PRODUCTS_URL:-http://127.0.0.1:3075/}'
-  reviews: '${env.SUBGRAPH_REVIEWS_URL:-http://127.0.0.1:3085/}'
+# override_subgraph_url:
+#   users: '${env.SUBGRAPH_USERS_URL:-http://127.0.0.1:3065/}'
+#   products: '${env.SUBGRAPH_PRODUCTS_URL:-http://127.0.0.1:3075/}'
+#   reviews: '${env.SUBGRAPH_REVIEWS_URL:-http://127.0.0.1:3085/}'
