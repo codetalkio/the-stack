@@ -6,10 +6,9 @@ members = [
   "ms-gql-products",
   "ms-gql-reviews",
   "ms-queue",
-  "ms-router",
 ]
 
-exclude = ["ui-internal", "ms-apollo", "ms-apollo2"]
+exclude = ["ui-internal", "ms-apollo"]
 
 [profile.release]
 # Configurations explicitly listed here for clarity.
