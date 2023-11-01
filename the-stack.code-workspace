@@ -51,10 +51,6 @@
     {
       "name": "ms-mesh",
       "path": "ms-mesh"
-    },
-    {
-      "name": "ms-apollo",
-      "path": "ms-apollo"
     }
   ],
   "settings": {
@@ -75,7 +71,6 @@
       "ms-router": true,
       "ms-gateway": true,
       "ms-mesh": true,
-      "ms-apollo": true,
       "ms-queue": true,
       "ms-gql-users": true,
       "ms-gql-products": true,

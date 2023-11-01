@@ -14,7 +14,9 @@ defaults:
 jobs:
   check:
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
+    environment:
+      name: ${{ inputs.environment }}
+      url: https://${{ vars.DOMAIN }}
     steps:
       - uses: actions/checkout@v3
       - uses: oven-sh/setup-bun@v1

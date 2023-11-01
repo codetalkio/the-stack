@@ -1,11 +1,10 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 
+import { config } from '../helpers';
 import * as s3Website from './s3-website';
 import * as lambdaFn from './lambda';
-import * as routerLambdaFn from './router';
 import * as routerAppRunner from './app-runner';
 
 interface StackProps extends cdk.StackProps {
@@ -24,101 +23,159 @@ export class Stack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
 
-    const usersFn = new lambdaFn.Stack(this, 'MsGqlUsers', {
-      ...props,
-      functionName: 'ms-gql-users',
-      assets: 'artifacts/ms-gql-users',
-      billingGroup: 'ms-gql-users',
-    });
+    // Set up environment variables pointing to each subgraph URL.
+    const subGraphUrls = {};
 
-    const productsFn = new lambdaFn.Stack(this, 'MsGqlProducts', {
-      ...props,
-      functionName: 'ms-gql-products',
-      assets: 'artifacts/ms-gql-products',
-      billingGroup: 'ms-gql-products',
-    });
+    // Create all Lambda subgraphs.
+    config.subgraphs
+      .filter((s) => !s.runtime || s.runtime === 'lambda')
+      .forEach((subgraph) => {
+        const subgraphName = subgraph.name.charAt(0).toUpperCase() + subgraph.name.slice(1);
+        const subgraphFn = new lambdaFn.Stack(this, `MsGql${subgraphName}`, {
+          ...props,
+          functionName: subgraph.project,
+          assets: `artifacts/${subgraph.project}`,
+          billingGroup: subgraph.project,
+        });
+        subGraphUrls[`SUBGRAPH_${subgraph.name.toUpperCase()}_URL`] = subgraphFn.functionUrl;
+      });
 
-    const reviewsFn = new lambdaFn.Stack(this, 'MsGqlReviews', {
-      ...props,
-      functionName: 'ms-gql-reviews',
-      assets: 'artifacts/ms-gql-reviews',
-      billingGroup: 'ms-gql-reviews',
-    });
+    // Make the API accessible on a path on the App domains, populated by the chosen
+    // supergraph(s).
+    const redirectPathToUrl = {};
 
     // Set up our Apollo Gateway that pieces together the microservices.
-    const supergraphGateway = new lambdaFn.Stack(this, 'MsGateway', {
-      ...props,
-      functionName: 'ms-gateway',
-      handler: 'lambda.graphqlHandler',
-      runtime: lambda.Runtime.NODEJS_LATEST,
-      assets: 'artifacts/ms-gateway',
-      billingGroup: 'ms-gateway',
-      environment: {
-        SUBGRAPH_USERS_URL: usersFn.functionUrl,
-        SUBGRAPH_PRODUCTS_URL: productsFn.functionUrl,
-        SUBGRAPH_REVIEWS_URL: reviewsFn.functionUrl,
-      },
-    });
+    const gatewayIsMain = config.supergraph.service === 'gateway';
+    const additionalGatewayConfig = config.experimental.additionalSupergraphs.find((s) => s.service === 'gateway');
+    if (gatewayIsMain || additionalGatewayConfig) {
+      const supergraphGateway = new lambdaFn.Stack(this, 'MsGateway', {
+        ...props,
+        functionName: 'ms-gateway',
+        handler: 'lambda.graphqlHandler',
+        runtime: lambda.Runtime.NODEJS_LATEST,
+        assets: 'artifacts/ms-gateway',
+        billingGroup: 'ms-gateway',
+        environment: {
+          ...subGraphUrls,
+        },
+      });
+      if (gatewayIsMain) {
+        redirectPathToUrl[config.supergraph.path] = cdk.Fn.select(2, cdk.Fn.split('/', supergraphGateway.functionUrl));
+      }
+      if (additionalGatewayConfig) {
+        redirectPathToUrl[additionalGatewayConfig.path] = cdk.Fn.select(
+          2,
+          cdk.Fn.split('/', supergraphGateway.functionUrl),
+        );
+      }
+    }
 
     // Set up our GraphQL Mesh that pieces together the microservices.
-    // const supergraphMesh = new lambdaFn.Stack(this, "MsMesh", {
-    //   ...props,
-    //   functionName: "ms-mesh",
-    //   handler: "lambda.graphqlHandler",
-    //   runtime: lambda.Runtime.NODEJS_LATEST,
-    //   assets: "artifacts/ms-mesh",
-    //   billingGroup: "ms-mesh",
-    //   environment: {
-    //     SUBGRAPH_USERS_URL: usersFn.functionUrl,
-    //     SUBGRAPH_PRODUCTS_URL: productsFn.functionUrl,
-    //     SUBGRAPH_REVIEWS_URL: reviewsFn.functionUrl,
-    //   },
-    // });
+    const meshIsMain = config.supergraph.service === 'mesh';
+    const additionalMeshConfig = config.experimental.additionalSupergraphs.find((s) => s.service === 'mesh');
+    if (meshIsMain || additionalMeshConfig) {
+      const supergraphMesh = new lambdaFn.Stack(this, 'MsMesh', {
+        ...props,
+        functionName: 'ms-mesh',
+        handler: 'lambda.graphqlHandler',
+        runtime: lambda.Runtime.NODEJS_LATEST,
+        assets: 'artifacts/ms-mesh',
+        billingGroup: 'ms-mesh',
+        environment: {
+          ...subGraphUrls,
+        },
+      });
+      if (meshIsMain) {
+        redirectPathToUrl[config.supergraph.path] = cdk.Fn.select(2, cdk.Fn.split('/', supergraphMesh.functionUrl));
+      }
+      if (additionalMeshConfig) {
+        redirectPathToUrl[additionalMeshConfig.path] = cdk.Fn.select(2, cdk.Fn.split('/', supergraphMesh.functionUrl));
+      }
+    }
 
-    // Set up our Apollo Router that pieces together the microservices.
-    const supergraphRouter = new routerAppRunner.Stack(this, 'MsRouter', {
-      ...props,
-      tag: `latest`,
-      billingGroup: 'ms-router',
-      environment: {
-        SUBGRAPH_USERS_URL: usersFn.functionUrl,
-        SUBGRAPH_PRODUCTS_URL: productsFn.functionUrl,
-        SUBGRAPH_REVIEWS_URL: reviewsFn.functionUrl,
-      },
-    });
+    // Set up our Apollo Router Lambda that pieces together the microservices.
+    const routerLambdaIsMain = config.supergraph.service === 'router' && config.supergraph.runtime === 'lambda';
+    const additionalRouterLambdaConfig = config.experimental.additionalSupergraphs.find(
+      (s) => s.service === 'router' && s.runtime === 'lambda',
+    );
+    if (routerLambdaIsMain || additionalRouterLambdaConfig) {
+      const supergraphRouterLambda = new lambdaFn.Stack(this, 'MsRouterLambda', {
+        ...props,
+        functionName: 'ms-router',
+        assets: 'artifacts/ms-router',
+        billingGroup: 'ms-router',
+        architecture: lambda.Architecture.X86_64,
+        environment: {
+          ...subGraphUrls,
+        },
+      });
+      if (routerLambdaIsMain) {
+        redirectPathToUrl[config.supergraph.path] = cdk.Fn.select(
+          2,
+          cdk.Fn.split('/', supergraphRouterLambda.functionUrl),
+        );
+      }
+      if (additionalRouterLambdaConfig) {
+        redirectPathToUrl[additionalRouterLambdaConfig.path] = cdk.Fn.select(
+          2,
+          cdk.Fn.split('/', supergraphRouterLambda.functionUrl),
+        );
+      }
+    }
 
-    // Make the API accessible on a path on the App domains.
-    const redirectPathToUrl = {
-      // ["/graphql"]: supergraphRouter.serviceUrl,
-      // ["/graphql"]: cdk.Fn.select(2, cdk.Fn.split("/", supergraphMesh.functionUrl)),
-      ['/graphql']: cdk.Fn.select(2, cdk.Fn.split('/', supergraphGateway.functionUrl)),
-    };
+    // Set up our Apollo Router App Runner that pieces together the microservices.
+    const routerAppIsMain = config.supergraph.service === 'router' && config.supergraph.runtime === 'app-runner';
+    const additionalRouterAppConfig = config.experimental.additionalSupergraphs.find(
+      (s) => s.service === 'router' && s.runtime === 'app-runner',
+    );
+    if (routerAppIsMain || additionalRouterAppConfig) {
+      const supergraphRouterApp = new routerAppRunner.Stack(this, 'MsRouterApp', {
+        ...props,
+        tag: `latest`,
+        billingGroup: 'ms-router',
+        environment: {
+          ...subGraphUrls,
+        },
+      });
+      if (routerAppIsMain) {
+        redirectPathToUrl[config.supergraph.path] = supergraphRouterApp.serviceUrl;
+      }
+      if (additionalRouterAppConfig) {
+        redirectPathToUrl[additionalRouterAppConfig.path] = supergraphRouterApp.serviceUrl;
+      }
+    }
 
     // Set up our s3 website for ui-app.
-    new s3Website.Stack(this, 'WebsiteUiApp', {
-      ...props,
-      assets: 'artifacts/ui-app',
-      index: 'index.html',
-      error: '404.html',
-      domain: props.domain,
-      hostedZone: props.domain,
-      certificateArn: props.certificateArn,
-      billingGroup: 'ui-app',
-      rewriteUrls: true,
-      redirectPathToUrl,
-    });
+    const appConfig = config.apps.find((app) => app.service === 'app');
+    if (appConfig && appConfig.service === 'app') {
+      new s3Website.Stack(this, 'WebsiteUiApp', {
+        ...props,
+        assets: 'artifacts/ui-app',
+        index: 'index.html',
+        error: '404.html',
+        domain: props.domain,
+        hostedZone: props.domain,
+        certificateArn: props.certificateArn,
+        billingGroup: 'ui-app',
+        rewriteUrls: true,
+        redirectPathToUrl,
+      });
+    }
 
-    // Set up our s3 website for ui-internal.
-    new s3Website.Stack(this, 'WebsiteUiInternal', {
-      ...props,
-      assets: 'artifacts/ui-internal',
-      index: 'index.html',
-      error: 'index.html',
-      domain: `internal.${props.domain}`,
-      hostedZone: props.domain,
-      certificateArn: props.certificateArn,
-      billingGroup: 'ui-internal',
-      redirectPathToUrl,
-    });
+    const internalConfig = config.apps.find((app) => app.service === 'internal');
+    if (internalConfig && internalConfig.service === 'internal') {
+      // Set up our s3 website for ui-internal.
+      new s3Website.Stack(this, 'WebsiteUiInternal', {
+        ...props,
+        assets: 'artifacts/ui-internal',
+        index: 'index.html',
+        error: 'index.html',
+        domain: `${internalConfig.subdomain}.${props.domain}`,
+        hostedZone: props.domain,
+        certificateArn: props.certificateArn,
+        billingGroup: 'ui-internal',
+        redirectPathToUrl,
+      });
+    }
   }
 }

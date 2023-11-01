@@ -4,10 +4,6 @@ set dotenv-load
 # https://github.com/apollographql/router/releases.
 router-version := "1.33.1"
 
-# The version of the Apollo Router we will be using. Check the latest version at
-# https://github.com/wundergraph/cosmo/releases
-cosmo-version := "0.25.1"
-
 # Display help information.
 help:
   @ just --list
@@ -98,7 +94,7 @@ _setup-ms-mesh:
 _setup-ms-mesh:
   cd ms-mesh && npm install
 
-_setup-ms-router: (_setup-rust "ms-router") deploy-setup-layers
+_setup-ms-router:
   #!/usr/bin/env bash
   set -euxo pipefail
   cd ms-router/bin
@@ -130,6 +126,14 @@ _setup-rust project:
   rustup toolchain install stable
   rustup default stable
 
+# Output the expected diff of deploying the stack, e.g. `just deploy-diff 'Services/MsGqlUsers'`, defaulting to --all.
+deploy-diff stack='--all':
+  cd deployment && bun run cdk diff {{ stack }}
+
+# Synthesize the whole stack.
+deploy-synth:
+  cd deployment && bun run cdk synth --all
+
 # Deploy the specified <stack>, e.g. `just deploy 'Cloud/**'`, defaulting to --all.
 deploy stack='--all':
   cd deployment && bun run cdk deploy --concurrency 6 --outputs-file artifacts/outputs.json --require-approval never {{ stack }}
@@ -138,18 +142,6 @@ deploy stack='--all':
 deploy-debug stack='--all':
   cd deployment && bun run cdk deploy --no-rolback --concurrency 6 --outputs-file artifacts/outputs.json --require-approval never {{ stack }}
 
-# Download the Apollo Router binary that we will use for AWS Lambda.
-deploy-setup-layers:
-  #!/usr/bin/env bash
-  set -euxo pipefail
-  cd deployment/layers
-  # Download the Apollo Router binary that we will use for AWS Lambda.
-  export TMP_DIR=$(mktemp -d)
-  curl -sSfL https://github.com/apollographql/router/releases/download/v{{router-version}}/router-v{{router-version}}-aarch64-unknown-linux-gnu.tar.gz -o $TMP_DIR/router.tar.gz
-  tar xf $TMP_DIR/router.tar.gz --strip-components 1 -C $TMP_DIR
-  mv $TMP_DIR/router ./router/router
-  rm -r $TMP_DIR
-
 # Validate that all deployment artifacts are present.
 deploy-validate-artifacts:
   @ just _deploy-validate-artifacts ui-app
@@ -157,7 +149,6 @@ deploy-validate-artifacts:
   @ just _deploy-validate-artifacts ms-gql-users
   @ just _deploy-validate-artifacts ms-gql-products
   @ just _deploy-validate-artifacts ms-gql-reviews
-  @ just _deploy-validate-artifacts ms-router
   @ just _deploy-validate-artifacts ms-gateway
   @ just _deploy-validate-artifacts ms-mesh
 
@@ -170,10 +161,10 @@ deploy-clean:
 
 # Compose the supergraph from all of our subgraphs (requires them to be running).
 compose:
-  cd ms-router && rover supergraph compose --config ../supergraph-config.yaml --output ../supergraph.graphql
-  cp ms-router/supergraph.graphql ms-gateway/src/supergraph.graphql
-  cp ms-router/supergraph.graphql ms-mesh/supergraph.graphql
-  cp ms-router/supergraph.graphql ms-apollo/supergraph.graphql
+  rover supergraph compose --config supergraph-config.yaml --output supergraph.graphql
+  cp supergraph.graphql ms-router/supergraph.graphql
+  cp supergraph.graphql ms-gateway/src/supergraph.graphql
+  cp supergraph.graphql ms-mesh/supergraph.graphql
 
 # Run tests for <project>, e.g. `just test deployment`.
 test project:
@@ -181,9 +172,6 @@ test project:
 
 _test-deployment:
   cd deployment && bun test "test/"
-
-_test-synth:
-  cd deployment && bun run cdk synth --all
 
 # Run End-to-End tests for <project>, e.g. `just e2e ui-internal`.
 e2e project:
@@ -211,26 +199,11 @@ _dev-ui-internal:
 _dev-ms-router:
   cd ms-router/bin && ./router --anonymous-telemetry-disabled --config ../router.yaml --supergraph=../supergraph.graphql --dev --hot-reload --log debug
 
-# Can be invoked with:
-# cargo lambda invoke --invoke-port 3035 --data-ascii '{ "body": "{\"query\":\"{me { name } }\"}" }'
-_dev-ms-router-lambda:
-  cd ms-router && cargo lambda watch --invoke-port 3035
-
 _dev-ms-gateway:
   cd ms-gateway && bun dev
 
 _dev-ms-mesh:
   cd ms-mesh && bun devh
-
-# Can be invoked with:
-# cargo lambda invoke --invoke-port 3034 --data-ascii '{ "body": "{\"query\":\"{me { name } }\"}" }'
-_dev-ms-apollo:
-  cd ms-apollo && cargo watch -x run --features local
-
-# Can be invoked with:
-# cargo lambda invoke --invoke-port 3034 --data-ascii '{ "body": "{\"query\":\"{me { name } }\"}" }'
-_dev-ms-apollo-lambda:
-  cd ms-apollo && cargo lambda watch --invoke-port 3034
 
 # Alternative: cargo lambda watch --invoke-port 3065
 _dev-ms-gql-users:
@@ -270,16 +243,21 @@ _build-ui-internal build="release":
   @ rm -r ./deployment/artifacts/ui-internal || true
   @ mkdir -p ./deployment/artifacts && cp -r ./ui-internal/dist ./deployment/artifacts/ui-internal
 
-_build-ms-router build="release":
-  cd ms-router && cargo lambda build --arm64 {{ if build == "debug" { "" } else { "--release" } }}
-  @ rm -r ./deployment/artifacts/ms-router || true
-  @ mkdir -p ./deployment/artifacts && cp -r ./target/lambda/ms-router ./deployment/artifacts/ms-router
-  @ cp ms-router/router.yaml ./deployment/artifacts/ms-router/router.yaml
-  @ cp ms-router/supergraph.graphql ./deployment/artifacts/ms-router/supergraph.graphql
-
-_build-ms-router-docker build="release":
+_build-ms-router-lambda build="release":
   #!/usr/bin/env bash
   set -euxo pipefail
+  mkdir -p ./deployment/artifacts
+  cp ms-router/router-lambda.yaml ./deployment/artifacts/ms-router/router.yaml
+  cp supergraph.graphql ./deployment/artifacts/ms-router/supergraph.graphql
+
+  # Download the prebuilt Apollo Router binary that we will use for deployment.
+  curl -sSL https://github.com/codetalkio/apollo-router-lambda/releases/latest/download/bootstrap-directly-x86-64 -o bootstrap
+  mv bootstrap ./deployment/artifacts/ms-router/bootstrap
+
+_build-ms-router-app build="release":
+  #!/usr/bin/env bash
+  set -euxo pipefail
+  cp supergraph.graphql ./ms-router/supergraph.graphql
   cd ms-router
   export ACCOUNT=$(aws sts get-caller-identity | jq .Account -r)
   export ECR_URL=$(aws cloudformation list-exports --query "Exports[?Name=='EcrMsRouter'].Value" --no-paginate --output text)
@@ -287,23 +265,6 @@ _build-ms-router-docker build="release":
   docker buildx build --platform linux/amd64,linux/arm64 -t ms-router:latest --build-arg ROUTER_VERSION="v{{router-version}}" .
   docker tag ms-router:latest "$ECR_URL:latest"
   docker push "$ECR_URL:latest"
-
-_build-ms-apollo build="release":
-  cd ms-apollo && cargo lambda build --arm64 {{ if build == "debug" { "" } else { "--release" } }}
-  @ rm -r ./deployment/artifacts/ms-apollo || true
-  @ mkdir -p ./deployment/artifacts && cp -r ./target/lambda/ms-apollo ./deployment/artifacts/ms-apollo
-  @ cp ms-apollo/router.yaml ./deployment/artifacts/ms-apollo/router.yaml
-  @ cp ms-apollo/supergraph.graphql ./deployment/artifacts/ms-apollo/supergraph.graphql
-
-_build-ms-apollo-docker build="release":
-  #!/usr/bin/env bash
-  set -euxo pipefail
-  cd ms-apollo
-  docker build -t ms-apollo:lambda .
-  # Copy the binary from the Docker image to the local filesystem.
-  export TMP_IMAGE_ID=$(docker create ms-apollo:lambda)
-  docker cp $TMP_IMAGE_ID:/dist/ms-router/target/lambda/ms-apollo/bootstrap bootstrap
-  docker rm -v $TMP_IMAGE_ID
 
 _build-ms-gateway build="release":
   cd ms-gateway && bun run build

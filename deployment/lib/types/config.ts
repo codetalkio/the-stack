@@ -1,3 +1,12 @@
+export type ConfigMap = {
+  Base: Config;
+  Developer?: Config;
+  Preview?: Config;
+  'Integration Test'?: Config;
+  'Production Single'?: Config;
+  'Production Multi'?: Config;
+};
+
 export type Config = {
   /**
    * Which Applications to deploy:

@@ -46,8 +46,8 @@ RUN rm -rf /var/lib/apt/lists/*
 RUN mkdir config schema
 
 # Copy configuration for docker image
-COPY ./router.yaml config
-COPY ./supergraph.graphql config
+COPY ./router-app.yaml ./config/router.yaml
+COPY ./supergraph.graphql ./config/supergraph.graphql
 
 ENV APOLLO_ROUTER_CONFIG_PATH="/dist/config/router.yaml"
 ENV APOLLO_ROUTER_SUPERGRAPH_PATH="/dist/config/supergraph.graphql"

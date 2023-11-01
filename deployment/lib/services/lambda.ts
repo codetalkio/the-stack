@@ -20,6 +20,11 @@ export interface StackProps extends cdk.StackProps {
   readonly runtime?: lambda.Runtime;
 
   /**
+   * The runtime for the function.
+   */
+  readonly architecture?: lambda.Architecture;
+
+  /**
    * The environment variables for the function.
    */
   readonly environment?: { [key: string]: string };
@@ -58,7 +63,7 @@ export class Stack extends cdk.Stack {
       code: lambda.Code.fromAsset(path.resolve(props.assets)),
       memorySize: 1024,
       runtime: props.runtime ?? lambda.Runtime.PROVIDED_AL2,
-      architecture: lambda.Architecture.ARM_64,
+      architecture: props.architecture ?? lambda.Architecture.ARM_64,
       handler: props.handler ?? 'not.required',
       environment: {
         RUST_BACKTRACE: '1',

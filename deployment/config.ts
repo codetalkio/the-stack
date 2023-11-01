@@ -1,11 +1,11 @@
-import type { Config } from './lib/types';
+import type { ConfigMap, Config } from './lib/types/config';
 
-export const config: Config = {
+const base: Config = {
   apps: [{ service: 'internal', subdomain: 'internal' }, { service: 'app' }],
 
   supergraph: {
-    service: 'mesh',
-    runtime: 'lambda',
+    service: 'router',
+    runtime: 'app-runner',
     path: '/graphql',
   },
 
@@ -17,21 +17,51 @@ export const config: Config = {
 
   experimental: {
     additionalSupergraphs: [
-      {
-        service: 'gateway',
-        runtime: 'lambda',
-        path: '/graphql-gateway',
-      },
-      {
-        service: 'router',
-        runtime: 'lambda',
-        path: '/graphql-router',
-      },
-      {
-        service: 'router',
-        runtime: 'app-runner',
-        path: '/graphql-app-router',
-      },
+      // {
+      //   service: 'gateway',
+      //   runtime: 'lambda',
+      //   path: '/graphql-gateway',
+      // },
+      // {
+      //   service: 'router',
+      //   runtime: 'lambda',
+      //   path: '/graphql-router',
+      // },
+      // {
+      //   service: 'router',
+      //   runtime: 'app-runner',
+      //   path: '/graphql-app-router',
+      // },
+      // {
+      //   service: 'mesh',
+      //   runtime: 'lambda',
+      //   path: '/graphql-mesh',
+      // }
     ],
   },
+};
+
+const development: Config = {
+  ...base,
+  supergraph: {
+    service: 'router',
+    runtime: 'app-runner',
+    path: '/graphql',
+  },
+};
+
+const production: Config = {
+  ...base,
+  supergraph: {
+    service: 'gateway',
+    runtime: 'lambda',
+    path: '/graphql',
+  },
+};
+
+export const config: ConfigMap = {
+  Base: base,
+  'Integration Test': development,
+  'Production Single': production,
+  'Production Multi': production,
 };

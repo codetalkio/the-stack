@@ -37,10 +37,9 @@ jobs:
       release: true
       upload-artifact: true
 
-  ms-router:
-    uses: ./.github/workflows/wf-build-lambda.yml
+  ms-router-lambda:
+    uses: ./.github/workflows/wf-build-ms-router-lambda.yml
     with:
-      project: ms-router
       release: true
       upload-artifact: true
 

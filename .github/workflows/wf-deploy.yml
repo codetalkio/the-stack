@@ -13,7 +13,7 @@ defaults:
 
 jobs:
   deploy:
-    name: "Deploy"
+    name: 'Deploy'
     runs-on: ubuntu-latest
     environment:
       name: ${{ inputs.environment }}
@@ -54,16 +54,29 @@ jobs:
         working-directory: ./deployment
         env:
           DOMAIN: ${{ vars.DOMAIN }}
+          ENVIRONMENT: ${{ inputs.environment }}
           AWS_REGION: ${{ vars.AWS_REGION }}
           AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        run: just test synth
+        run: just deploy-synth
+
+      - name: Output the stack diff
+        working-directory: ./deployment
+        env:
+          DOMAIN: ${{ vars.DOMAIN }}
+          ENVIRONMENT: ${{ inputs.environment }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: just deploy-diff
 
       - name: Run tests
         working-directory: ./deployment
         env:
           DOMAIN: ${{ vars.DOMAIN }}
+          ENVIRONMENT: ${{ inputs.environment }}
           AWS_REGION: ${{ vars.AWS_REGION }}
           AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
         run: just test deployment
@@ -72,6 +85,7 @@ jobs:
         working-directory: ./deployment
         env:
           DOMAIN: ${{ vars.DOMAIN }}
+          ENVIRONMENT: ${{ inputs.environment }}
           AWS_REGION: ${{ vars.AWS_REGION }}
           AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}

@@ -1,17 +1,21 @@
-name: "Build: ms-router"
+name: 'Build: ms-router'
 
 on:
   workflow_call:
     inputs:
+      project:
+        type: string
+        required: true
       release:
         type: boolean
         default: false
-      upload-artifact:
+      push-image:
         type: boolean
         default: false
 
 jobs:
-  ms-router:
+  build:
+    name: ${{ inputs.project }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -28,7 +32,7 @@ jobs:
         run: just build ms-router
 
       - uses: actions/upload-artifact@v3
-        if: ${{ inputs.upload-artifact }}
+        if: ${{ inputs.push-image }}
         with:
           name: ms-router
           path: ms-router/dist
