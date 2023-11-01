@@ -1,4 +1,4 @@
-name: "Build: ms-gateway"
+name: 'Build: ms-router-lambda'
 
 on:
   workflow_call:
@@ -11,7 +11,7 @@ on:
         default: false
 
 jobs:
-  ms-gateway:
+  ms-router-lambda:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

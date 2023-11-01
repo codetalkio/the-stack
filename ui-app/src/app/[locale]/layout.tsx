@@ -1,17 +1,17 @@
-import "../globals.css";
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import { NextIntlClientProvider } from "next-intl";
-import { notFound } from "next/navigation";
+import '../globals.css';
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import { NextIntlClientProvider } from 'next-intl';
+import { notFound } from 'next/navigation';
 import { ReactNode } from 'react';
 import { promises as fs } from 'fs';
 
 export const metadata: Metadata = {
-  title: "Hello, World!",
-  description: "Ready to set things up",
-}
+  title: 'Hello, World!',
+  description: 'Ready to set things up',
+};
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ['latin'] });
 
 /**
  * Set up all supported locales as static parameters, which ensures we generate
@@ -20,7 +20,7 @@ const inter = Inter({ subsets: ["latin"] });
 export async function generateStaticParams() {
   // Construct an array of all supported locales based on the files in the `messages/` directory.
   const localeFiles = await fs.readdir(`${process.cwd()}/messages`);
-  return localeFiles.map((f) => ({locale: f.replace(/\.json$/, "")}));
+  return localeFiles.map((f) => ({ locale: f.replace(/\.json$/, '') }));
 }
 
 /**
@@ -30,7 +30,7 @@ async function messagesContent(locale: string) {
   try {
     return (await import(`../../../messages/${locale}.json`)).default;
   } catch (error) {
-    console.error("Something went wrong", error);
+    console.error('Something went wrong', error);
     notFound();
   }
 }

@@ -246,7 +246,7 @@ _build-ui-internal build="release":
 _build-ms-router-lambda build="release":
   #!/usr/bin/env bash
   set -euxo pipefail
-  mkdir -p ./deployment/artifacts
+  mkdir -p ./deployment/artifacts/ms-router
   cp ms-router/router-lambda.yaml ./deployment/artifacts/ms-router/router.yaml
   cp supergraph.graphql ./deployment/artifacts/ms-router/supergraph.graphql
 
