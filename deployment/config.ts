@@ -25,7 +25,7 @@ const base: Config = {
       // {
       //   service: 'router',
       //   runtime: 'lambda',
-      //   path: '/graphql-router',
+      //   path: '/graphql-lambda-router',
       // },
       // {
       //   service: 'router',
@@ -47,6 +47,15 @@ const development: Config = {
     service: 'router',
     runtime: 'app-runner',
     path: '/graphql',
+  },
+  experimental: {
+    additionalSupergraphs: [
+      {
+        service: 'router',
+        runtime: 'lambda',
+        path: '/graphql-lambda-router',
+      },
+    ],
   },
 };
 

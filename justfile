@@ -151,6 +151,7 @@ deploy-validate-artifacts:
   @ just _deploy-validate-artifacts ms-gql-reviews
   @ just _deploy-validate-artifacts ms-gateway
   @ just _deploy-validate-artifacts ms-mesh
+  @ just _deploy-validate-artifacts ms-router
 
 _deploy-validate-artifacts project:
   @ [ -d "./deployment/artifacts/{{project}}" ] && echo "✅ {{project}} exists" || (echo "❌ {{project}} missing" && exit 1)
@@ -251,7 +252,7 @@ _build-ms-router-lambda build="release":
   cp supergraph.graphql ./deployment/artifacts/ms-router/supergraph.graphql
 
   # Download the prebuilt Apollo Router binary that we will use for deployment.
-  curl -sSL https://github.com/codetalkio/apollo-router-lambda/releases/latest/download/bootstrap-directly-x86-64 -o bootstrap
+  curl -sSL https://github.com/codetalkio/apollo-router-lambda/releases/latest/download/bootstrap-with-server-x86-64 -o bootstrap
   mv bootstrap ./deployment/artifacts/ms-router/bootstrap
 
 _build-ms-router-app build="release":
