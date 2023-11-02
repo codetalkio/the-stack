@@ -71,15 +71,18 @@ export class Stack extends cdk.Stack {
       },
       logRetention: cdk.aws_logs.RetentionDays.ONE_WEEK,
       tracing: lambda.Tracing.ACTIVE,
+      currentVersionOptions: {
+        removalPolicy: cdk.RemovalPolicy.RETAIN,
+      },
     });
     cdk.Tags.of(lambdaFn).add('billing', `${props.billingGroup}-lambda`);
     cdk.Tags.of(lambdaFn).add('billing-group', `${props.billingGroup}`);
 
-    // TODO: Set up alias so each deployment is versioned and can live next to the live one.
-    // const alias = lambdaFn.addAlias("live", {});
+    //  Set up alias so each deployment is versioned and can live next to each other.
+    const aliasFn = lambdaFn.addAlias(`fn-${lambdaFn.currentVersion}`, {});
 
     // Make our Lambda function accessible from the internet. We make it publicly accessible.
-    const fnUrl = lambdaFn.addFunctionUrl({
+    const fnUrl = aliasFn.addFunctionUrl({
       authType: lambda.FunctionUrlAuthType.NONE,
       cors: {
         allowedOrigins: ['*'],

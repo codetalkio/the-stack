@@ -2,7 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 
-import { config } from '../helpers';
+import { config, setupSupergraph, setupApp } from '../helpers';
 import * as s3Website from './s3-website';
 import * as lambdaFn from './lambda';
 import * as routerAppRunner from './app-runner';
@@ -23,10 +23,10 @@ export class Stack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
 
-    // Set up environment variables pointing to each subgraph URL.
+    // Collect environment variables pointing to each subgraph URL for the Supergraph.
     const subGraphUrls = {};
 
-    // Create all Lambda subgraphs.
+    // Create all Lambda subgraphs (no runtime defaults to Lambda).
     config.subgraphs
       .filter((s) => !s.runtime || s.runtime === 'lambda')
       .forEach((subgraph) => {
@@ -37,18 +37,19 @@ export class Stack extends cdk.Stack {
           assets: `artifacts/${subgraph.project}`,
           billingGroup: subgraph.project,
         });
+
+        // Each function URL points to a specific Lambda Alias, which means each router
+        // will be pinned to the version of the subgraph it was deployed with.
         subGraphUrls[`SUBGRAPH_${subgraph.name.toUpperCase()}_URL`] = subgraphFn.functionUrl;
       });
 
-    // Make the API accessible on a path on the App domains, populated by the chosen
-    // supergraph(s).
-    const redirectPathToUrl = {};
+    // Collect all routes so we can make the API accessible on a path on the App domains,
+    // populated by the enabled supergraph(s).
+    const supergraphRoutes: { [key: string]: string } = {};
 
     // Set up our Apollo Gateway that pieces together the microservices.
-    const gatewayIsMain = config.supergraph.service === 'gateway';
-    const additionalGatewayConfig = config.experimental.additionalSupergraphs.find((s) => s.service === 'gateway');
-    if (gatewayIsMain || additionalGatewayConfig) {
-      const supergraphGateway = new lambdaFn.Stack(this, 'MsGateway', {
+    setupSupergraph('gateway', 'lambda', supergraphRoutes, () => {
+      const supergraph = new lambdaFn.Stack(this, 'MsGateway', {
         ...props,
         functionName: 'ms-gateway',
         handler: 'lambda.graphqlHandler',
@@ -59,22 +60,12 @@ export class Stack extends cdk.Stack {
           ...subGraphUrls,
         },
       });
-      if (gatewayIsMain) {
-        redirectPathToUrl[config.supergraph.path] = cdk.Fn.select(2, cdk.Fn.split('/', supergraphGateway.functionUrl));
-      }
-      if (additionalGatewayConfig) {
-        redirectPathToUrl[additionalGatewayConfig.path] = cdk.Fn.select(
-          2,
-          cdk.Fn.split('/', supergraphGateway.functionUrl),
-        );
-      }
-    }
+      return cdk.Fn.select(2, cdk.Fn.split('/', supergraph.functionUrl));
+    });
 
     // Set up our GraphQL Mesh that pieces together the microservices.
-    const meshIsMain = config.supergraph.service === 'mesh';
-    const additionalMeshConfig = config.experimental.additionalSupergraphs.find((s) => s.service === 'mesh');
-    if (meshIsMain || additionalMeshConfig) {
-      const supergraphMesh = new lambdaFn.Stack(this, 'MsMesh', {
+    setupSupergraph('mesh', 'lambda', supergraphRoutes, () => {
+      const supergraph = new lambdaFn.Stack(this, 'MsMesh', {
         ...props,
         functionName: 'ms-mesh',
         handler: 'lambda.graphqlHandler',
@@ -85,21 +76,12 @@ export class Stack extends cdk.Stack {
           ...subGraphUrls,
         },
       });
-      if (meshIsMain) {
-        redirectPathToUrl[config.supergraph.path] = cdk.Fn.select(2, cdk.Fn.split('/', supergraphMesh.functionUrl));
-      }
-      if (additionalMeshConfig) {
-        redirectPathToUrl[additionalMeshConfig.path] = cdk.Fn.select(2, cdk.Fn.split('/', supergraphMesh.functionUrl));
-      }
-    }
+      return cdk.Fn.select(2, cdk.Fn.split('/', supergraph.functionUrl));
+    });
 
     // Set up our Apollo Router Lambda that pieces together the microservices.
-    const routerLambdaIsMain = config.supergraph.service === 'router' && config.supergraph.runtime === 'lambda';
-    const additionalRouterLambdaConfig = config.experimental.additionalSupergraphs.find(
-      (s) => s.service === 'router' && s.runtime === 'lambda',
-    );
-    if (routerLambdaIsMain || additionalRouterLambdaConfig) {
-      const supergraphRouterLambda = new lambdaFn.Stack(this, 'MsRouterLambda', {
+    setupSupergraph('router', 'lambda', supergraphRoutes, () => {
+      const supergraph = new lambdaFn.Stack(this, 'MsRouterLambda', {
         ...props,
         functionName: 'ms-router',
         assets: 'artifacts/ms-router',
@@ -109,27 +91,12 @@ export class Stack extends cdk.Stack {
           ...subGraphUrls,
         },
       });
-      if (routerLambdaIsMain) {
-        redirectPathToUrl[config.supergraph.path] = cdk.Fn.select(
-          2,
-          cdk.Fn.split('/', supergraphRouterLambda.functionUrl),
-        );
-      }
-      if (additionalRouterLambdaConfig) {
-        redirectPathToUrl[additionalRouterLambdaConfig.path] = cdk.Fn.select(
-          2,
-          cdk.Fn.split('/', supergraphRouterLambda.functionUrl),
-        );
-      }
-    }
+      return cdk.Fn.select(2, cdk.Fn.split('/', supergraph.functionUrl));
+    });
 
     // Set up our Apollo Router App Runner that pieces together the microservices.
-    const routerAppIsMain = config.supergraph.service === 'router' && config.supergraph.runtime === 'app-runner';
-    const additionalRouterAppConfig = config.experimental.additionalSupergraphs.find(
-      (s) => s.service === 'router' && s.runtime === 'app-runner',
-    );
-    if (routerAppIsMain || additionalRouterAppConfig) {
-      const supergraphRouterApp = new routerAppRunner.Stack(this, 'MsRouterApp', {
+    setupSupergraph('router', 'app-runner', supergraphRoutes, () => {
+      const supergraph = new routerAppRunner.Stack(this, 'MsRouterApp', {
         ...props,
         tag: `latest`,
         billingGroup: 'ms-router',
@@ -137,17 +104,11 @@ export class Stack extends cdk.Stack {
           ...subGraphUrls,
         },
       });
-      if (routerAppIsMain) {
-        redirectPathToUrl[config.supergraph.path] = supergraphRouterApp.serviceUrl;
-      }
-      if (additionalRouterAppConfig) {
-        redirectPathToUrl[additionalRouterAppConfig.path] = supergraphRouterApp.serviceUrl;
-      }
-    }
+      return supergraph.serviceUrl;
+    });
 
     // Set up our s3 website for ui-app.
-    const appConfig = config.apps.find((app) => app.service === 'app');
-    if (appConfig && appConfig.service === 'app') {
+    setupApp('app', () => {
       new s3Website.Stack(this, 'WebsiteUiApp', {
         ...props,
         assets: 'artifacts/ui-app',
@@ -158,24 +119,23 @@ export class Stack extends cdk.Stack {
         certificateArn: props.certificateArn,
         billingGroup: 'ui-app',
         rewriteUrls: true,
-        redirectPathToUrl,
+        redirectPathToUrl: supergraphRoutes,
       });
-    }
+    });
 
-    const internalConfig = config.apps.find((app) => app.service === 'internal');
-    if (internalConfig && internalConfig.service === 'internal') {
-      // Set up our s3 website for ui-internal.
+    // Set up our s3 website for ui-internal.
+    setupApp('internal', (appConfig) => {
       new s3Website.Stack(this, 'WebsiteUiInternal', {
         ...props,
         assets: 'artifacts/ui-internal',
         index: 'index.html',
         error: 'index.html',
-        domain: `${internalConfig.subdomain}.${props.domain}`,
+        domain: `${appConfig.subdomain}.${props.domain}`,
         hostedZone: props.domain,
         certificateArn: props.certificateArn,
         billingGroup: 'ui-internal',
-        redirectPathToUrl,
+        redirectPathToUrl: supergraphRoutes,
       });
-    }
+    });
   }
 }
