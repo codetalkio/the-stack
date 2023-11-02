@@ -78,11 +78,8 @@ export class Stack extends cdk.Stack {
     cdk.Tags.of(lambdaFn).add('billing', `${props.billingGroup}-lambda`);
     cdk.Tags.of(lambdaFn).add('billing-group', `${props.billingGroup}`);
 
-    //  Set up alias so each deployment is versioned and can live next to each other.
-    const aliasFn = lambdaFn.addAlias(`fn-${lambdaFn.currentVersion}`, {});
-
     // Make our Lambda function accessible from the internet. We make it publicly accessible.
-    const fnUrl = aliasFn.addFunctionUrl({
+    const fnUrl = lambdaFn.addFunctionUrl({
       authType: lambda.FunctionUrlAuthType.NONE,
       cors: {
         allowedOrigins: ['*'],
@@ -98,6 +95,28 @@ export class Stack extends cdk.Stack {
     });
     // Keep cross-stack references stable via `exportValue`.
     this.exportValue(fnUrl.url);
-    this.functionUrl = fnUrl.url;
+
+    //  Set up alias so each deployment is versioned and can live next to each other.
+    const aliasFn = lambdaFn.addAlias(`fn-${lambdaFn.currentVersion}`, {});
+
+    const aliasFnUrl = aliasFn.addFunctionUrl({
+      authType: lambda.FunctionUrlAuthType.NONE,
+      cors: {
+        allowedOrigins: ['*'],
+        allowedMethods: [lambda.HttpMethod.ALL],
+        allowCredentials: true,
+        maxAge: cdk.Duration.minutes(1),
+      },
+    });
+
+    new cdk.CfnOutput(this, `AliasFunctionUrl`, {
+      value: aliasFnUrl.url,
+      description: 'The HTTP URL for the Lambda Function.',
+    });
+    // Keep cross-stack references stable via `exportValue`.
+    this.exportValue(fnUrl.url);
+
+    // We allow the other services to access the Alias URL.
+    this.functionUrl = aliasFnUrl.url;
   }
 }
