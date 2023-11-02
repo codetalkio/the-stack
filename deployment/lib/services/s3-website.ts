@@ -160,19 +160,18 @@ export class Stack extends cdk.Stack {
       },
       additionalBehaviors,
       // Set up redirects when a user hits a 404 or 403.
-      // TODO: Are these causing the other pages to be inaccessible?
-      // errorResponses: [
-      //   {
-      //     httpStatus: 403,
-      //     responsePagePath: `/${props.error}`,
-      //     responseHttpStatus: 200,
-      //   },
-      //   {
-      //     httpStatus: 404,
-      //     responsePagePath: `/${props.error}`,
-      //     responseHttpStatus: 200,
-      //   },
-      // ],
+      errorResponses: [
+        {
+          httpStatus: 403,
+          responsePagePath: `/${props.error}`,
+          responseHttpStatus: 200,
+        },
+        {
+          httpStatus: 404,
+          responsePagePath: `/${props.error}`,
+          responseHttpStatus: 200,
+        },
+      ],
     });
     cdk.Tags.of(distribution).add('billing', `${props.billingGroup}-cloudfront`);
     cdk.Tags.of(distribution).add('billing-group', `${props.billingGroup}`);
