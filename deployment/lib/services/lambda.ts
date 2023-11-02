@@ -97,7 +97,7 @@ export class Stack extends cdk.Stack {
     this.exportValue(fnUrl.url);
 
     //  Set up alias so each deployment is versioned and can live next to each other.
-    const aliasFn = lambdaFn.addAlias(`fn-${lambdaFn.currentVersion}`, {});
+    const aliasFn = lambdaFn.addAlias(`fn-${lambdaFn.currentVersion.version}`, {});
 
     const aliasFnUrl = aliasFn.addFunctionUrl({
       authType: lambda.FunctionUrlAuthType.NONE,
