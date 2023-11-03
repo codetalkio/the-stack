@@ -64,7 +64,7 @@ jobs:
         run: just build ${{ inputs.project }}
 
       - name: Build debug build
-        if: ${{ !inputs.release }}
+        if: ${{ !inputs.release && !steps.cached-artifact.outputs.cache-hit }}
         run: just build ${{ inputs.project }} debug
 
       - name: Save artifact to cache
@@ -72,7 +72,7 @@ jobs:
         uses: actions/cache/save@v3
         with:
           path: target/lambda/${{ inputs.project }}
-          # Caches are immutable, so we need to use a new key every time.
+          # Caches are immutable, so we need to use a new key every time, hence the run_id.
           key: ${{ steps.cached-artifact.outputs.cache-primary-key }}-${{ github.run_id }}
 
       - uses: actions/upload-artifact@v3

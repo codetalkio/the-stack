@@ -18,15 +18,31 @@ jobs:
       RUSTC_WRAPPER: 'sccache'
     steps:
       - uses: actions/checkout@v3
+
+      # We hash all depencies and project files, and if nothing has changed then we try
+      # to restore from cache and skip the entire build.
+      - name: Restore artifact from cache
+        id: cached-artifact
+        uses: actions/cache/restore@v3
+        with:
+          path: ui-internal/dist
+          key: ${{ hashFiles('ui-internal/**') }}-${{ hashFiles('.github/workflows/wf-build-ui-internal.yml') }}
+          # Restore keys matche on the prefix, which will hit our uniquely generated key.
+          restore-keys: ${{ hashFiles('ui-internal/**') }}-${{ hashFiles('.github/workflows/wf-build-ui-internal.yml') }}
+
       - uses: oven-sh/setup-bun@v1
+        if: ${{ !steps.cached-artifact.outputs.cache-hit }}
       - uses: extractions/setup-just@v1
+        if: ${{ !steps.cached-artifact.outputs.cache-hit }}
       - uses: actions-rust-lang/setup-rust-toolchain@v1
+        if: ${{ !steps.cached-artifact.outputs.cache-hit }}
         with:
           toolchain: nightly-2023-10-11
           target: wasm32-unknown-unknown
           cache: false
 
       - name: Install trunk
+        if: ${{ !steps.cached-artifact.outputs.cache-hit }}
         uses: jaxxstorm/action-install-gh-release@v1.9.0
         with:
           repo: thedodd/trunk
@@ -34,18 +50,28 @@ jobs:
           arch: x86_64
 
       - uses: Swatinem/rust-cache@v2
+        if: ${{ !steps.cached-artifact.outputs.cache-hit }}
         with:
           workspaces: ui-internal
       - uses: mozilla-actions/sccache-action@v0.0.3
+        if: ${{ !steps.cached-artifact.outputs.cache-hit }}
         name: 'Setup sccache'
 
       - name: Build release build
-        if: ${{ inputs.release }}
+        if: ${{ inputs.release && !steps.cached-artifact.outputs.cache-hit }}
         run: just build ui-internal
 
       - name: Build debug build
-        if: ${{ !inputs.release }}
+        if: ${{ !inputs.release && !steps.cached-artifact.outputs.cache-hit }}
         run: just build ui-internal debug
+
+      - name: Save artifact to cache
+        if: ${{ inputs.upload-artifact }}
+        uses: actions/cache/save@v3
+        with:
+          path: ui-internal/dist
+          # Caches are immutable, so we need to use a new key every time, hence the run_id.
+          key: ${{ steps.cached-artifact.outputs.cache-primary-key }}-${{ github.run_id }}
 
       - uses: actions/upload-artifact@v3
         if: ${{ inputs.upload-artifact }}

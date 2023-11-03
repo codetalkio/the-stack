@@ -15,18 +15,43 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
+      # We hash all depencies and project files, and if nothing has changed then we try
+      # to restore from cache and skip the entire build.
+      - name: Restore artifact from cache
+        id: cached-artifact
+        uses: actions/cache/restore@v3
+        with:
+          path: ui-app/out
+          key: ${{ hashFiles('ui-app/**') }}-${{ hashFiles('.github/workflows/wf-build-ui-app.yml') }}
+          # Restore keys matche on the prefix, which will hit our uniquely generated key.
+          restore-keys: ${{ hashFiles('ui-app/**') }}-${{ hashFiles('.github/workflows/wf-build-ui-app.yml') }}
+
       - uses: actions/setup-node@v3
+        if: ${{ !steps.cached-artifact.outputs.cache-hit }}
         with:
           node-version: 20
       - uses: oven-sh/setup-bun@v1
+        if: ${{ !steps.cached-artifact.outputs.cache-hit }}
       - uses: extractions/setup-just@v1
+        if: ${{ !steps.cached-artifact.outputs.cache-hit }}
 
       - name: Install dependencies
+        if: ${{ !steps.cached-artifact.outputs.cache-hit }}
         working-directory: ./ui-app
         run: bun install
 
       - name: Build Next.js project
+        if: ${{ !steps.cached-artifact.outputs.cache-hit }}
         run: just build ui-app
+
+      - name: Save artifact to cache
+        if: ${{ inputs.upload-artifact }}
+        uses: actions/cache/save@v3
+        with:
+          path: ui-app/out
+          # Caches are immutable, so we need to use a new key every time, hence the run_id.
+          key: ${{ steps.cached-artifact.outputs.cache-primary-key }}-${{ github.run_id }}
 
       - uses: actions/upload-artifact@v3
         if: ${{ inputs.upload-artifact }}
