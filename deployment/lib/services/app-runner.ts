@@ -4,9 +4,15 @@ import * as ecr from 'aws-cdk-lib/aws-ecr';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as cfnAppRunner from 'aws-cdk-lib/aws-apprunner';
 import * as cr from 'aws-cdk-lib/custom-resources';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as appRunner from '@aws-cdk/aws-apprunner-alpha';
 
 export interface StackProps extends cdk.StackProps {
+  /**
+   * The repo of the image that we are deploying.
+   */
+  readonly repo: string;
+
   /**
    * The tag that we are deploying.
    */
@@ -47,12 +53,7 @@ export interface StackProps extends cdk.StackProps {
  * Other inspiration https://github.com/aws/aws-cdk/blob/114199229aea495e82b119291743258e734cfbeb/packages/%40aws-cdk/aws-apprunner-alpha/lib/service.ts#L1225.
  */
 export class Stack extends cdk.Stack {
-  /**
-   * The URL to access the App Runner.
-   *
-   * NOTE: The service URL only contains the domain and no `https://` part.
-   */
-  public readonly serviceUrl: string;
+  public readonly urlParameterName: string;
 
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
@@ -159,7 +160,7 @@ export class Stack extends cdk.Stack {
       }),
     });
 
-    const repo = ecr.Repository.fromRepositoryName(this, 'MsRouterRepo', 'ms-router');
+    const repo = ecr.Repository.fromRepositoryName(this, 'MsRouterRepo', props.repo);
     const app = new cfnAppRunner.CfnService(this, 'AppRunner', {
       instanceConfiguration: {
         instanceRoleArn: instanceRole.roleArn,
@@ -202,12 +203,14 @@ export class Stack extends cdk.Stack {
     cdk.Tags.of(app).add('billing', `${props.billingGroup}-app-runner`);
     cdk.Tags.of(app).add('billing-group', `${props.billingGroup}`);
 
-    new cdk.CfnOutput(this, `ServiceUrl`, {
-      value: app.attrServiceUrl,
-      description: 'The HTTP URL for the App Runner service.',
+    // Store the Function URL to the $latest version. This will stay the same
+    // across deployments.
+    const parameterName = `/app-runner/${props.repo}/${props.tag}/url`;
+    new ssm.StringParameter(this, 'ServiceUrl', {
+      parameterName,
+      description: `The URL to the ${props.tag} tag of the ${props.repo} App Runner.`,
+      stringValue: app.attrServiceUrl,
     });
-    // Keep cross-stack references stable via `exportValue`.
-    this.exportValue(app.attrServiceUrl);
-    this.serviceUrl = app.attrServiceUrl;
+    this.urlParameterName = parameterName;
   }
 }

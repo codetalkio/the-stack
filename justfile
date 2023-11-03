@@ -126,6 +126,24 @@ _setup-rust project:
   rustup toolchain install stable
   rustup default stable
 
+# Deploy everything in order.
+deploy:
+  @ just deploy-stack 'Cloud/**' 'CloudCertificate'
+  @ just deploy-stack 'Services/**'
+
+# Deploy the specified <stack>, e.g. `just deploy 'Services/**'`, defaulting to --all.
+deploy-stack +stack='--all':
+  cd deployment && bun run cdk deploy --concurrency 6 --outputs-file artifacts/outputs.json --require-approval never {{ stack }}
+
+# Deploy the specified <stack> with --no-rolback, e.g. `just deploy 'Cloud/**'`, defaulting to --all.
+deploy-debug +stack='--all':
+  cd deployment && bun run cdk deploy --no-rolback --concurrency 6 --outputs-file artifacts/outputs.json --require-approval never {{ stack }}
+
+# Deploy the specific <service> without any dependencies (i.e. exclusively), e.g. `just deploy-service 'Services/UiApp'`.
+deploy-list:
+  @ cd deployment && bun run cdk list 'Cloud/**'
+  @ cd deployment && bun run cdk list 'Services/**'
+
 # Output the expected diff of deploying the stack, e.g. `just deploy-diff 'Services/MsGqlUsers'`, defaulting to --all.
 deploy-diff stack='--all':
   cd deployment && bun run cdk diff {{ stack }}
@@ -134,13 +152,9 @@ deploy-diff stack='--all':
 deploy-synth:
   cd deployment && bun run cdk synth --all
 
-# Deploy the specified <stack>, e.g. `just deploy 'Cloud/**'`, defaulting to --all.
-deploy stack='--all':
-  cd deployment && bun run cdk deploy --concurrency 6 --outputs-file artifacts/outputs.json --require-approval never {{ stack }}
-
-# Deploy the specified <stack> with --no-rolback, e.g. `just deploy 'Cloud/**'`, defaulting to --all.
-deploy-debug stack='--all':
-  cd deployment && bun run cdk deploy --no-rolback --concurrency 6 --outputs-file artifacts/outputs.json --require-approval never {{ stack }}
+# Clean up deployment artifacts.
+deploy-clean:
+  @ rm -rf ./deployment/artifacts
 
 # Validate that all deployment artifacts are present.
 deploy-validate-artifacts:
@@ -155,10 +169,6 @@ deploy-validate-artifacts:
 
 _deploy-validate-artifacts project:
   @ [ -d "./deployment/artifacts/{{project}}" ] && echo "✅ {{project}} exists" || (echo "❌ {{project}} missing" && exit 1)
-
-# Clean up deployment artifacts.
-deploy-clean:
-  @ rm -rf ./deployment/artifacts
 
 # Compose the supergraph from all of our subgraphs (requires them to be running).
 compose:
@@ -198,7 +208,7 @@ _dev-ui-internal:
   cd ui-internal && trunk serve
 
 _dev-ms-router:
-  cd ms-router/bin && ./router --anonymous-telemetry-disabled --config ../router.yaml --supergraph=../supergraph.graphql --dev --hot-reload --log debug
+  cd ms-router/bin && ./router --anonymous-telemetry-disabled --config ../router-app.yaml --supergraph=../../supergraph.graphql --dev --hot-reload --log debug
 
 _dev-ms-gateway:
   cd ms-gateway && bun dev
@@ -226,13 +236,14 @@ build project build="release":
 build-all:
   @ just deploy-clean
   @ mkdir -p ./deployment/artifacts
-  just _build-ui-app
-  just _build-ui-internal
-  just _build-ms-gql-users
-  just _build-ms-gql-products
-  just _build-ms-gql-reviews
-  just _build-ms-gateway
-  just _build-ms-mesh
+  @ just _build-ui-app
+  @ just _build-ui-internal
+  @ just _build-ms-gql-users
+  @ just _build-ms-gql-products
+  @ just _build-ms-gql-reviews
+  @ just _build-ms-router-lambda
+  @ just _build-ms-gateway
+  @ just _build-ms-mesh
 
 _build-ui-app build="release":
   cd ui-app && bun run build

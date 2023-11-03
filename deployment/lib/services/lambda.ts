@@ -2,6 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as path from 'path';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
 
 export interface StackProps extends cdk.StackProps {
   /**
@@ -44,15 +45,10 @@ export interface StackProps extends cdk.StackProps {
  * Set up an a Lambda Function.
  */
 export class Stack extends cdk.Stack {
-  /**
-   * The URL to access the Lambda Function.
-   *
-   * NOTE: The function URL includes `https://`. To get only the domain you can do:
-   * ```ts
-   * cdk.Fn.select(2, cdk.Fn.split("/", functionUrl))
-   * ```
-   */
-  public readonly functionUrl: string;
+  public readonly latestUrlParameterName: string;
+
+  public readonly aliasUrlParameterName: string;
+  public readonly aliasUrlParameterVersion: string;
 
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
@@ -89,12 +85,15 @@ export class Stack extends cdk.Stack {
       },
     });
 
-    new cdk.CfnOutput(this, `FunctionUrl`, {
-      value: fnUrl.url,
-      description: 'The HTTP URL for the Lambda Function.',
+    // Store the Function URL to the $latest version. This will stay the same
+    // across deployments.
+    const latestParameterName = `/lambda/${props.functionName}/url/latest`;
+    new ssm.StringParameter(this, 'LatestUrl', {
+      parameterName: latestParameterName,
+      description: `The URL to the latest version of the ${props.functionName} Lambda function.`,
+      stringValue: cdk.Fn.select(2, cdk.Fn.split('/', fnUrl.url)),
     });
-    // Keep cross-stack references stable via `exportValue`.
-    this.exportValue(fnUrl.url);
+    this.latestUrlParameterName = latestParameterName;
 
     //  Set up alias so each deployment is versioned and can live next to each other.
     const aliasFn = new lambda.Alias(this, `LambdaAlias${id}`, {
@@ -112,14 +111,15 @@ export class Stack extends cdk.Stack {
       },
     });
 
-    new cdk.CfnOutput(this, `AliasFunctionUrl`, {
-      value: aliasFnUrl.url,
-      description: 'The HTTP URL for the Lambda Function.',
+    // Store the Function URL to the versioned alias. This will change on
+    // every deployment.
+    const aliasParameterName = `/lambda/${props.functionName}/url/versioned`;
+    new ssm.StringParameter(this, 'VersionedUrl', {
+      parameterName: aliasParameterName,
+      description: `The URL to the latest version of the ${props.functionName} Lambda function.`,
+      stringValue: cdk.Fn.select(2, cdk.Fn.split('/', aliasFnUrl.url)),
     });
-    // Keep cross-stack references stable via `exportValue`.
-    this.exportValue(fnUrl.url);
-
-    // We allow the other services to access the Alias URL.
-    this.functionUrl = aliasFnUrl.url;
+    this.aliasUrlParameterName = aliasParameterName;
+    this.aliasUrlParameterVersion = '1';
   }
 }

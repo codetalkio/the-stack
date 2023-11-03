@@ -12,6 +12,7 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as path from 'path';
 
 import { CloudFrontInvalidation } from './cloudfront';
+import { SsmGlobal } from './ssm-global';
 
 export interface StackProps extends cdk.StackProps {
   /**
@@ -176,12 +177,6 @@ export class Stack extends cdk.Stack {
     cdk.Tags.of(distribution).add('billing', `${props.billingGroup}-cloudfront`);
     cdk.Tags.of(distribution).add('billing-group', `${props.billingGroup}`);
 
-    // Output the distribution ID.
-    new cdk.CfnOutput(this, `WebsiteDistributionId`, {
-      value: distribution.distributionId,
-      description: 'The ID of the CloudFront distribution used to serve the website.',
-    });
-
     // Upload our assets to our bucket, and connect it to our distribution.
     new s3deploy.BucketDeployment(this, 'WebsiteDeployment', {
       destinationBucket: bucket,
@@ -210,19 +205,6 @@ export class Stack extends cdk.Stack {
       zone: hostedZone,
       recordName: props.domain,
       target: route53.RecordTarget.fromAlias(new route53Targets.CloudFrontTarget(distribution)),
-    });
-
-    // Make www redirect to the root domain.
-    new route53Patterns.HttpsRedirect(this, 'Redirect', {
-      zone: hostedZone,
-      recordNames: [`www.${props.domain}`],
-      targetDomain: props.domain,
-    });
-
-    // Output the distribution ID.
-    new cdk.CfnOutput(this, `WebsiteUrl`, {
-      value: props.domain,
-      description: 'The URL of the website.',
     });
   }
 }
