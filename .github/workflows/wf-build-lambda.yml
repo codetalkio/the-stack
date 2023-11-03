@@ -36,17 +36,17 @@ jobs:
           restore-keys: ${{ hashFiles('${{ inputs.project }}/**') }}-${{ hashFiles('lib-handler/**') }}-${{ hashFiles('Cargo.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ hashFiles('.github/workflows/wf-build.yml') }}-${{ hashFiles('.github/workflows/wf-build-lambda.yml') }}
 
       - uses: actions-rust-lang/setup-rust-toolchain@v1
-        if: steps.cached-artifact.outputs.cache-hit != 'true'
+        if: ${{ !steps.cached-artifact.outputs.cache-hit }}
         with:
           toolchain: stable
           cache: true
       - name: Install Zig toolchain
-        if: steps.cached-artifact.outputs.cache-hit != 'true'
+        if: ${{ !steps.cached-artifact.outputs.cache-hit }}
         uses: korandoru/setup-zig@v1
         with:
           zig-version: 0.11.0
       - name: Install Cargo Lambda
-        if: steps.cached-artifact.outputs.cache-hit != 'true'
+        if: ${{ !steps.cached-artifact.outputs.cache-hit }}
         uses: jaxxstorm/action-install-gh-release@v1.9.0
         with:
           repo: cargo-lambda/cargo-lambda
@@ -54,11 +54,11 @@ jobs:
           arch: x86_64
 
       - uses: mozilla-actions/sccache-action@v0.0.3
-        if: steps.cached-artifact.outputs.cache-hit != 'true'
+        if: ${{ !steps.cached-artifact.outputs.cache-hit }}
         name: 'Setup sccache'
 
       - name: Build release build
-        if: ${{ inputs.release && steps.cached-artifact.outputs.cache-hit != 'true' }}
+        if: ${{ inputs.release && !steps.cached-artifact.outputs.cache-hit }}
         run: just build ${{ inputs.project }}
 
       - name: Build debug build
