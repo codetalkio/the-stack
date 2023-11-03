@@ -2,6 +2,8 @@ name: 'CI: ui-internal'
 
 on:
   push:
+    branches-ignore:
+      - main
     paths:
       - '.github/workflows/ci-ui-internal.yml'
       - '.github/workflows/wf-build-ui-internal.yml'

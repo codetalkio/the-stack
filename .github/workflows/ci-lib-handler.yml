@@ -2,6 +2,8 @@ name: 'CI: lib-handler'
 
 on:
   push:
+    branches-ignore:
+      - main
     paths:
       - '.github/workflows/ci-lib-handler.yml'
       - '.github/workflows/wf-build-crate.yml'

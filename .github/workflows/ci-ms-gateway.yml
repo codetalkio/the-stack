@@ -2,6 +2,8 @@ name: 'CI: ms-gateway'
 
 on:
   push:
+    branches-ignore:
+      - main
     paths:
       - 'ms-gateway/**'
       - '.github/workflows/ci-ms-gateway.yml'

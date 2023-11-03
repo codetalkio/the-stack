@@ -2,6 +2,8 @@ name: 'CI: ui-app'
 
 on:
   push:
+    branches-ignore:
+      - main
     paths:
       - 'ui-app/**'
       - '.github/workflows/ci-ui-app.yml'

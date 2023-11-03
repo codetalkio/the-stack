@@ -2,6 +2,8 @@ name: 'CI: ms-mesh'
 
 on:
   push:
+    branches-ignore:
+      - main
     paths:
       - 'ms-mesh/**'
       - '.github/workflows/ci-ms-mesh.yml'

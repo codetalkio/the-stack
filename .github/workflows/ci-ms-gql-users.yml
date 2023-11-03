@@ -2,6 +2,8 @@ name: 'CI: ms-gql-users'
 
 on:
   push:
+    branches-ignore:
+      - main
     paths:
       - '.github/workflows/ci-ms-gql-users.yml'
       - '.github/workflows/wf-build-lambda.yml'
