@@ -170,6 +170,10 @@ deploy-validate-artifacts:
 _deploy-validate-artifacts project:
   @ [ -d "./deployment/artifacts/{{project}}" ] && echo "✅ {{project}} exists" || (echo "❌ {{project}} missing" && exit 1)
 
+# Destroy (delete) the specified <stack>, e.g. `just destroy 'Services/MsGqlUsers'`.
+destroy-stack stack:
+  cd deployment && bun run cdk destroy {{ stack }}
+
 # Compose the supergraph from all of our subgraphs (requires them to be running).
 compose:
   rover supergraph compose --config supergraph-config.yaml --output supergraph.graphql

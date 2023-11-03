@@ -1,5 +1,5 @@
 import { config as configMap } from '../config';
-import { Config, Supergraph, App } from './types/config';
+import { Config, Supergraph, App, validEnvironments } from './types/config';
 
 /**
  * Resolve the configuration for the current environment and fall back to
@@ -8,6 +8,8 @@ import { Config, Supergraph, App } from './types/config';
 const resolveConfig = (env: string | undefined): Config => {
   if (!env) {
     throw new Error('ENVIRONMENT not set');
+  } else if (!(env in validEnvironments)) {
+    throw new Error(`ENVIRONMENT '${env}' is not a valid option. Possible values ${validEnvironments.join(', ')}`);
   } else if (env in configMap) {
     return configMap[env];
   }

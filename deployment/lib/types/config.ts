@@ -1,11 +1,25 @@
-export type ConfigMap = {
-  Base: Config;
-  Developer?: Config;
-  Preview?: Config;
-  'Integration Test'?: Config;
-  'Production Single'?: Config;
-  'Production Multi'?: Config;
-};
+/**
+ * Make the possible environments available during runtime by constructing them
+ * as a const array.
+ */
+export const validEnvironments = [
+  'Developer',
+  'Preview',
+  'Integration Test',
+  'Production Single',
+  'Production Multi',
+] as const;
+
+/**
+ * The possible environments as a type, inferred from `validEnvironments`.
+ */
+type Environment = (typeof validEnvironments)[number];
+
+/**
+ * Mapping between environment and configuration. The `Base` configuration is required, but
+ * the rest are optional and will fall back to `Base` if not specified.
+ */
+export type ConfigMap = { Base: Config } & { [key in Environment]?: Config };
 
 export type Config = {
   /**

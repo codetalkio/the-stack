@@ -4,8 +4,8 @@ const base: Config = {
   apps: [{ service: 'internal', subdomain: 'internal' }, { service: 'app' }],
 
   supergraph: {
-    service: 'router',
-    runtime: 'app-runner',
+    service: 'gateway',
+    runtime: 'lambda',
     path: '/graphql',
   },
 
