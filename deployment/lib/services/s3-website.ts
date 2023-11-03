@@ -1,7 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as route53 from 'aws-cdk-lib/aws-route53';
-import * as route53Patterns from 'aws-cdk-lib/aws-route53-patterns';
 import * as route53Targets from 'aws-cdk-lib/aws-route53-targets';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
@@ -10,9 +9,9 @@ import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as cloudfrontOrigins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as path from 'path';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
 
 import { CloudFrontInvalidation } from './cloudfront';
-import { SsmGlobal } from './ssm-global';
 
 export interface StackProps extends cdk.StackProps {
   /**
@@ -58,7 +57,7 @@ export interface StackProps extends cdk.StackProps {
   /**
    * Paths that the CloudFront distribution should set up redirects for.
    */
-  readonly redirectPathToUrl?: { [path: string]: string };
+  readonly redirectPathToUrlFromSsm?: { [path: string]: string };
 }
 
 /**
@@ -97,11 +96,13 @@ export class Stack extends cdk.Stack {
       [key: string]: cloudfront.BehaviorOptions & cloudfront.AddBehaviorOptions;
     } = {};
 
-    // Content-Type
-    const redirectPathToUrl = props.redirectPathToUrl ?? {};
-    // Iterate over the keys and values of redirectPathToUrl.
-    for (const key in redirectPathToUrl) {
-      const domain = redirectPathToUrl[key];
+    // Iterate over the keys and values of redirectPathToUrlFromSsm and fetch the
+    // values from the SSM Parameter Store.
+    const redirectPathToUrlFromSsm = props.redirectPathToUrlFromSsm ?? {};
+    for (const key in redirectPathToUrlFromSsm) {
+      const parameterName = redirectPathToUrlFromSsm[key];
+      const domain = ssm.StringParameter.valueForStringParameter(this, parameterName);
+
       additionalBehaviors[key] = {
         origin: new cloudfrontOrigins.HttpOrigin(domain, {
           customHeaders: {

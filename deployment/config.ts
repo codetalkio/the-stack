@@ -71,6 +71,6 @@ const production: Config = {
 export const config: ConfigMap = {
   Base: base,
   'Integration Test': development,
-  'Production Single': production,
-  'Production Multi': production,
+  'Production Single-tenant': production,
+  'Production Multi-tenant': production,
 };

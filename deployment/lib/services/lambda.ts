@@ -31,6 +31,12 @@ export interface StackProps extends cdk.StackProps {
   readonly environment?: { [key: string]: string };
 
   /**
+   * The environment variables for the function, fetched from the SSM Parameter
+   * Store using the values as the Parameter Name.
+   */
+  readonly environmentFromSsm?: { [key: string]: string };
+
+  /**
    * The name we want to give the function.
    */
   readonly functionName: string;
@@ -53,6 +59,16 @@ export class Stack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
 
+    // Resolve any environment variables from the SSM Parameter Store.
+    const environment = { ...props.environment };
+    for (const [envName, parameterName] of Object.entries(props.environmentFromSsm ?? {})) {
+      const param = ssm.StringParameter.valueForStringParameter(this, parameterName);
+      environment[envName] = param;
+      // We also store the key with a _SSM suffix so we can easily see where we got
+      // the value from.
+      environment[`${envName}_SSM`] = param;
+    }
+
     // Create our Lambda function.
     const lambdaFn = new lambda.Function(this, `Lambda${id}`, {
       functionName: props.functionName,
@@ -63,7 +79,7 @@ export class Stack extends cdk.Stack {
       handler: props.handler ?? 'not.required',
       environment: {
         RUST_BACKTRACE: '1',
-        ...props.environment,
+        ...environment,
       },
       logRetention: cdk.aws_logs.RetentionDays.ONE_WEEK,
       tracing: lambda.Tracing.ACTIVE,

@@ -24,6 +24,12 @@ export interface StackProps extends cdk.StackProps {
   readonly environment?: { [key: string]: string };
 
   /**
+   * The environment variables for the function, fetched from the SSM Parameter
+   * Store using the values as the Parameter Name.
+   */
+  readonly environmentFromSsm?: { [key: string]: string };
+
+  /**
    * Specify if the App Runner should be be able to connect to VPC resources
    * such as RDS.
    */
@@ -57,6 +63,16 @@ export class Stack extends cdk.Stack {
 
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
+
+    // Resolve any environment variables from the SSM Parameter Store.
+    const environment = { ...props.environment };
+    for (const [envName, parameterName] of Object.entries(props.environmentFromSsm ?? {})) {
+      const param = ssm.StringParameter.valueForStringParameter(this, parameterName);
+      environment[envName] = param;
+      // We also store the key with a _SSM suffix so we can easily see where we got
+      // the value from.
+      environment[`${envName}_SSM`] = param;
+    }
 
     const instanceRole = new iam.Role(this, 'InstanceRole', {
       assumedBy: new iam.ServicePrincipal('tasks.apprunner.amazonaws.com'),
@@ -183,7 +199,7 @@ export class Stack extends cdk.Stack {
           imageRepositoryType: 'ECR',
           imageConfiguration: {
             port: '4000',
-            runtimeEnvironmentVariables: Object.entries(props.environment ?? {}).map((e) => {
+            runtimeEnvironmentVariables: Object.entries(environment ?? {}).map((e) => {
               return { name: e[0], value: e[1] };
             }),
           },

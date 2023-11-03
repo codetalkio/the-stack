@@ -6,8 +6,8 @@ export const validEnvironments = [
   'Developer',
   'Preview',
   'Integration Test',
-  'Production Single',
-  'Production Multi',
+  'Production Single-tenant',
+  'Production Multi-tenant',
 ] as const;
 
 /**
