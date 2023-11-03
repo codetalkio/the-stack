@@ -46,6 +46,8 @@ const config: PlaywrightTestConfig = {
   ],
   webServer: {
     command: 'just dev ui-internal',
+    // Set a timeout of 10 minutes.
+    timeout: 10 * 60 * 1000,
     url: SERVER,
     reuseExistingServer: true,
     stdout: 'ignore',
