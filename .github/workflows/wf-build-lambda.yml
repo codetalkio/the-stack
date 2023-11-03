@@ -22,7 +22,6 @@ jobs:
       RUSTC_WRAPPER: 'sccache'
     steps:
       - uses: actions/checkout@v3
-      - uses: extractions/setup-just@v1
 
       # We hash all depencies and project files, and if nothing has changed then we try
       # to restore from cache and skip the entire build.
@@ -34,6 +33,9 @@ jobs:
           key: ${{ hashFiles('${{ inputs.project }}/**') }}-${{ hashFiles('lib-handler/**') }}-${{ hashFiles('Cargo.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ hashFiles('.github/workflows/wf-build.yml') }}-${{ hashFiles('.github/workflows/wf-build-lambda.yml') }}
           # Restore keys matche on the prefix, which will hit our uniquely generated key.
           restore-keys: ${{ hashFiles('${{ inputs.project }}/**') }}-${{ hashFiles('lib-handler/**') }}-${{ hashFiles('Cargo.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ hashFiles('.github/workflows/wf-build.yml') }}-${{ hashFiles('.github/workflows/wf-build-lambda.yml') }}
+
+      - uses: extractions/setup-just@v1
+        if: ${{ !steps.cached-artifact.outputs.cache-hit }}
 
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         if: ${{ !steps.cached-artifact.outputs.cache-hit }}
