@@ -64,7 +64,7 @@ jobs:
           bun run setup
 
       - name: Build debug build
-        run: just build ui-internal true
+        run: just build ui-internal debug
 
       - name: Run end-to-end tests
         run: just e2e ui-internal
