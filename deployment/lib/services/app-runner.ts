@@ -68,10 +68,10 @@ export class Stack extends cdk.Stack {
     const environment = { ...props.environment };
     for (const [envName, parameterName] of Object.entries(props.environmentFromSsm ?? {})) {
       const param = ssm.StringParameter.valueForStringParameter(this, parameterName);
-      environment[envName] = param;
+      environment[envName] = `https://${param}`;
       // We also store the key with a _SSM suffix so we can easily see where we got
       // the value from.
-      environment[`${envName}_SSM`] = param;
+      environment[`${envName}_SSM`] = parameterName;
     }
 
     const instanceRole = new iam.Role(this, 'InstanceRole', {
@@ -194,12 +194,11 @@ export class Stack extends cdk.Stack {
         },
         autoDeploymentsEnabled: false,
         imageRepository: {
-          // FIXME: Validate that the image identifier is correct.
           imageIdentifier: repo.repositoryUriForTag(props.tag),
           imageRepositoryType: 'ECR',
           imageConfiguration: {
             port: '4000',
-            runtimeEnvironmentVariables: Object.entries(environment ?? {}).map((e) => {
+            runtimeEnvironmentVariables: Object.entries(environment).map((e) => {
               return { name: e[0], value: e[1] };
             }),
           },

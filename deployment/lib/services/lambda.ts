@@ -42,6 +42,11 @@ export interface StackProps extends cdk.StackProps {
   readonly functionName: string;
 
   /**
+   * Enable Lambda Insights for the function.
+   */
+  readonly lambdaInsights?: boolean;
+
+  /**
    * The billing group to associate with this stack.
    */
   readonly billingGroup: string;
@@ -63,10 +68,10 @@ export class Stack extends cdk.Stack {
     const environment = { ...props.environment };
     for (const [envName, parameterName] of Object.entries(props.environmentFromSsm ?? {})) {
       const param = ssm.StringParameter.valueForStringParameter(this, parameterName);
-      environment[envName] = param;
+      environment[envName] = `https://${param}`;
       // We also store the key with a _SSM suffix so we can easily see where we got
       // the value from.
-      environment[`${envName}_SSM`] = param;
+      environment[`${envName}_SSM`] = parameterName;
     }
 
     // Create our Lambda function.
@@ -77,6 +82,7 @@ export class Stack extends cdk.Stack {
       runtime: props.runtime ?? lambda.Runtime.PROVIDED_AL2,
       architecture: props.architecture ?? lambda.Architecture.ARM_64,
       handler: props.handler ?? 'not.required',
+      insightsVersion: props.lambdaInsights ? lambda.LambdaInsightsVersion.VERSION_1_0_229_0 : undefined,
       environment: {
         RUST_BACKTRACE: '1',
         ...environment,
@@ -116,6 +122,8 @@ export class Stack extends cdk.Stack {
       aliasName: `fn-${lambdaFn.currentVersion.version}`,
       version: lambdaFn.currentVersion,
     });
+    // Ensure the old alias doesn't deleted on each deployment.
+    (aliasFn.node.defaultChild as cdk.CfnResource).applyRemovalPolicy(cdk.RemovalPolicy.RETAIN);
 
     const aliasFnUrl = aliasFn.addFunctionUrl({
       authType: lambda.FunctionUrlAuthType.NONE,
@@ -126,6 +134,8 @@ export class Stack extends cdk.Stack {
         maxAge: cdk.Duration.minutes(1),
       },
     });
+    // Ensure the old alias Function URL doesn't deleted on each deployment.
+    (aliasFnUrl.node.defaultChild as cdk.CfnResource).applyRemovalPolicy(cdk.RemovalPolicy.RETAIN);
 
     // Store the Function URL to the versioned alias. This will change on
     // every deployment.

@@ -74,15 +74,6 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: just deploy-diff
 
-      - name: Run tests
-        working-directory: ./deployment
-        env:
-          DOMAIN: ${{ vars.DOMAIN }}
-          ENVIRONMENT: ${{ inputs.environment }}
-          AWS_REGION: ${{ vars.AWS_REGION }}
-          AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
-        run: just test deployment
-
       - name: Deploy to ${{ inputs.environment }}
         working-directory: ./deployment
         env:

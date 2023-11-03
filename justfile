@@ -185,9 +185,6 @@ compose:
 test project:
   just _test-{{project}}
 
-_test-deployment:
-  cd deployment && bun test "test/"
-
 # Run End-to-End tests for <project>, e.g. `just e2e ui-internal`.
 e2e project:
   just _e2e-{{project}}

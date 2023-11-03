@@ -24,8 +24,6 @@ export class Stack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
 
-    // TODO: Eliminate all exports because they are a pain to update...
-
     // Collect environment variables pointing to each subgraph URL for the Supergraph.
     const subGraphUrlsSsm = {};
     // Collect all subgraphs that the supergraph will depend on.
@@ -40,6 +38,7 @@ export class Stack extends cdk.Stack {
           ...props,
           functionName: subgraph.project,
           assets: `artifacts/${subgraph.project}`,
+          lambdaInsights: true,
           billingGroup: subgraph.project,
         });
         subgraphs.push(subgraphFn);
@@ -62,6 +61,7 @@ export class Stack extends cdk.Stack {
         functionName: 'ms-gateway',
         handler: 'lambda.graphqlHandler',
         runtime: lambda.Runtime.NODEJS_LATEST,
+        lambdaInsights: true,
         assets: 'artifacts/ms-gateway',
         billingGroup: 'ms-gateway',
         environmentFromSsm: {
@@ -80,6 +80,7 @@ export class Stack extends cdk.Stack {
         functionName: 'ms-mesh',
         handler: 'lambda.graphqlHandler',
         runtime: lambda.Runtime.NODEJS_LATEST,
+        lambdaInsights: true,
         assets: 'artifacts/ms-mesh',
         billingGroup: 'ms-mesh',
         environmentFromSsm: {
@@ -99,6 +100,7 @@ export class Stack extends cdk.Stack {
         assets: 'artifacts/ms-router',
         billingGroup: 'ms-router',
         architecture: lambda.Architecture.X86_64,
+        lambdaInsights: true,
         environmentFromSsm: {
           ...subGraphUrlsSsm,
         },
