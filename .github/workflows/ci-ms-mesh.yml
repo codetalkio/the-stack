@@ -1,11 +1,11 @@
-name: "CI: ms-mesh"
+name: 'CI: ms-mesh'
 
 on:
   push:
     paths:
-      - "ms-mesh/**"
-      - ".github/workflows/ci-ms-mesh.yml"
-      - ".github/workflows/wf-build-ms-mesh.yml"
+      - 'ms-mesh/**'
+      - '.github/workflows/ci-ms-mesh.yml'
+      - '.github/workflows/wf-build-ms-mesh.yml'
 
 defaults:
   run:

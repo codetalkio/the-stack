@@ -35,6 +35,11 @@ jobs:
         with:
           path: ./deployment/artifacts/
 
+      # Some artifacts are pulled from the internet, so we fetch them directly
+      # instead of temporarily storing them as artifacts.
+      - name: Fetch static artifacts
+        run: just build ms-router-lambda
+
       - name: Display structure of downloaded files
         working-directory: ./deployment/artifacts/
         run: ls -R

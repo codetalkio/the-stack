@@ -1,4 +1,4 @@
-name: "Build Artifacts"
+name: 'Build Artifacts'
 
 on:
   workflow_call:
@@ -34,12 +34,6 @@ jobs:
     uses: ./.github/workflows/wf-build-lambda.yml
     with:
       project: ms-gql-reviews
-      release: true
-      upload-artifact: true
-
-  ms-router-lambda:
-    uses: ./.github/workflows/wf-build-ms-router-lambda.yml
-    with:
       release: true
       upload-artifact: true
 

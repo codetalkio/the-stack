@@ -36,33 +36,33 @@ jobs:
 
   # Stage 2 is our more critical environments, and only proceeds if prior stages succeed.
   stage-2-single:
-    name: "Stage 2: Single-tenant"
+    name: 'Stage 2: Single-tenant'
     needs: [stage-1-check]
     uses: ./.github/workflows/wf-deploy.yml
     with:
-      environment: "Production Single-tenant"
+      environment: 'Production Single-tenant'
     secrets: inherit
 
   stage-2-single-check:
-    name: "Stage 2: Check Single-tenant"
+    name: 'Stage 2: Check Single-tenant'
     needs: [stage-2-single]
     uses: ./.github/workflows/wf-check.yml
     with:
-      environment: "Production Single-tenant"
+      environment: 'Production Single-tenant'
     secrets: inherit
 
   stage-2-multi:
-    name: "Stage 2: Multi-tenant"
+    name: 'Stage 2: Multi-tenant'
     needs: [stage-1-check]
     uses: ./.github/workflows/wf-deploy.yml
     with:
-      environment: "Production Multi-tenant"
+      environment: 'Production Multi-tenant'
     secrets: inherit
 
   stage-2-multi-check:
-    name: "Stage 2: Check Multi-tenant"
+    name: 'Stage 2: Check Multi-tenant'
     needs: [stage-2-multi]
     uses: ./.github/workflows/wf-check.yml
     with:
-      environment: "Production Multi-tenant"
+      environment: 'Production Multi-tenant'
     secrets: inherit

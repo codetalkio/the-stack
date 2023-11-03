@@ -1,4 +1,4 @@
-name: "Deployment: Bootstrap"
+name: 'Deployment: Bootstrap'
 
 on:
   workflow_dispatch:
@@ -16,9 +16,9 @@ jobs:
       matrix:
         # Add new environments to this list to run bootstrap on them when manually triggered.
         environment:
-          - "Integration Test"
-          - "Production Single-tenant"
-          - "Production Multi-tenant"
+          - 'Integration Test'
+          - 'Production Single-tenant'
+          - 'Production Multi-tenant'
     environment: ${{ matrix.environment }}
     # Limit to only one concurrent deployment per environment.
     concurrency:

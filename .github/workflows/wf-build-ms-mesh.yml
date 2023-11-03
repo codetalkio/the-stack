@@ -1,4 +1,4 @@
-name: "Build: ms-mesh"
+name: 'Build: ms-mesh'
 
 on:
   workflow_call:

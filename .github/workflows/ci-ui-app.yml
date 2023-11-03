@@ -1,11 +1,11 @@
-name: "CI: ui-app"
+name: 'CI: ui-app'
 
 on:
   push:
     paths:
-      - "ui-app/**"
-      - ".github/workflows/ci-ui-app.yml"
-      - ".github/workflows/wf-build-ui-app.yml"
+      - 'ui-app/**'
+      - '.github/workflows/ci-ui-app.yml'
+      - '.github/workflows/wf-build-ui-app.yml'
 
 defaults:
   run:

@@ -1,14 +1,14 @@
-name: "CI: ms-gql-products"
+name: 'CI: ms-gql-products'
 
 on:
   push:
     paths:
-      - ".github/workflows/ci-ms-gql-products.yml"
-      - ".github/workflows/wf-build-lambda.yml"
-      - "ms-gql-products/**"
-      - "lib-handler/**"
-      - "Cargo.toml"
-      - "Cargo.lock"
+      - '.github/workflows/ci-ms-gql-products.yml'
+      - '.github/workflows/wf-build-lambda.yml'
+      - 'ms-gql-products/**'
+      - 'lib-handler/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
 
 defaults:
   run:

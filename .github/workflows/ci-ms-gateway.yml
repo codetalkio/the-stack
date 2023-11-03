@@ -1,11 +1,11 @@
-name: "CI: ms-gateway"
+name: 'CI: ms-gateway'
 
 on:
   push:
     paths:
-      - "ms-gateway/**"
-      - ".github/workflows/ci-ms-gateway.yml"
-      - ".github/workflows/wf-build-ms-gateway.yml"
+      - 'ms-gateway/**'
+      - '.github/workflows/ci-ms-gateway.yml'
+      - '.github/workflows/wf-build-ms-gateway.yml'
 
 defaults:
   run:

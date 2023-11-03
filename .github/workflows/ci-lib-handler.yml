@@ -1,13 +1,13 @@
-name: "CI: lib-handler"
+name: 'CI: lib-handler'
 
 on:
   push:
     paths:
-      - ".github/workflows/ci-lib-handler.yml"
-      - ".github/workflows/wf-build-crate.yml"
-      - "lib-handler/**"
-      - "Cargo.toml"
-      - "Cargo.lock"
+      - '.github/workflows/ci-lib-handler.yml'
+      - '.github/workflows/wf-build-crate.yml'
+      - 'lib-handler/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
 
 defaults:
   run:

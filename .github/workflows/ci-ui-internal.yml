@@ -1,11 +1,11 @@
-name: "CI: ui-internal"
+name: 'CI: ui-internal'
 
 on:
   push:
     paths:
-      - ".github/workflows/ci-ui-internal.yml"
-      - ".github/workflows/wf-build-ui-internal.yml"
-      - "ui-internal/**"
+      - '.github/workflows/ci-ui-internal.yml'
+      - '.github/workflows/wf-build-ui-internal.yml'
+      - 'ui-internal/**'
 
 defaults:
   run:
@@ -22,8 +22,8 @@ jobs:
   end-to-end:
     runs-on: ubuntu-latest
     env:
-      SCCACHE_GHA_ENABLED: "true"
-      RUSTC_WRAPPER: "sccache"
+      SCCACHE_GHA_ENABLED: 'true'
+      RUSTC_WRAPPER: 'sccache'
     steps:
       - uses: actions/checkout@v3
       - uses: oven-sh/setup-bun@v1
@@ -55,7 +55,7 @@ jobs:
             cargo-debug-${{ hashFiles('ui-internal/Cargo.lock') }}-ui-internal
             cargo-debug-
       - uses: mozilla-actions/sccache-action@v0.0.3
-        name: "Setup sccache"
+        name: 'Setup sccache'
 
       - name: Install dependencies and setup Playwright
         working-directory: ./ui-internal/end2end

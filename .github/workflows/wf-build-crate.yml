@@ -1,19 +1,19 @@
-name: "Build: crate"
+name: 'Build: crate'
 
 on:
   workflow_call:
     inputs:
       project:
-          type: string
-          required: true
+        type: string
+        required: true
 
 jobs:
   build:
     name: ${{ inputs.project }}
     runs-on: ubuntu-latest
     env:
-      SCCACHE_GHA_ENABLED: "true"
-      RUSTC_WRAPPER: "sccache"
+      SCCACHE_GHA_ENABLED: 'true'
+      RUSTC_WRAPPER: 'sccache'
     steps:
       - uses: actions/checkout@v3
       - uses: extractions/setup-just@v1
@@ -23,7 +23,7 @@ jobs:
           toolchain: stable
           cache: true
       - uses: mozilla-actions/sccache-action@v0.0.3
-        name: "Setup sccache"
+        name: 'Setup sccache'
 
       - name: Build release build
         working-directory: ${{ inputs.project }}

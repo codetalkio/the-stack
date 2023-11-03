@@ -1,4 +1,4 @@
-name: "Build: ui-app"
+name: 'Build: ui-app'
 
 on:
   workflow_call:
