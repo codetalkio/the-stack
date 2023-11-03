@@ -1,7 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as route53 from 'aws-cdk-lib/aws-route53';
-import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 
 export interface StackProps extends cdk.StackProps {
   /**
@@ -24,11 +23,10 @@ export class Stack extends cdk.Stack {
       zoneName: props.domain,
     });
 
-    // Set up an ACM certificate for the domain + subdomains, and validate it using DNS.
-    new acm.Certificate(this, 'Certificate', {
-      domainName: props.domain,
-      subjectAlternativeNames: [`*.${props.domain}`],
-      validation: acm.CertificateValidation.fromDns(hostedZone),
+    // Restrict certificate authorities allowed to issue certificates for a domain to Amazon
+    // only. Without this ACM sometimes fails to issue a certificate.
+    new route53.CaaAmazonRecord(this, 'CaaAmazonRecord', {
+      zone: hostedZone,
     });
   }
 }

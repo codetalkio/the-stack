@@ -135,7 +135,7 @@ deploy:
 deploy-stack +stack='--all':
   cd deployment && bun run cdk deploy --concurrency 6 --outputs-file artifacts/outputs.json --require-approval never {{ stack }}
 
-# Deploy the specified <stack> with --no-rolback, e.g. `just deploy 'Cloud/**'`, defaulting to --all.
+# Deploy the specified <stack> with --no-rolback, e.g. `just deploy-debug 'Cloud/**'`, defaulting to --all.
 deploy-debug +stack='--all':
   cd deployment && bun run cdk deploy --no-rolback --concurrency 6 --outputs-file artifacts/outputs.json --require-approval never {{ stack }}
 
