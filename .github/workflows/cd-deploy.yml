@@ -18,10 +18,25 @@ jobs:
     with:
       git-sha: ${{ github.sha }}
 
+  build-ms-router-image:
+    strategy:
+      matrix:
+        environment:
+          - 'Integration Test'
+          - 'Production Single-tenant'
+          - 'Production Multi-tenant'
+    uses: ./.github/workflows/wf-build-docker.yml
+    with:
+      environment: ${{ matrix.environment }}
+      project: ms-router
+      tag: ${{ github.sha }}
+      tag-env-name: SUPERGRAPH_ROUTER_IMAGE_TAG
+      push-image: true
+
   # Stage 1 tests that the deployment is working correctly.
   stage-1:
     name: 'Stage 1: Integration'
-    needs: [build-artifacts]
+    needs: [build-artifacts, build-ms-router-image]
     uses: ./.github/workflows/wf-deploy.yml
     with:
       environment: 'Integration Test'
