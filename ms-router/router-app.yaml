@@ -1,8 +1,15 @@
 supergraph:
   listen: 127.0.0.1:4000
+  # NOTE: The path must align with what how you expose it on in CloudFront,
+  # since it gets forwarded to the App Runner request.
+  path: '/*'
+  introspection: true
 
 homepage:
-  enabled: true # false
+  enabled: true
+
+sandbox:
+  enabled: true
 
 plugins:
   # Enable with the header, Apollo-Expose-Query-Plan: true
@@ -35,6 +42,6 @@ traffic_shaping:
 # Support setting the path to each subgraph via environment variables. This will override
 # the ones defined in the composed supergraph.graphql schema.
 override_subgraph_url:
-  users: "${env.SUBGRAPH_USERS_URL:-http://127.0.0.1:3065/}"
-  products: "${env.SUBGRAPH_PRODUCTS_URL:-http://127.0.0.1:3075/}"
-  reviews: "${env.SUBGRAPH_REVIEWS_URL:-http://127.0.0.1:3085/}"
+  users: '${env.SUBGRAPH_USERS_URL:-http://127.0.0.1:3065/}'
+  products: '${env.SUBGRAPH_PRODUCTS_URL:-http://127.0.0.1:3075/}'
+  reviews: '${env.SUBGRAPH_REVIEWS_URL:-http://127.0.0.1:3085/}'

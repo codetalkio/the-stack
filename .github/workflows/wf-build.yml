@@ -2,6 +2,10 @@ name: 'Build Artifacts'
 
 on:
   workflow_call:
+    inputs:
+      git-sha:
+        required: true
+        type: string
 
 jobs:
   ui-app:
@@ -48,3 +52,11 @@ jobs:
     with:
       release: true
       upload-artifact: true
+
+  ms-router:
+    uses: ./.github/workflows/wf-build-docker.yml
+    with:
+      project: ms-router
+      tag: ${{ inputs.git-sha }}
+      tag-env-name: SUPERGRAPH_ROUTER_IMAGE_TAG
+      push-image: true

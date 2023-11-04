@@ -15,6 +15,11 @@ export interface StackProps extends cdk.StackProps {
  * https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_route53.HostedZone.html
  */
 export class Stack extends cdk.Stack {
+  /**
+   * The Hosted Zone.
+   */
+  readonly hostedZone: route53.HostedZone;
+
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
 
@@ -22,6 +27,7 @@ export class Stack extends cdk.Stack {
     const hostedZone = new route53.HostedZone(this, 'HostedZone', {
       zoneName: props.domain,
     });
+    this.hostedZone = hostedZone;
 
     // Restrict certificate authorities allowed to issue certificates for a domain to Amazon
     // only. Without this ACM sometimes fails to issue a certificate.

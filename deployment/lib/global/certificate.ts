@@ -4,16 +4,16 @@ import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 
-interface StackProps extends cdk.StackProps {
+export interface StackProps extends cdk.StackProps {
   /**
    * The domain name the application is hosted under.
    */
   readonly domain: string;
 
   /**
-   * The domain name the application is hosted under.
+   * SSM Parameter name for the global certificate ARN used by CloudFront.
    */
-  readonly ssmParameterName: string;
+  readonly certificateArnSsm: string;
 }
 
 export class Stack extends cdk.Stack {
@@ -24,8 +24,8 @@ export class Stack extends cdk.Stack {
       domainName: props.domain,
     });
 
-    // Importantly this has to live in us-east-1 for CloudFront to be able to use it.
-    // Set up an ACM certificate for the domain + subdomains, and validate it using DNS.
+    //  Set up an ACM certificate for the domain + subdomains, and validate it using DNS.
+    // NOTE: This has to live in us-east-1 for CloudFront to be able to use it with CloudFront.
     const cert = new acm.Certificate(this, 'Certificate', {
       domainName: props.domain,
       subjectAlternativeNames: [`*.${props.domain}`],
@@ -40,7 +40,7 @@ export class Stack extends cdk.Stack {
     // Store the Certificate ARN in SSM so that we can reference it from other regions
     // without creating cross-stack references.
     new ssm.StringParameter(this, 'CertificateARN', {
-      parameterName: props.ssmParameterName,
+      parameterName: props.certificateArnSsm,
       description: 'Certificate ARN to be used with Cloudfront',
       stringValue: cert.certificateArn,
     });

@@ -1,4 +1,4 @@
 *
 !bin/router
-!router.yaml
+!router-app.yaml
 !supergraph.graphql

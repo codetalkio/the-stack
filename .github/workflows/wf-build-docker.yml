@@ -1,4 +1,4 @@
-name: 'Build: ms-router'
+name: 'Build: Docker'
 
 on:
   workflow_call:
@@ -6,9 +6,13 @@ on:
       project:
         type: string
         required: true
-      release:
-        type: boolean
-        default: false
+      tag:
+        type: string
+        required: true
+      tag-env-name:
+        type: string
+        description: The name of the environment variable that defines the tag for the image
+        required: true
       push-image:
         type: boolean
         default: false
@@ -19,22 +23,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18.18.2
-      - uses: oven-sh/setup-bun@v1
       - uses: extractions/setup-just@v1
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
 
-      - name: Install dependencies
-        run: just setup ms-router
-
-      - name: Build project
-        run: just build ms-router
-
-      - uses: actions/upload-artifact@v3
+      - name: Build and push docker image to ECR
         if: ${{ inputs.push-image }}
-        with:
-          name: ms-router
-          path: ms-router/dist
-          if-no-files-found: error
-          retention-days: 1
+        run: |
+          export ${{ inputs.tag-env-name }}=${{ inputs.tag }}
+          just build ${{ inputs.project }}

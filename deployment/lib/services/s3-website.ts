@@ -96,15 +96,6 @@ export class Stack extends cdk.Stack {
       [key: string]: cloudfront.BehaviorOptions & cloudfront.AddBehaviorOptions;
     } = {};
 
-    const originRequestPolicy = new cloudfront.OriginRequestPolicy(this, 'OriginRequestPolicy', {
-      // NOTE: We cannot forward the HOST header, it will cause a 403.
-      // See note in https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/controlling-origin-requests.html#origin-request-understand-origin-request-policy.
-      headerBehavior: cloudfront.OriginRequestHeaderBehavior.denyList('Host'),
-      queryStringBehavior: cloudfront.OriginRequestQueryStringBehavior.all(),
-      cookieBehavior: cloudfront.OriginRequestCookieBehavior.all(),
-      comment: 'Allow all headers (except HOST), cookies, and query strings.',
-    });
-
     // Iterate over the keys and values of redirectPathToUrlFromSsm and fetch the
     // values from the SSM Parameter Store.
     const redirectPathToUrlFromSsm = props.redirectPathToUrlFromSsm ?? {};
@@ -122,12 +113,10 @@ export class Stack extends cdk.Stack {
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
 
-        originRequestPolicy,
-
         // NOTE: Use the special Managed Policy that allows us to forward the HOST header
         // without causing issues at the Origin when using CloudFronts normal behavior.
         // https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-origin-request-policies.html#managed-origin-request-policy-all-viewer-except-host-header.
-        // originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+        originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
         // responseHeadersPolicy: cloudfront.ResponseHeadersPolicy.CORS_ALLOW_ALL_ORIGINS_WITH_PREFLIGHT_AND_SECURITY_HEADERS
       };
     }

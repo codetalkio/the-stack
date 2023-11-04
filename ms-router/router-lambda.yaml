@@ -1,8 +1,12 @@
 supergraph:
   listen: 127.0.0.1:4000
+  introspection: false
 
 homepage:
-  enabled: true # false
+  enabled: true
+
+sandbox:
+  enabled: false
 
 plugins:
   # Enable with the header, Apollo-Expose-Query-Plan: true

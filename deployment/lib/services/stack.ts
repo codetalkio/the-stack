@@ -15,9 +15,9 @@ interface StackProps extends cdk.StackProps {
   readonly domain: string;
 
   /**
-   * The Parameter Store name of the ACM Certificate ARN to use with CloudFront.
+   * SSM Parameter name for the global certificate ARN used by CloudFront.
    */
-  readonly certificateArnParameterName: string;
+  readonly certificateArnSsm: string;
 }
 
 export class Stack extends cdk.Stack {
@@ -25,7 +25,7 @@ export class Stack extends cdk.Stack {
     super(scope, id, props);
 
     // Collect environment variables pointing to each subgraph URL for the Supergraph.
-    const subGraphUrlsSsm = {};
+    const subgraphEnvsSsm = {};
     // Collect all subgraphs that the supergraph will depend on.
     const subgraphs: Stack[] = [];
 
@@ -45,8 +45,7 @@ export class Stack extends cdk.Stack {
 
         // Each function URL points to a specific Lambda Alias, which means each router
         // will be pinned to the version of the subgraph it was deployed with.
-        // TODO: Verify that it picks from the latest alias and not n-1 (delayed).
-        subGraphUrlsSsm[`SUBGRAPH_${subgraph.name.toUpperCase()}_URL`] = subgraphFn.aliasUrlParameterName;
+        subgraphEnvsSsm[`SUBGRAPH_${subgraph.name.toUpperCase()}_URL`] = subgraphFn.aliasUrlParameterName;
       });
 
     // Collect all routes so we can make the API accessible on a path on the App domains,
@@ -66,7 +65,7 @@ export class Stack extends cdk.Stack {
         assets: 'artifacts/ms-gateway',
         billingGroup: 'ms-gateway',
         environmentFromSsm: {
-          ...subGraphUrlsSsm,
+          ...subgraphEnvsSsm,
         },
       });
       supergraphs.push(supergraph);
@@ -85,7 +84,7 @@ export class Stack extends cdk.Stack {
         assets: 'artifacts/ms-mesh',
         billingGroup: 'ms-mesh',
         environmentFromSsm: {
-          ...subGraphUrlsSsm,
+          ...subgraphEnvsSsm,
         },
       });
       supergraphs.push(supergraph);
@@ -103,7 +102,7 @@ export class Stack extends cdk.Stack {
         architecture: lambda.Architecture.X86_64,
         lambdaInsights: true,
         environmentFromSsm: {
-          ...subGraphUrlsSsm,
+          ...subgraphEnvsSsm,
         },
       });
       supergraphs.push(supergraph);
@@ -116,10 +115,10 @@ export class Stack extends cdk.Stack {
       const supergraph = new routerAppRunner.Stack(this, 'MsRouterApp', {
         ...props,
         repo: 'ms-router',
-        tag: `latest`,
+        tag: process.env.SUPERGRAPH_ROUTER_IMAGE_TAG ?? `latest`,
         billingGroup: 'ms-router',
         environmentFromSsm: {
-          ...subGraphUrlsSsm,
+          ...subgraphEnvsSsm,
         },
       });
       supergraphs.push(supergraph);
@@ -129,7 +128,7 @@ export class Stack extends cdk.Stack {
 
     // Fetch the ARN of our CloudFront ACM Certificate from us-east-1.
     const certificateArnReader = new SsmGlobal(this, 'SsmCertificateArn', {
-      parameterName: props.certificateArnParameterName,
+      parameterName: props.certificateArnSsm,
       region: 'us-east-1',
     });
     const certificateArn = certificateArnReader.value();

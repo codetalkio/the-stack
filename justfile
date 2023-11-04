@@ -128,7 +128,8 @@ _setup-rust project:
 
 # Deploy everything in order.
 deploy:
-  @ just deploy-stack 'Cloud/**' 'CloudCertificate'
+  @ just deploy-stack 'Global/**'
+  @ just deploy-stack 'Cloud/**'
   @ just deploy-stack 'Services/**'
 
 # Deploy the specified <stack>, e.g. `just deploy 'Services/**'`, defaulting to --all.
@@ -141,6 +142,7 @@ deploy-debug +stack='--all':
 
 # Deploy the specific <service> without any dependencies (i.e. exclusively), e.g. `just deploy-service 'Services/UiApp'`.
 deploy-list:
+  @ cd deployment && bun run cdk list 'Global/**'
   @ cd deployment && bun run cdk list 'Cloud/**'
   @ cd deployment && bun run cdk list 'Services/**'
 
@@ -149,8 +151,8 @@ deploy-diff stack='--all':
   cd deployment && bun run cdk diff {{ stack }}
 
 # Synthesize the whole stack.
-deploy-synth:
-  cd deployment && bun run cdk synth --all
+deploy-synth stack='--all':
+  cd deployment && bun run cdk synth {{ stack }}
 
 # Clean up deployment artifacts.
 deploy-clean:
@@ -171,7 +173,7 @@ _deploy-validate-artifacts project:
   @ [ -d "./deployment/artifacts/{{project}}" ] && echo "✅ {{project}} exists" || (echo "❌ {{project}} missing" && exit 1)
 
 # Destroy (delete) the specified <stack>, e.g. `just destroy 'Services/MsGqlUsers'`.
-destroy-stack stack:
+destroy-stack +stack:
   cd deployment && bun run cdk destroy {{ stack }}
 
 # Compose the supergraph from all of our subgraphs (requires them to be running).
