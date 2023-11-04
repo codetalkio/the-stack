@@ -40,6 +40,12 @@ jobs:
           export ${{ inputs.tag-env-name }}=${{ inputs.tag }}
           just docker-prepare ${{ inputs.project }}
 
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ inputs.project }}
+
       - name: Build and export to Docker
         uses: docker/build-push-action@v5
         with:
