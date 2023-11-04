@@ -32,6 +32,7 @@ jobs:
       tag: ${{ github.sha }}
       tag-env-name: SUPERGRAPH_ROUTER_IMAGE_TAG
       push-image: true
+    secrets: inherit
 
   # Stage 1 tests that the deployment is working correctly.
   stage-1:
