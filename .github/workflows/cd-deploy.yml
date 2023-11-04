@@ -18,7 +18,8 @@ jobs:
     with:
       git-sha: ${{ github.sha }}
 
-  build-ms-router-image:
+  build-images:
+    name: 'Stage 0: Build Images'
     strategy:
       matrix:
         environment:
@@ -37,7 +38,7 @@ jobs:
   # Stage 1 tests that the deployment is working correctly.
   stage-1:
     name: 'Stage 1: Integration'
-    needs: [build-artifacts, build-ms-router-image]
+    needs: [build-artifacts, build-images]
     uses: ./.github/workflows/wf-deploy.yml
     with:
       environment: 'Integration Test'
