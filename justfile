@@ -258,29 +258,6 @@ _build-ui-internal build="release":
   @ rm -r ./deployment/artifacts/ui-internal || true
   @ mkdir -p ./deployment/artifacts && cp -r ./ui-internal/dist ./deployment/artifacts/ui-internal
 
-_build-ms-router-lambda build="release":
-  #!/usr/bin/env bash
-  set -euxo pipefail
-  mkdir -p ./deployment/artifacts/ms-router
-  cp ms-router/router-lambda.yaml ./deployment/artifacts/ms-router/router.yaml
-  cp supergraph.graphql ./deployment/artifacts/ms-router/supergraph.graphql
-
-  # Download the prebuilt Apollo Router binary that we will use for deployment.
-  curl -sSL https://github.com/codetalkio/apollo-router-lambda/releases/latest/download/bootstrap-with-server-x86-64 -o bootstrap
-  mv bootstrap ./deployment/artifacts/ms-router/bootstrap
-
-_build-ms-router-app build="release":
-  #!/usr/bin/env bash
-  set -euxo pipefail
-  cp supergraph.graphql ./ms-router/supergraph.graphql
-  cd ms-router
-  export ACCOUNT=$(aws sts get-caller-identity | jq .Account -r)
-  export ECR_URL=$(aws cloudformation list-exports --query "Exports[?Name=='EcrMsRouter'].Value" --no-paginate --output text)
-  aws ecr get-login-password --region "${AWS_REGION:-$AWS_DEFAULT_REGION}" | docker login --username AWS --password-stdin "$ACCOUNT.dkr.ecr.${AWS_REGION:-$AWS_DEFAULT_REGION}.amazonaws.com"
-  docker buildx build --platform linux/amd64,linux/arm64 -t ms-router:latest --build-arg ROUTER_VERSION="v{{router-version}}" .
-  docker tag ms-router:latest "$ECR_URL:latest"
-  docker push "$ECR_URL:latest"
-
 _build-ms-gateway build="release":
   cd ms-gateway && bun run build
   @ rm -r ./deployment/artifacts/ms-gateway || true
@@ -305,3 +282,49 @@ _build-ms-gql-reviews build="release":
   cd ms-gql-reviews && cargo lambda build --arm64 {{ if build == "debug" { "" } else { "--release" } }}
   @ rm -r ./deployment/artifacts/ms-gql-reviews || true
   @ mkdir -p ./deployment/artifacts && cp -r ./target/lambda/ms-gql-reviews ./deployment/artifacts/ms-gql-reviews
+
+_build-ms-router-lambda build="release":
+  #!/usr/bin/env bash
+  set -euxo pipefail
+  mkdir -p ./deployment/artifacts/ms-router
+  cp ms-router/router-lambda.yaml ./deployment/artifacts/ms-router/router.yaml
+  cp supergraph.graphql ./deployment/artifacts/ms-router/supergraph.graphql
+
+  # Download the prebuilt Apollo Router binary that we will use for deployment.
+  curl -sSL https://github.com/codetalkio/apollo-router-lambda/releases/latest/download/bootstrap-with-server-x86-64 -o bootstrap
+  mv bootstrap ./deployment/artifacts/ms-router/bootstrap
+
+_build-ms-router-app build="release":
+  @ just docker-prepare ms-router
+  @ just docker-build ms-router
+  @ just docker-push ms-router
+
+docker-prepare project:
+  just _docker-prepare-{{project}}
+
+_docker-prepare-ms-router:
+  #!/usr/bin/env bash
+  set -euxo pipefail
+  cp supergraph.graphql ./ms-router/supergraph.graphql
+
+docker-build project:
+  just _docker-build-{{project}}
+
+_docker-build-ms-router:
+  #!/usr/bin/env bash
+  set -euxo pipefail
+  cd ms-router
+  docker buildx build --platform linux/amd64,linux/arm64 -t ms-router:${SUPERGRAPH_ROUTER_IMAGE_TAG:-latest} --build-arg ROUTER_VERSION="v{{router-version}}" .
+
+docker-push project:
+  just _docker-push-{{project}}
+
+_docker-push-ms-router:
+  #!/usr/bin/env bash
+  set -euxo pipefail
+  cd ms-router
+  export ACCOUNT=$(aws sts get-caller-identity | jq .Account -r)
+  export ECR_URL=$(aws cloudformation list-exports --query "Exports[?Name=='EcrMsRouter'].Value" --no-paginate --output text)
+  aws ecr get-login-password --region "${AWS_REGION:-$AWS_DEFAULT_REGION}" | docker login --username AWS --password-stdin "$ACCOUNT.dkr.ecr.${AWS_REGION:-$AWS_DEFAULT_REGION}.amazonaws.com"
+  docker tag ms-router:${SUPERGRAPH_ROUTER_IMAGE_TAG:-latest} "$ECR_URL:${SUPERGRAPH_ROUTER_IMAGE_TAG:-latest}"
+  docker push "$ECR_URL:${SUPERGRAPH_ROUTER_IMAGE_TAG:-latest}"
