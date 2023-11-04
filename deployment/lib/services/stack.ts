@@ -45,17 +45,18 @@ export class Stack extends cdk.Stack {
 
         // Each function URL points to a specific Lambda Alias, which means each router
         // will be pinned to the version of the subgraph it was deployed with.
-        subGraphUrlsSsm[`SUBGRAPH_${subgraph.name.toUpperCase()}_URL`] = subgraphFn.latestUrlParameterName;
+        // TODO: Verify that it picks from the latest alias and not n-1 (delayed).
+        subGraphUrlsSsm[`SUBGRAPH_${subgraph.name.toUpperCase()}_URL`] = subgraphFn.aliasUrlParameterName;
       });
 
     // Collect all routes so we can make the API accessible on a path on the App domains,
     // populated by the enabled supergraph(s).
     const supergraphRoutesSsm: { [key: string]: string } = {};
-    // Collect all supergraphs that the ui will depend on.
+    // Collect all supergraphs that the UIs will depend on.
     const supergraphs: Stack[] = [];
 
     // Set up our Apollo Gateway that pieces together the microservices.
-    setupSupergraph('gateway', 'lambda', supergraphRoutesSsm, () => {
+    setupSupergraph('gateway', 'lambda', supergraphRoutesSsm, (config) => {
       const supergraph = new lambdaFn.Stack(this, 'MsGateway', {
         ...props,
         functionName: 'ms-gateway',
@@ -70,11 +71,11 @@ export class Stack extends cdk.Stack {
       });
       supergraphs.push(supergraph);
       subgraphs.forEach((subgraph) => supergraph.addDependency(subgraph));
-      return supergraph.latestUrlParameterName;
+      return config?.pinToVersionedApi ? supergraph.aliasUrlParameterName : supergraph.latestUrlParameterName;
     });
 
     // Set up our GraphQL Mesh that pieces together the microservices.
-    setupSupergraph('mesh', 'lambda', supergraphRoutesSsm, () => {
+    setupSupergraph('mesh', 'lambda', supergraphRoutesSsm, (config) => {
       const supergraph = new lambdaFn.Stack(this, 'MsMesh', {
         ...props,
         functionName: 'ms-mesh',
@@ -89,11 +90,11 @@ export class Stack extends cdk.Stack {
       });
       supergraphs.push(supergraph);
       subgraphs.forEach((subgraph) => supergraph.addDependency(subgraph));
-      return supergraph.latestUrlParameterName;
+      return config?.pinToVersionedApi ? supergraph.aliasUrlParameterName : supergraph.latestUrlParameterName;
     });
 
     // Set up our Apollo Router Lambda that pieces together the microservices.
-    setupSupergraph('router', 'lambda', supergraphRoutesSsm, () => {
+    setupSupergraph('router', 'lambda', supergraphRoutesSsm, (config) => {
       const supergraph = new lambdaFn.Stack(this, 'MsRouterLambda', {
         ...props,
         functionName: 'ms-router',
@@ -107,7 +108,7 @@ export class Stack extends cdk.Stack {
       });
       supergraphs.push(supergraph);
       subgraphs.forEach((subgraph) => supergraph.addDependency(subgraph));
-      return supergraph.latestUrlParameterName;
+      return config?.pinToVersionedApi ? supergraph.aliasUrlParameterName : supergraph.latestUrlParameterName;
     });
 
     // Set up our Apollo Router App Runner that pieces together the microservices.

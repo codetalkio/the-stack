@@ -59,7 +59,6 @@ export class Stack extends cdk.Stack {
   public readonly latestUrlParameterName: string;
 
   public readonly aliasUrlParameterName: string;
-  public readonly aliasUrlParameterVersion: string;
 
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
@@ -146,6 +145,5 @@ export class Stack extends cdk.Stack {
       stringValue: cdk.Fn.select(2, cdk.Fn.split('/', aliasFnUrl.url)),
     });
     this.aliasUrlParameterName = aliasParameterName;
-    this.aliasUrlParameterVersion = '1';
   }
 }

@@ -22,13 +22,27 @@ const resolveConfig = (env: string | undefined): Config => {
 export const config: Config = resolveConfig(process.env.ENVIRONMENT);
 
 /**
+ * Construct a type that becomes concrete based on which record is passed in. This
+ * utilizes discriminated unions so that we can make the input type of `stackFn` dependent
+ * on the input of e.g. `name` and/or `runtime` in the `setupSupergraph`/`setupApp` functions.
+ *
+ * Example:
+ * ```ts
+ * const setupApp = <N extends App['service']>(name: N, stackFn: (appConfig: Specific<App, { service: N }>) => void) => {
+ *   // ..
+ * }
+ * ```
+ */
+type Specific<S, R> = Extract<S, R>;
+
+/**
  * Convenience function for looking up relevant Supergraph configurations and setting
  * up a supergraph along with its routes.
  *
  * Example:
  * ```ts
- * setupSupergraph('router', 'lambda', supergraphRoutes, () => {
- *   const supergraphRouterLambda = new lambdaFn.Stack(this, 'MsRouterLambda', {
+ * setupSupergraph('router', 'lambda', supergraphRoutes, (config) => {
+ *   const supergraph = new lambdaFn.Stack(this, 'MsRouterLambda', {
  *     ...props,
  *     functionName: 'ms-router',
  *     assets: 'artifacts/ms-router',
@@ -38,20 +52,22 @@ export const config: Config = resolveConfig(process.env.ENVIRONMENT);
  *       ...subGraphUrls,
  *     },
  *   });
- *   return cdk.Fn.select(2, cdk.Fn.split('/', supergraphRouterLambda.functionUrl));
+ *   // ..
+ *   return config?.pinToVersionedApi ? supergraph.aliasUrlParameterName : supergraph.latestUrlParameterName;
  * });
  * ```
  */
-export const setupSupergraph = (
-  name: Supergraph['service'],
-  runtime: Supergraph['runtime'],
+export const setupSupergraph = <N extends Supergraph['service'], R extends Supergraph['runtime']>(
+  name: N,
+  runtime: R,
   supergraphRoutes: { [key: string]: string },
-  stackFn: (additionalConfig?: Supergraph) => string,
+  stackFn: (additionalConfig?: Specific<Supergraph, { service: N; runtime: R }>) => string,
 ) => {
   const isMainSupergraph = config.supergraph.service === name;
+  // We cast our result to `undefined | Specific` to narrow down the type.
   const additionalSupergraphConfig = config.experimental.additionalSupergraphs.find(
     (s) => s.service === name && s.runtime === runtime,
-  );
+  ) as undefined | Specific<Supergraph, { service: N; runtime: R }>;
 
   // If the supergraph is the main one, or if it's an additional supergraph, set up the stack.
   if (isMainSupergraph || additionalSupergraphConfig) {
@@ -64,13 +80,6 @@ export const setupSupergraph = (
     }
   }
 };
-
-/**
- * Construct a type that becomes concrete based on which `service` is passed in. This
- * utilizes discriminated unions so that we can make the input type of `stackFn` dependent
- * on the input of `name` in the `setupApp` function.
- */
-type SpecificApp<N> = Extract<App, { service: N }>;
 
 /**
  * Convenience function for looking up relevant App configurations and setting
@@ -93,12 +102,12 @@ type SpecificApp<N> = Extract<App, { service: N }>;
  * });
  * ```
  */
-export const setupApp = <N extends App['service']>(name: N, stackFn: (appConfig: SpecificApp<N>) => void) => {
-  // We do a bit of type trickery here to convert our general `App` type into a specific
-  // type in the union based on which `name` is passed in.
-  const appConfig: SpecificApp<typeof name> | undefined = config.apps.find(
-    (app) => app.service === name,
-  ) as SpecificApp<typeof name>;
+export const setupApp = <N extends App['service']>(
+  name: N,
+  stackFn: (appConfig: Specific<App, { service: N }>) => void,
+) => {
+  // We cast our result to `undefined | Specific` to narrow down the type.
+  const appConfig = config.apps.find((app) => app.service === name) as undefined | Specific<App, { service: N }>;
 
   if (appConfig && appConfig.service === name) {
     return stackFn(appConfig);

@@ -7,6 +7,7 @@ const base: Config = {
     service: 'gateway',
     runtime: 'lambda',
     path: '/graphql',
+    pinToVersionedApi: true,
   },
 
   subgraphs: [
@@ -54,6 +55,7 @@ const development: Config = {
         service: 'router',
         runtime: 'lambda',
         path: '/graphql-lambda-router',
+        pinToVersionedApi: true,
       },
     ],
   },
@@ -65,6 +67,7 @@ const production: Config = {
     service: 'gateway',
     runtime: 'lambda',
     path: '/graphql',
+    pinToVersionedApi: true,
   },
 };
 

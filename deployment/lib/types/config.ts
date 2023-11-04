@@ -42,12 +42,17 @@ export type Config = {
 
   /**
    * Which supergraph to use:
+   * - router (app-runner): [Apollo Router](https://www.apollographql.com/docs/router/)
+   * - router (lambda): [Custom Apollo Router Lambda](https://github.com/codetalkio/apollo-router-lambda)
    * - mesh: [GraphQL Mesh](https://the-guild.dev/graphql/mesh)
-   * - router: [Apollo Router](https://www.apollographql.com/docs/router/)
    * - gateway: [Apollo Gateway](https://www.apollographql.com/docs/apollo-server/using-federation/apollo-gateway-setup)
    *
-   * NOTE: The `path` defines the path on the App domains where the API will be
+   * The `path` defines the path on the App domains where the API will be
    * accessible, to avoid running into CORS issues by needing to go cross-domain.
+   *
+   * The `pinToVersionedApi` flag will make the Apps use a pinned version of the Supergraph,
+   * which prevents client<->api drift, but requires a new deployment of the App CloudFront distribution
+   * to pick up the new version.
    *
    * Example:
    * ```ts
@@ -105,14 +110,22 @@ export type Supergraph =
       service: 'mesh';
       runtime: 'lambda';
       path: string;
+      pinToVersionedApi: boolean;
     }
   | {
       service: 'gateway';
       runtime: 'lambda';
       path: string;
+      pinToVersionedApi: boolean;
     }
   | {
       service: 'router';
-      runtime: 'app-runner' | 'lambda';
+      runtime: 'lambda';
+      path: string;
+      pinToVersionedApi: boolean;
+    }
+  | {
+      service: 'router';
+      runtime: 'app-runner';
       path: string;
     };
