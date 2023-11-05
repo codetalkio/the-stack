@@ -7,14 +7,14 @@ supergraph:
   introspection: true
 
 homepage:
-  enabled: true
+  enabled: false
 
 sandbox:
   enabled: true
 
 plugins:
   # Enable with the header, Apollo-Expose-Query-Plan: true
-  experimental.expose_query_plan: true
+  # experimental.expose_query_plan: true
 
 experimental_batching:
   enabled: true
