@@ -1,5 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
+import * as appRunner from '@aws-cdk/aws-apprunner-alpha';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 
 import { config, setupSupergraph, setupApp } from '../helpers';
@@ -128,6 +129,8 @@ export class Stack extends cdk.Stack {
           healthyThreshold: 1,
           unhealthyThreshold: 5,
         },
+        cpu: appRunner.Cpu.HALF_VCPU,
+        memory: appRunner.Memory.ONE_GB,
       });
       supergraphs.push(supergraph);
       subgraphs.forEach((subgraph) => supergraph.addDependency(subgraph));
