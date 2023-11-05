@@ -1,6 +1,6 @@
-import { Arn, Stack } from 'aws-cdk-lib';
-import * as CustomResource from 'aws-cdk-lib/custom-resources';
-import { Construct } from 'constructs';
+import { Arn, Stack } from "aws-cdk-lib";
+import * as CustomResource from "aws-cdk-lib/custom-resources";
+import { Construct } from "constructs";
 
 interface SsmGlobalProps {
   /**
@@ -17,9 +17,8 @@ interface SsmGlobalProps {
 /**
  * Remove any leading slashes from the resource `parameterName`.
  */
-function removeLeadingSlash(parameterName: string): string {
-  return parameterName.slice(0, 1) == '/' ? parameterName.slice(1) : parameterName;
-}
+const removeLeadingSlash = (parameterName: string): string =>
+  parameterName.slice(0, 1) == "/" ? parameterName.slice(1) : parameterName;
 
 /**
  * Custom resource to retrieve a global SSM parameter. See https://aws.amazon.com/blogs/infrastructure-and-automation/read-parameters-across-aws-regions-with-aws-cloudformation-custom-resources/ for more information.
@@ -55,25 +54,27 @@ export class SsmGlobal extends CustomResource.AwsCustomResource {
     const { parameterName, region } = props;
 
     const ssmAwsSdkCall: CustomResource.AwsSdkCall = {
-      service: 'SSM',
-      action: 'getParameter',
+      service: "SSM",
+      action: "getParameter",
       parameters: {
         Name: parameterName,
       },
       region,
-      physicalResourceId: CustomResource.PhysicalResourceId.of(Date.now().toString()),
+      physicalResourceId: CustomResource.PhysicalResourceId.of(
+        Date.now().toString()
+      ),
     };
 
     const ssmCrPolicy = CustomResource.AwsCustomResourcePolicy.fromSdkCalls({
       resources: [
         Arn.format(
           {
-            service: 'ssm',
+            service: "ssm",
             region: props.region,
-            resource: 'parameter',
+            resource: "parameter",
             resourceName: removeLeadingSlash(parameterName),
           },
-          Stack.of(scope),
+          Stack.of(scope)
         ),
       ],
     });
@@ -85,6 +86,6 @@ export class SsmGlobal extends CustomResource.AwsCustomResource {
    * Get the parameter value from the store.
    */
   public value(): string {
-    return this.getResponseField('Parameter.Value').toString();
+    return this.getResponseField("Parameter.Value").toString();
   }
 }

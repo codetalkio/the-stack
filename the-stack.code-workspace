@@ -9,10 +9,6 @@
       "path": "deployment"
     },
     {
-      "name": "ms-router",
-      "path": "ms-router"
-    },
-    {
       "name": "ui-app",
       "path": "ui-app"
     },
@@ -34,7 +30,6 @@
       "**/Cargo.lock": true,
       "**/dist": true,
       "**/.vscode": false,
-      "ms-router": true,
       "deployment": true,
       "ui-app": true,
       "ui-internal": true
