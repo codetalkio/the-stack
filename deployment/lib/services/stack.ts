@@ -121,6 +121,7 @@ export class Stack extends cdk.Stack {
         environmentFromSsm: {
           ...subgraphEnvsSsm,
         },
+        // FIXME: Health endpoint is served on port 8088.
         healthCheck: {
           protocol: 'HTTP',
           path: '/health',
