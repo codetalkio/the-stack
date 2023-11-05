@@ -1,31 +1,35 @@
 #!/usr/bin/env bun
 import * as cdk from "aws-cdk-lib";
 import { matchesStack, validateEnv } from "./helpers";
-import { Stack as CloudStack } from "../lib/cloud/stack";
+import { Stack as GlobalStack } from "../lib/global/stack";
 import { Stack as ServicesStack } from "../lib/services/stack";
-import { Stack as ServicesCertificateStack } from "../lib/services/stack-certificate";
 
 const app = new cdk.App();
 
 /**
- * Define our 'Cloud' stack that provisions the infrastructure for our application, such
- * as domain names, certificates, and other resources that are shared across all.
+ * SSM Parameter name for the global certificate ARN used by CloudFront.
+ */
+const GLOBAL_CERTIFICATE_SSM = '/global/acm/certificate/arn';
+
+/**
+ * Define our 'Global' stack that provisions the infrastructure for our application, such
+ * as domain names, certificates, and other resources that are shared across all regions.
  *
  * ```bash
- * bun run cdk deploy --concurrency 4 'Cloud' 'Cloud/**'
+ * bun run cdk deploy --concurrency 6 'Global/**'
  * ```
  */
-const cloudStackName = "Cloud";
-if (matchesStack(app, cloudStackName)) {
-  new CloudStack(app, cloudStackName, {
+const globalStackName = 'Global';
+if (matchesStack(app, globalStackName)) {
+  // Some of our global resources need to live in us-east-1 (e.g. CloudFront certificates),
+  // so we set that as the region for all global resources.
+  new GlobalStack(app, globalStackName, {
     env: {
       account: process.env.AWS_ACCOUNT_ID || process.env.CDK_DEFAULT_ACCOUNT,
-      region:
-        process.env.AWS_REGION ||
-        process.env.AWS_DEFAULT_REGION ||
-        process.env.CDK_DEFAULT_REGION,
+      region: 'us-east-1',
     },
-    domain: validateEnv("DOMAIN", cloudStackName),
+    domain: validateEnv('DOMAIN', globalStackName),
+    certificateArnSsm: GLOBAL_CERTIFICATE_SSM,
   });
 }
 
@@ -39,19 +43,6 @@ if (matchesStack(app, cloudStackName)) {
  */
 const servicesStackName = "Services";
 if (matchesStack(app, servicesStackName)) {
-  // Set up our us-east-1 specific resources.
-  const certificateStack = new ServicesCertificateStack(
-    app,
-    `${servicesStackName}Certificate`,
-    {
-      env: {
-        account: process.env.AWS_ACCOUNT_ID || process.env.CDK_DEFAULT_ACCOUNT,
-        region: "us-east-1",
-      },
-      crossRegionReferences: true,
-      domain: validateEnv("DOMAIN", `${servicesStackName}Certificate`),
-    }
-  );
   // Set up our service resources.
   new ServicesStack(app, servicesStackName, {
     env: {
@@ -61,8 +52,7 @@ if (matchesStack(app, servicesStackName)) {
         process.env.AWS_DEFAULT_REGION ||
         process.env.CDK_DEFAULT_REGION,
     },
-    crossRegionReferences: true,
     domain: validateEnv("DOMAIN", servicesStackName),
-    certificate: certificateStack.certificate,
+    certificateArnSsm: GLOBAL_CERTIFICATE_SSM,
   });
 }

@@ -69,12 +69,14 @@ _setup-ui-internal:
   bun install
   bun run setup
 
-# Deploy the specified <stack>, e.g. `just deploy Cloud`, defaulting to --all.
-deploy stack='--all':
-  #!/usr/bin/env bash
-  set -euxo pipefail
-  cd deployment
-  bun run cdk deploy --concurrency 4 --require-approval never {{ if stack == "--all" { "--all" } else { stack } }}
+# Deploy everything in order.
+deploy:
+  @ just deploy-stack 'Global/**'
+  @ just deploy-stack 'Services/**'
+
+# Deploy the specified <stack>, e.g. `just deploy 'Services/**'`, defaulting to --all.
+deploy-stack +stack='--all':
+  cd deployment && bun run cdk deploy --concurrency 6 --outputs-file artifacts/outputs.json --require-approval never {{ stack }}
 
 # Validate that all deployment artifacts are present.
 deploy-validate-artifacts:
