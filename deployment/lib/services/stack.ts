@@ -129,8 +129,8 @@ export class Stack extends cdk.Stack {
           healthyThreshold: 1,
           unhealthyThreshold: 5,
         },
-        cpu: appRunner.Cpu.HALF_VCPU,
-        memory: appRunner.Memory.ONE_GB,
+        cpu: appRunner.Cpu.QUARTER_VCPU,
+        memory: appRunner.Memory.HALF_GB,
       });
       supergraphs.push(supergraph);
       subgraphs.forEach((subgraph) => supergraph.addDependency(subgraph));
