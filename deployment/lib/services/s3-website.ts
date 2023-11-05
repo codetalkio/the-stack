@@ -1,7 +1,6 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as route53 from "aws-cdk-lib/aws-route53";
-import * as route53Patterns from "aws-cdk-lib/aws-route53-patterns";
 import * as route53Targets from "aws-cdk-lib/aws-route53-targets";
 import * as acm from "aws-cdk-lib/aws-certificatemanager";
 import * as lambda from "aws-cdk-lib/aws-lambda";
@@ -157,13 +156,6 @@ export class Stack extends cdk.Stack {
       target: route53.RecordTarget.fromAlias(
         new route53Targets.CloudFrontTarget(distribution)
       ),
-    });
-
-    // Make www redirect to the root domain.
-    new route53Patterns.HttpsRedirect(this, "Redirect", {
-      zone: hostedZone,
-      recordNames: [`www.${props.domain}`],
-      targetDomain: props.domain,
     });
   }
 }
