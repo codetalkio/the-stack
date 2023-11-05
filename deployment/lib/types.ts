@@ -86,13 +86,13 @@ export type Config = {
   /**
    * Experimental features.
    */
-  experimental: {
+  experimental?: {
     /**
      * Set up additional supergraphs.
      *
      * NOTE: Make sure to not overlap the paths.
      */
-    additionalSupergraphs: Supergraph[];
+    additionalSupergraphs?: Supergraph[];
   };
 };
 

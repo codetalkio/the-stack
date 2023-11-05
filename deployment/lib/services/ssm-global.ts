@@ -17,9 +17,8 @@ interface SsmGlobalProps {
 /**
  * Remove any leading slashes from the resource `parameterName`.
  */
-function removeLeadingSlash(parameterName: string): string {
-  return parameterName.slice(0, 1) == '/' ? parameterName.slice(1) : parameterName;
-}
+const removeLeadingSlash = (parameterName: string): string =>
+  parameterName.slice(0, 1) == '/' ? parameterName.slice(1) : parameterName;
 
 /**
  * Custom resource to retrieve a global SSM parameter. See https://aws.amazon.com/blogs/infrastructure-and-automation/read-parameters-across-aws-regions-with-aws-cloudformation-custom-resources/ for more information.

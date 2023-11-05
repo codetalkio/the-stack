@@ -6,7 +6,7 @@ export interface Props {
   /**
    * The CloudFront distribution to invalidate.
    */
-  distribution: cloudfront.Distribution;
+  distribution: cloudfront.Distribution | cloudfront.IDistribution;
 
   /**
    * The paths to invalidate.

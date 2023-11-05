@@ -1,4 +1,4 @@
-import type { ConfigMap, Config } from './lib/types/config';
+import type { ConfigMap, Config } from './lib/types';
 
 const base: Config = {
   apps: [{ service: 'internal', subdomain: 'internal' }, { service: 'app' }],

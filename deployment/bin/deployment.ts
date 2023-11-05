@@ -35,6 +35,11 @@ if (matchesStack(app, globalStackName)) {
 }
 
 /**
+ * SSM Parameter name for the ECR repository URI of ms-router.
+ */
+const ECR_REPO_MS_ROUTER_SSM = '/ecr/repo/ms-router/uri';
+
+/**
  * Define our 'Cloud' stack that provisions the region specific base infrastructure for
  * our application, such as ECR repositories, Databases, Queues, etc.
  *
@@ -49,6 +54,7 @@ if (matchesStack(app, cloudStackName) || matchesStack(app, cloudStackName)) {
       account: process.env.AWS_ACCOUNT_ID || process.env.CDK_DEFAULT_ACCOUNT,
       region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || process.env.CDK_DEFAULT_REGION,
     },
+    ecrRepoMsRouterSsm: ECR_REPO_MS_ROUTER_SSM,
   });
 }
 
@@ -70,5 +76,6 @@ if (matchesStack(app, servicesStackName)) {
     },
     domain: validateEnv('DOMAIN', servicesStackName),
     certificateArnSsm: GLOBAL_CERTIFICATE_SSM,
+    ecrRepoMsRouterSsm: ECR_REPO_MS_ROUTER_SSM,
   });
 }

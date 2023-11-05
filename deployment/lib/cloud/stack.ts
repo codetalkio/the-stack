@@ -1,8 +1,9 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
+
 import * as ecr from './ecr';
 
-interface StackProps extends cdk.StackProps {}
+interface StackProps extends cdk.StackProps, ecr.StackProps {}
 
 export class Stack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: StackProps) {

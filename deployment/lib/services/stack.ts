@@ -19,6 +19,11 @@ interface StackProps extends cdk.StackProps {
    * SSM Parameter name for the global certificate ARN used by CloudFront.
    */
   readonly certificateArnSsm: string;
+
+  /**
+   * SSM Parameter name for the ECR repository URI.
+   */
+  readonly ecrRepoMsRouterSsm: string;
 }
 
 export class Stack extends cdk.Stack {
@@ -126,7 +131,6 @@ export class Stack extends cdk.Stack {
       });
       supergraphs.push(supergraph);
       subgraphs.forEach((subgraph) => supergraph.addDependency(subgraph));
-      // FIXME: Route still doesn't work.
       return supergraph.urlParameterName;
     });
 
@@ -155,13 +159,13 @@ export class Stack extends cdk.Stack {
     });
 
     // Set up our s3 website for ui-internal.
-    setupApp('internal', (appConfig) => {
+    setupApp('internal', (config) => {
       const app = new s3Website.Stack(this, 'UiInternal', {
         ...props,
         assets: 'artifacts/ui-internal',
         index: 'index.html',
         error: 'index.html',
-        domain: `${appConfig.subdomain}.${props.domain}`,
+        domain: `${config.subdomain}.${props.domain}`,
         hostedZone: props.domain,
         certificateArn: certificateArn,
         billingGroup: 'ui-internal',
