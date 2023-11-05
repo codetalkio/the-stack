@@ -1,5 +1,6 @@
 supergraph:
-  listen: 127.0.0.1:4000
+  # listen: 127.0.0.1:4000
+  listen: 0.0.0.0:4000
   # NOTE: The path must align with what how you expose it on in CloudFront,
   # since it gets forwarded to the App Runner request.
   path: '/*'
@@ -19,9 +20,18 @@ experimental_batching:
   enabled: true
   mode: batch_http_link
 
+cors:
+  allow_any_origin: true
+  methods:
+    - GET
+    - POST
+    - OPTIONS
+
 # We are running the server in a Lambda, so we have no need for a health check endpoint.
 health_check:
-  enabled: false
+  enabled: true
+  # listen: 127.0.0.1:8088
+  listen: 0.0.0.0:8088
 
 # Propogate all headers to the subgraphs.
 headers:

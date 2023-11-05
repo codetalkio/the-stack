@@ -120,9 +120,18 @@ export class Stack extends cdk.Stack {
         environmentFromSsm: {
           ...subgraphEnvsSsm,
         },
+        healthCheck: {
+          protocol: 'HTTP',
+          path: '/health',
+          interval: 2,
+          timeout: 2,
+          healthyThreshold: 1,
+          unhealthyThreshold: 5,
+        },
       });
       supergraphs.push(supergraph);
       subgraphs.forEach((subgraph) => supergraph.addDependency(subgraph));
+      // FIXME: Route still doesn't work.
       return supergraph.urlParameterName;
     });
 
