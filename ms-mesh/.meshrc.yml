@@ -1,8 +1,0 @@
-serve:
-  endpoint: /
-
-sources:
-  - name: Supergraph
-    handler:
-      supergraph:
-        source: supergraph.graphql

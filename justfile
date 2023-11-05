@@ -46,8 +46,6 @@ _install-tooling-all-platforms:
   cargo binstall --no-confirm cargo-lambda
   # Install leptosfmt for formatting Leptos View macros.
   cargo binstall --no-confirm leptosfmt
-  # Install cargo-xtask for running tasks.
-  cargo binstall --no-confirm cargo-xtask
 
 # Setup dependencies and tooling for <project>, e.g. `just setup deployment`.
 setup project:
@@ -64,7 +62,6 @@ setup-all:
   just _setup-ms-gql-reviews
   just _setup-ms-router
   just _setup-ms-gateway
-  just _setup-ms-mesh
 
 _setup-deployment:
   cd deployment && bun install
@@ -85,14 +82,6 @@ _setup-ui-internal: (_setup-rust-wasm "ui-internal")
 
 _setup-ms-gateway:
   cd ms-gateway && bun install
-
-[macos]
-_setup-ms-mesh:
-  cd ms-mesh && npm_config_curl_include_dirs="$(xcrun --show-sdk-path)/usr/include" npm install
-
-[linux]
-_setup-ms-mesh:
-  cd ms-mesh && npm install
 
 _setup-ms-router:
   #!/usr/bin/env bash
@@ -166,7 +155,6 @@ deploy-validate-artifacts:
   @ just _deploy-validate-artifacts ms-gql-products
   @ just _deploy-validate-artifacts ms-gql-reviews
   @ just _deploy-validate-artifacts ms-gateway
-  @ just _deploy-validate-artifacts ms-mesh
   @ just _deploy-validate-artifacts ms-router
 
 _deploy-validate-artifacts project:
@@ -181,7 +169,6 @@ compose:
   rover supergraph compose --config supergraph-config.yaml --output supergraph.graphql
   cp supergraph.graphql ms-router/supergraph.graphql
   cp supergraph.graphql ms-gateway/src/supergraph.graphql
-  cp supergraph.graphql ms-mesh/supergraph.graphql
 
 # Run tests for <project>, e.g. `just test deployment`.
 test project:
@@ -216,9 +203,6 @@ _dev-ms-router:
 _dev-ms-gateway:
   cd ms-gateway && bun dev
 
-_dev-ms-mesh:
-  cd ms-mesh && bun devh
-
 # Alternative: cargo lambda watch --invoke-port 3065
 _dev-ms-gql-users:
   cd ms-gql-users && cargo watch -x run --features local
@@ -246,7 +230,6 @@ build-all:
   @ just _build-ms-gql-reviews
   @ just _build-ms-router-lambda
   @ just _build-ms-gateway
-  @ just _build-ms-mesh
 
 _build-ui-app build="release":
   cd ui-app && bun run build
@@ -262,11 +245,6 @@ _build-ms-gateway build="release":
   cd ms-gateway && bun run build
   @ rm -r ./deployment/artifacts/ms-gateway || true
   @ mkdir -p ./deployment/artifacts && cp -r ./ms-gateway/dist ./deployment/artifacts/ms-gateway
-
-_build-ms-mesh build="release":
-  cd ms-mesh && bun run build
-  @ rm -r ./deployment/artifacts/ms-mesh || true
-  @ mkdir -p ./deployment/artifacts && cp -r ./ms-mesh/dist ./deployment/artifacts/ms-mesh
 
 _build-ms-gql-users build="release":
   cd ms-gql-users && cargo lambda build --arm64 {{ if build == "debug" { "" } else { "--release" } }}

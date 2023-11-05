@@ -46,9 +46,3 @@ jobs:
     with:
       release: true
       upload-artifact: true
-
-  ms-mesh:
-    uses: ./.github/workflows/wf-build-ms-mesh.yml
-    with:
-      release: true
-      upload-artifact: true

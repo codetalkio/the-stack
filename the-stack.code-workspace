@@ -37,21 +37,14 @@
       "path": "ms-gql-reviews"
     },
     {
-      "name": "ms-queue",
-      "path": "ms-queue"
-    },
-    {
       "name": "ms-router",
       "path": "ms-router"
     },
     {
       "name": "ms-gateway",
       "path": "ms-gateway"
-    },
-    {
-      "name": "ms-mesh",
-      "path": "ms-mesh"
     }
+
   ],
   "settings": {
     "files.exclude": {
@@ -70,8 +63,6 @@
       "lib-handler": true,
       "ms-router": true,
       "ms-gateway": true,
-      "ms-mesh": true,
-      "ms-queue": true,
       "ms-gql-users": true,
       "ms-gql-products": true,
       "ms-gql-reviews": true,

@@ -79,25 +79,6 @@ export class Stack extends cdk.Stack {
       return config?.pinToVersionedApi ? supergraph.aliasUrlParameterName : supergraph.latestUrlParameterName;
     });
 
-    // Set up our GraphQL Mesh that pieces together the microservices.
-    setupSupergraph('mesh', 'lambda', supergraphRoutesSsm, (config) => {
-      const supergraph = new lambdaFn.Stack(this, 'MsMesh', {
-        ...props,
-        functionName: 'ms-mesh',
-        handler: 'lambda.graphqlHandler',
-        runtime: lambda.Runtime.NODEJS_LATEST,
-        lambdaInsights: true,
-        assets: 'artifacts/ms-mesh',
-        billingGroup: 'ms-mesh',
-        environmentFromSsm: {
-          ...subgraphEnvsSsm,
-        },
-      });
-      supergraphs.push(supergraph);
-      subgraphs.forEach((subgraph) => supergraph.addDependency(subgraph));
-      return config?.pinToVersionedApi ? supergraph.aliasUrlParameterName : supergraph.latestUrlParameterName;
-    });
-
     // Set up our Apollo Router Lambda that pieces together the microservices.
     setupSupergraph('router', 'lambda', supergraphRoutesSsm, (config) => {
       const supergraph = new lambdaFn.Stack(this, 'MsRouterLambda', {
