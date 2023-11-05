@@ -19,6 +19,21 @@ export interface StackProps extends cdk.StackProps {
   readonly tag: string;
 
   /**
+   * CPU for the App Runner service.
+   */
+  readonly cpu?: appRunner.Cpu;
+
+  /**
+   * Memory for the App Runner service.
+   */
+  readonly memory?: appRunner.Memory;
+
+  /**
+   * The max number of instances. Can at most be 25.
+   */
+  readonly maxNumberOfInstances?: number;
+
+  /**
    * The environment variables for the function.
    */
   readonly environment?: { [key: string]: string };
@@ -64,6 +79,11 @@ export class Stack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
 
+    // Validate that the max number of instances is not more than 25.
+    if (props.maxNumberOfInstances && props.maxNumberOfInstances > 25) {
+      throw new Error(`Max number of instances cannot be more than 25, you specified ${props.maxNumberOfInstances}.`);
+    }
+
     // Resolve any environment variables from the SSM Parameter Store.
     const environment = { ...props.environment };
     for (const [envName, parameterName] of Object.entries(props.environmentFromSsm ?? {})) {
@@ -104,7 +124,7 @@ export class Stack extends cdk.Stack {
       AutoScalingConfigurationName: `${id}AutoScalingConf`,
       MaxConcurrency: 200,
       MinSize: 1,
-      MaxSize: 1,
+      MaxSize: props.maxNumberOfInstances ?? 1,
     };
 
     const createAutoScalingConfiguration = new cr.AwsCustomResource(this, 'CreateAutoScalingConfiguration', {
@@ -180,8 +200,8 @@ export class Stack extends cdk.Stack {
     const app = new cfnAppRunner.CfnService(this, 'AppRunner', {
       instanceConfiguration: {
         instanceRoleArn: instanceRole.roleArn,
-        cpu: appRunner.Cpu.QUARTER_VCPU.unit,
-        memory: appRunner.Memory.HALF_GB.unit,
+        cpu: props.cpu?.unit ?? appRunner.Cpu.QUARTER_VCPU.unit,
+        memory: props.memory?.unit ?? appRunner.Memory.HALF_GB.unit,
       },
       autoScalingConfigurationArn: autoScalingConfigurationArn,
       observabilityConfiguration: {
