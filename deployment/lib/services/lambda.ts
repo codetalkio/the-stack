@@ -26,6 +26,11 @@ export interface StackProps extends cdk.StackProps {
   readonly architecture?: lambda.Architecture;
 
   /**
+   * Any layers we want to include in the function.
+   */
+  readonly layers?: lambda.ILayerVersion[];
+
+  /**
    * The environment variables for the function.
    */
   readonly environment?: { [key: string]: string };
@@ -80,6 +85,7 @@ export class Stack extends cdk.Stack {
       memorySize: 1024,
       runtime: props.runtime ?? lambda.Runtime.PROVIDED_AL2,
       architecture: props.architecture ?? lambda.Architecture.ARM_64,
+      layers: [...(props.layers ?? [])],
       handler: props.handler ?? 'not.required',
       insightsVersion: props.lambdaInsights ? lambda.LambdaInsightsVersion.VERSION_1_0_229_0 : undefined,
       environment: {

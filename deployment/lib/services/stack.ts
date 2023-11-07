@@ -44,7 +44,7 @@ export class Stack extends cdk.Stack {
           ...props,
           functionName: subgraph.project,
           assets: `artifacts/${subgraph.project}`,
-          lambdaInsights: true,
+          lambdaInsights: false,
           billingGroup: subgraph.project,
         });
         subgraphs.push(subgraphFn);
@@ -67,7 +67,7 @@ export class Stack extends cdk.Stack {
         functionName: 'ms-gateway',
         handler: 'lambda.graphqlHandler',
         runtime: lambda.Runtime.NODEJS_LATEST,
-        lambdaInsights: true,
+        lambdaInsights: false,
         assets: 'artifacts/ms-gateway',
         billingGroup: 'ms-gateway',
         environmentFromSsm: {
@@ -86,7 +86,7 @@ export class Stack extends cdk.Stack {
         functionName: 'ms-mesh',
         handler: 'lambda.graphqlHandler',
         runtime: lambda.Runtime.NODEJS_LATEST,
-        lambdaInsights: true,
+        lambdaInsights: false,
         assets: 'artifacts/ms-mesh',
         billingGroup: 'ms-mesh',
         environmentFromSsm: {
@@ -106,7 +106,7 @@ export class Stack extends cdk.Stack {
         assets: 'artifacts/ms-router',
         billingGroup: 'ms-router',
         architecture: lambda.Architecture.X86_64,
-        lambdaInsights: true,
+        lambdaInsights: false,
         environmentFromSsm: {
           ...subgraphEnvsSsm,
         },
