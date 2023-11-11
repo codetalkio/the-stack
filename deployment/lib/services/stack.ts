@@ -105,7 +105,7 @@ export class Stack extends cdk.Stack {
         functionName: 'ms-router',
         assets: 'artifacts/ms-router',
         billingGroup: 'ms-router',
-        architecture: lambda.Architecture.X86_64,
+        // architecture: lambda.Architecture.X86_64,
         lambdaInsights: false,
         environmentFromSsm: {
           ...subgraphEnvsSsm,

@@ -8,19 +8,20 @@ members = [
   "ms-queue",
 ]
 
-exclude = ["ui-internal", "ms-apollo"]
+exclude = ["ui-internal"]
 
+# Configurations explicitly listed here for clarity, using the best options for performance.
+# - https://doc.rust-lang.org/cargo/reference/profiles.html#default-profiles
+# - https://github.com/johnthagen/min-sized-rust
 [profile.release]
-# Configurations explicitly listed here for clarity.
-# Using the best options for performance.
-opt-level = 3
-lto = "fat"
-codegen-units = 1
-strip = false     # "symbols"
-debug = true      # false
+opt-level = 3     # Optimize for speed.
+lto = true        # Enable Link Time Optimization.
+codegen-units = 1 # Reduce Parallel Code Generation Units to Increase Optimization.
+strip = true      # Automatically strip symbols from the binary.
+debug = false
 
-# Use the `--profile release-debug` flag to show symbols in release mode.
-# e.g. `cargo build --profile release-debug`
+# Use the `--profile release-debug` flag to show symbols in release mode. E.g.
+# `cargo build --profile release-debug`.
 [profile.release-debug]
 inherits = "release"
 strip = false

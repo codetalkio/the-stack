@@ -1,13 +1,13 @@
-import type { ConfigMap, Config } from './lib/types';
+import type { Config, ConfigMap } from './lib/types';
 
 const base: Config = {
   apps: [{ service: 'internal', subdomain: 'internal' }, { service: 'app' }],
 
   supergraph: {
-    service: 'gateway',
+    service: 'router',
     runtime: 'lambda',
     path: '/graphql',
-    pinToVersionedApi: true,
+    pinToVersionedApi: false,
   },
 
   subgraphs: [
@@ -46,28 +46,19 @@ const development: Config = {
   ...base,
   supergraph: {
     service: 'router',
-    runtime: 'app-runner',
-    path: '/graphql',
-  },
-  experimental: {
-    additionalSupergraphs: [
-      {
-        service: 'router',
-        runtime: 'lambda',
-        path: '/graphql-lambda-router',
-        pinToVersionedApi: true,
-      },
-    ],
+    runtime: 'lambda',
+    path: '/graphql-lambda-router',
+    pinToVersionedApi: false,
   },
 };
 
 const production: Config = {
   ...base,
   supergraph: {
-    service: 'gateway',
+    service: 'router',
     runtime: 'lambda',
     path: '/graphql',
-    pinToVersionedApi: true,
+    pinToVersionedApi: false,
   },
 };
 

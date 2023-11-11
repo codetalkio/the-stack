@@ -46,8 +46,6 @@ _install-tooling-all-platforms:
   cargo binstall --no-confirm cargo-lambda
   # Install leptosfmt for formatting Leptos View macros.
   cargo binstall --no-confirm leptosfmt
-  # Install cargo-xtask for running tasks.
-  cargo binstall --no-confirm cargo-xtask
 
 # Setup dependencies and tooling for <project>, e.g. `just setup deployment`.
 setup project:
@@ -286,13 +284,14 @@ _build-ms-gql-reviews build="release":
 _build-ms-router-lambda build="release":
   #!/usr/bin/env bash
   set -euxo pipefail
+  rm -r ./deployment/artifacts/ms-router || true
   mkdir -p ./deployment/artifacts/ms-router
-  cp ms-router/router-lambda.yaml ./deployment/artifacts/ms-router/router.yaml
+  cp ms-router/router.yaml ./deployment/artifacts/ms-router/router.yaml
   cp supergraph.graphql ./deployment/artifacts/ms-router/supergraph.graphql
 
   # Download the prebuilt Apollo Router binary that we will use for deployment.
-  curl -sSL https://github.com/codetalkio/apollo-router-lambda/releases/latest/download/bootstrap-with-server-x86-64 -o bootstrap
-  mv bootstrap ./deployment/artifacts/ms-router/bootstrap
+  # curl -sSL https://github.com/codetalkio/apollo-router-lambda/releases/latest/download/bootstrap-directly-optimized-arm -o ./deployment/artifacts/ms-router/bootstrap
+  curl -sSL https://github.com/codetalkio/apollo-router-lambda/releases/download/2023-11-10-at-00-23/bootstrap-directly-optimized-graviton-arm.bootstrap-directly-optimized-graviton-arm -o ./deployment/artifacts/ms-router/bootstrap
 
 _build-ms-router-app build="release":
   @ just docker-prepare ms-router

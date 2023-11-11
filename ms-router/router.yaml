@@ -1,37 +1,24 @@
 supergraph:
-  # listen: 127.0.0.1:4000
-  listen: 0.0.0.0:4000
-  # NOTE: The path must align with what how you expose it on in CloudFront,
-  # since it gets forwarded to the App Runner request.
-  path: '/*'
-  introspection: true
+  listen: 127.0.0.1:4000
+  introspection: false
 
 homepage:
-  enabled: false
+  enabled: true
 
 sandbox:
-  enabled: true
+  enabled: false
 
 plugins:
   # Enable with the header, Apollo-Expose-Query-Plan: true
-  # experimental.expose_query_plan: true
+  experimental.expose_query_plan: true
 
 experimental_batching:
   enabled: true
   mode: batch_http_link
 
-cors:
-  allow_any_origin: true
-  methods:
-    - GET
-    - POST
-    - OPTIONS
-
 # We are running the server in a Lambda, so we have no need for a health check endpoint.
 health_check:
-  enabled: true
-  # listen: 127.0.0.1:8088
-  listen: 0.0.0.0:8088
+  enabled: false
 
 # Propogate all headers to the subgraphs.
 headers:
@@ -49,8 +36,9 @@ traffic_shaping:
       retry_percent: 0.2 # defines the proportion of available retries to the current number of tokens
       retry_mutations: false # allows retries on mutations. This should only be enabled if mutations are idempotent
 
-# Support setting the path to each subgraph via environment variables. This will override
-# the ones defined in the composed supergraph.graphql schema.
+# Support setting the path to each subgraph via environment variables. This will override the
+# ones defined in the composed supergraph.graphql schema. See more at
+# https://www.apollographql.com/docs/router/configuration/overview/#subgraph-routing-urls.
 override_subgraph_url:
   users: '${env.SUBGRAPH_USERS_URL:-http://127.0.0.1:3065/}'
   products: '${env.SUBGRAPH_PRODUCTS_URL:-http://127.0.0.1:3075/}'
