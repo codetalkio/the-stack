@@ -47,7 +47,7 @@ const development: Config = {
   supergraph: {
     service: 'router',
     runtime: 'lambda',
-    path: '/graphql-lambda-router',
+    path: '/graphql',
     pinToVersionedApi: false,
   },
 };
