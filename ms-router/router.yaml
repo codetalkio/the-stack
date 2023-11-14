@@ -10,7 +10,10 @@ sandbox:
 
 plugins:
   # Enable with the header, Apollo-Expose-Query-Plan: true
-  experimental.expose_query_plan: true
+  experimental.expose_query_plan: false
+
+# Opt-in to the new GraphQL validation implementation written in Rust.
+# experimental_graphql_validation_mode: new
 
 experimental_batching:
   enabled: true

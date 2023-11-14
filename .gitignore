@@ -17,3 +17,7 @@ deployment/layers/router/*
 !deployment/layers/router/.gitkeep
 deployment/layers/cosmo/*
 !deployment/layers/cosmo/.gitkeep
+
+# Benchmarks.
+benchmark/traces/*
+!benchmark/traces/.gitkeep

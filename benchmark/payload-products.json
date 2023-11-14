@@ -1,0 +1,4 @@
+{
+  "query": "query ExampleQuery{products{__typename id}}",
+  "operationName": "ExampleQuery"
+}

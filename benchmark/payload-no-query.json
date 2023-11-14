@@ -1,0 +1,4 @@
+{
+  "query": "query ExampleQuery{__typename}",
+  "operationName": "ExampleQuery"
+}

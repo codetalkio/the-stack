@@ -1,0 +1,19 @@
+{
+  "name": "benchmark",
+  "description": "Benchmarking.",
+  "version": "1.0.0",
+  "author": "Christian Kjaer <ckl@codetalk.io>",
+  "license": "MIT",
+  "scripts": {
+    "benchmark": "bun run ./lambda.ts"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@aws-sdk/client-lambda": "3.450.0",
+    "@aws-sdk/client-xray": "3.450.0",
+    "@types/node": "20.8.3",
+    "bun-types": "latest",
+    "svg-chartist": "1.0.1",
+    "typescript": "5.2.2"
+  }
+}
