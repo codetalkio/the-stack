@@ -17,7 +17,8 @@ import {
 } from '@aws-sdk/client-xray';
 import * as fs from 'fs';
 
-import * as benchmarkPayload from './payload-no-query.json';
+import * as benchmarkPayloadNoQuery from './payload-no-query.json';
+import * as benchmarkPayloadProducts from './payload-products.json';
 
 const chartistSvg = require('svg-chartist');
 
@@ -32,6 +33,8 @@ const MEMORY_SIZES = [128, 256, 512, 1024, 2048];
 const RUN_ID = process.env.RUN_ID ?? `${new Date().toISOString()}`;
 const DRY_RUN = process.env.DRY_RUN;
 const FN_NAME = process.env.FUNCTION_NAME;
+const benchmarkPayload =
+  process.env.BENCHMARK_PAYLOAD === 'products' ? benchmarkPayloadProducts : benchmarkPayloadNoQuery;
 
 /**
  * Map of memory configuration and their benchmark results.
@@ -122,7 +125,7 @@ const main = async (functionName: string) => {
   const memoryTimes: MemoryTimes[] = [];
   if (DRY_RUN === 'true') {
     // If we are running a dry run, we only need to load in the existing traces and process them.
-    const memoryTraces = JSON.parse(fs.readFileSync(`./traces/${RUN_ID}-traces.json`).toString());
+    const memoryTraces = JSON.parse(fs.readFileSync(`./traces/${FN_NAME}-${RUN_ID}-traces.json`).toString());
     memoryTraces.forEach(({ memorySize, traces: traceBatches }: MemoryTraces) => {
       const times = processXRayTraces(traceBatches);
       memoryTimes.push({
@@ -157,7 +160,7 @@ const main = async (functionName: string) => {
         times,
       });
     }
-    fs.writeFileSync(`./traces/${RUN_ID}-traces.json`, JSON.stringify(memoryTraces));
+    fs.writeFileSync(`./traces/${FN_NAME}-${RUN_ID}-traces.json`, JSON.stringify(memoryTraces));
   }
 
   outputBenchmarkMarkdown(memoryTimes);
@@ -470,12 +473,26 @@ const outputBenchmarkMarkdown = async (memoryTimes: MemoryTimes[]) => {
   console.log("[OUTPUT] Saving benchmark times to 'response-times.md'.");
 
   // Generate the measurement tables for each memory configuration section.
+  let overviewData = `
+
+## Summary of Results`;
+  let overviewTableData = {
+    header: `| Measurement (ms) |`,
+    sep: '|-------------|',
+    avgWarm: '| Average warm start response time |',
+    avgCold: '| Average cold start response time |',
+    fastestWarm: '| Fastest warm response time |',
+    slowestWarm: '| Slowest warm response time |',
+    fastestCold: '| Fastest cold response time  |',
+    slowestCold: '| Slowest cold response time |',
+  };
+
   let benchmarkData = '';
   memoryTimes.map(({ memorySize, times }) => {
     benchmarkData += `
 
 ## Results for ${memorySize} MB`;
-    benchmarkData += `
+    const results = `
 
 | Measurement (${memorySize} MB) | Time (ms) |
 |-------------|------|
@@ -486,6 +503,16 @@ const outputBenchmarkMarkdown = async (memoryTimes: MemoryTimes[]) => {
 | Fastest cold response time  | ${Math.floor(times.overallTimes.fastestColdMs! * 10000) / 10} ms |
 | Slowest cold response time | ${Math.floor(times.overallTimes.slowestColdMs! * 10000) / 10} ms |
   `;
+
+    benchmarkData += results;
+    overviewTableData.header += ` ${memorySize} MB |`;
+    overviewTableData.sep += '-------------|';
+    overviewTableData.avgWarm += ` ${Math.floor(times.overallTimes.avgWarmMs! * 10000) / 10} ms |`;
+    overviewTableData.avgCold += ` ${Math.floor(times.overallTimes.avgColdMs! * 10000) / 10} ms |`;
+    overviewTableData.fastestWarm += ` ${Math.floor(times.overallTimes.fastestWarmMs! * 10000) / 10} ms |`;
+    overviewTableData.slowestWarm += ` ${Math.floor(times.overallTimes.slowestWarmMs! * 10000) / 10} ms |`;
+    overviewTableData.fastestCold += ` ${Math.floor(times.overallTimes.fastestColdMs! * 10000) / 10} ms |`;
+    overviewTableData.slowestCold += ` ${Math.floor(times.overallTimes.slowestColdMs! * 10000) / 10} ms |`;
 
     benchmarkData += `
 
@@ -503,18 +530,33 @@ const outputBenchmarkMarkdown = async (memoryTimes: MemoryTimes[]) => {
     });
   });
 
+  const overviewTable = `
+${overviewTableData.header}
+${overviewTableData.sep}
+${overviewTableData.avgWarm}
+${overviewTableData.avgCold}
+${overviewTableData.fastestWarm}
+${overviewTableData.slowestWarm}
+${overviewTableData.fastestCold}
+${overviewTableData.slowestCold}
+  `;
+
   // Set up the page, including the generated charts.
   const header = `
 # Benchmark: Response Times
 
-The following are the response time results from AWS XRay, generated after running \`npm run benchmark\`.
+The following are the response time results from AWS XRay, generated after running \`bun run benchmark\`.
 
-![Average Cold/Warm Response Times](./${RUN_ID}-response-times-average.svg)
+- Run ID: ${RUN_ID}
+- Function Name: ${FN_NAME}
+- Payload: ${benchmarkPayload === benchmarkPayloadProducts ? 'Products' : 'No Query'}
+
+![Average Cold/Warm Response Times](./${FN_NAME}-${RUN_ID}-response-times-average.svg)
 
 - 🔵: Average cold startup times
 - 🔴: Average warm startup times
 
-![Fastest and Slowest Response Times](./${RUN_ID}-response-times-extremes.svg)
+![Fastest and Slowest Response Times](./${FN_NAME}-${RUN_ID}-response-times-extremes.svg)
 
 - 🔵: Fastest warm response time
 - 🔴: Slowest warm response time
@@ -544,8 +586,8 @@ The following are the response time results from AWS XRay, generated after runni
 
 <img width="1479" alt="Screenshot 2020-10-07 at 23 01 23" src="https://user-images.githubusercontent.com/1189998/95387509-1953e080-08f1-11eb-8d46-ac25efa235e4.png">
 `;
-  const markdown = [header, tableOfContents, benchmarkData, footer].join('\n');
-  fs.writeFileSync(`./traces/${RUN_ID}-response-times.md`, markdown);
+  const markdown = [header, tableOfContents, overviewData, overviewTable, benchmarkData, footer].join('\n');
+  fs.writeFileSync(`./traces/${FN_NAME}-${RUN_ID}-response-times.md`, markdown);
 };
 
 /**
@@ -555,7 +597,7 @@ The following are the response time results from AWS XRay, generated after runni
  *   starts, for each memory configuration.
  */
 const outputBenchmarkChart = async (memoryTimes: MemoryTimes[]) => {
-  console.log(`[OUTPUT] Charting benchmark times to './traces/${RUN_ID}-response-times.svg'.`);
+  console.log(`[OUTPUT] Charting benchmark times to './traces/${FN_NAME}-${RUN_ID}-response-times.svg'.`);
 
   const opts = {
     options: {
@@ -616,10 +658,10 @@ const outputBenchmarkChart = async (memoryTimes: MemoryTimes[]) => {
   };
 
   chartistSvg('bar', avgSeriesData, opts).then((html: any) => {
-    fs.writeFileSync(`./traces/${RUN_ID}-response-times-average.svg`, html);
+    fs.writeFileSync(`./traces/${FN_NAME}-${RUN_ID}-response-times-average.svg`, html);
   });
   chartistSvg('bar', extremesSeriesData, opts).then((html: any) => {
-    fs.writeFileSync(`./traces/${RUN_ID}-response-times-extremes.svg`, html);
+    fs.writeFileSync(`./traces/${FN_NAME}-${RUN_ID}-response-times-extremes.svg`, html);
   });
 };
 

@@ -290,7 +290,7 @@ _build-ms-router-lambda build="release":
   cp supergraph.graphql ./deployment/artifacts/ms-router/supergraph.graphql
 
   # Download the prebuilt Apollo Router binary that we will use for deployment.
-  curl -sSL https://github.com/codetalkio/apollo-router-lambda/releases/latest/download/bootstrap-directly-optimized-graviton-arm-size -o ./deployment/artifacts/ms-router/bootstrap
+  curl -sSL https://github.com/codetalkio/apollo-router-lambda/releases/latest/download/bootstrap-directly-optimized-graviton-arm-{{ if build == "speed" { "speed" } else { "size" } }} -o ./deployment/artifacts/ms-router/bootstrap
 
 _build-ms-router-app build="release":
   @ just docker-prepare ms-router

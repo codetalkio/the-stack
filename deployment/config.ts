@@ -22,11 +22,13 @@ const base: Config = {
       //   service: 'gateway',
       //   runtime: 'lambda',
       //   path: '/graphql-gateway',
+      //   pinToVersionedApi: false,
       // },
       // {
       //   service: 'router',
       //   runtime: 'lambda',
       //   path: '/graphql-lambda-router',
+      //   pinToVersionedApi: false,
       // },
       // {
       //   service: 'router',
@@ -37,6 +39,7 @@ const base: Config = {
       //   service: 'mesh',
       //   runtime: 'lambda',
       //   path: '/graphql-mesh',
+      //   pinToVersionedApi: false,
       // }
     ],
   },

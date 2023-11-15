@@ -1,12 +1,12 @@
-import * as cdk from 'aws-cdk-lib';
-import { Construct } from 'constructs';
 import * as appRunner from '@aws-cdk/aws-apprunner-alpha';
+import * as cdk from 'aws-cdk-lib';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import { Construct } from 'constructs';
 
-import { config, setupSupergraph, setupApp } from '../helpers';
-import * as s3Website from './s3-website';
-import * as lambdaFn from './lambda';
+import { config, setupApp, setupSupergraph } from '../helpers';
 import * as routerAppRunner from './app-runner';
+import * as lambdaFn from './lambda';
+import * as s3Website from './s3-website';
 import { SsmGlobal } from './ssm-global';
 
 interface StackProps extends cdk.StackProps {
