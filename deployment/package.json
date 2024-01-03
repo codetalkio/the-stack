@@ -12,13 +12,13 @@
   },
   "devDependencies": {
     "@types/node": "20.8.3",
-    "aws-cdk": "2.100.0",
+    "aws-cdk": "2.108.1",
     "typescript": "5.2.2",
     "bun-types": "latest"
   },
   "dependencies": {
-    "@aws-cdk/aws-apprunner-alpha": "2.100.0-alpha.0",
-    "aws-cdk-lib": "2.100.0",
+    "@aws-cdk/aws-apprunner-alpha": "2.108.1-alpha.0",
+    "aws-cdk-lib": "2.108.1",
     "constructs": "10.3.0"
   }
 }

@@ -13,6 +13,10 @@
       "path": "deployment"
     },
     {
+      "name": "benchmark",
+      "path": "benchmark"
+    },
+    {
       "name": "ui-app",
       "path": "ui-app"
     },
@@ -45,6 +49,10 @@
       "path": "ms-router"
     },
     {
+      "name": "ms-cosmo",
+      "path": "ms-cosmo"
+    },
+    {
       "name": "ms-gateway",
       "path": "ms-gateway"
     },
@@ -69,6 +77,7 @@
       ".github": true,
       "lib-handler": true,
       "ms-router": true,
+      "ms-cosmo": true,
       "ms-gateway": true,
       "ms-mesh": true,
       "ms-queue": true,
@@ -76,6 +85,7 @@
       "ms-gql-products": true,
       "ms-gql-reviews": true,
       "deployment": true,
+      "benchmark": true,
       "ui-app": true,
       "ui-internal": true
     },
@@ -110,6 +120,6 @@
     "css.validate": false
   },
   "extensions": {
-    "recommendations": ["bradlc.vscode-tailwindcss", "rust-lang.rust-analyzer", "skellock.just"]
+    "recommendations": ["bradlc.vscode-tailwindcss", "rust-lang.rust-analyzer", "skellock.just", "golang.go"]
   }
 }

@@ -1,7 +1,6 @@
 import {
   GetFunctionConfigurationCommand,
-  InvokeCommand,
-  InvokeCommandInput,
+  GetFunctionUrlConfigCommand,
   LambdaClient,
   UpdateFunctionConfigurationCommand,
   UpdateFunctionConfigurationCommandInput,
@@ -17,24 +16,47 @@ import {
 } from '@aws-sdk/client-xray';
 import * as fs from 'fs';
 
-import * as benchmarkPayloadNoQuery from './payload-no-query.json';
-import * as benchmarkPayloadProducts from './payload-products.json';
+import benchmarkPayloadNoQuery from './payload-no-query.json';
+import benchmarkPayloadProducts from './payload-products.json';
 
-const chartistSvg = require('svg-chartist');
+// const chartistSvg = require('svg-chartist');
 
 /**
  * Benchmark configuration values.
  */
-const COLD_STARTS = 15;
-const WARM_STARTS = 15;
-const MEMORY_SIZES = [128, 256, 512, 1024, 2048];
-// const MEMORY_SIZES = [1024];
+const COLD_STARTS = 10;
+const WARM_STARTS = 10;
+// const MEMORY_SIZES = [128, 256, 512, 1024, 2048] as const;
+const MEMORY_SIZES = [512, 1024, 2048] as const;
+
+// How long to wait for XRay to gather all the traces.
+const WAIT_FOR_XRAY = 15;
 
 const RUN_ID = process.env.RUN_ID ?? `${new Date().toISOString()}`;
 const DRY_RUN = process.env.DRY_RUN;
-const FN_NAME = process.env.FUNCTION_NAME;
+
+// We allow you to pass multiple function names split by comma.
+const FN_NAMES: string[] = process.env.FUNCTION_NAME?.includes(',')
+  ? process.env.FUNCTION_NAME?.split(',') ?? []
+  : [process.env.FUNCTION_NAME!];
 const benchmarkPayload =
   process.env.BENCHMARK_PAYLOAD === 'products' ? benchmarkPayloadProducts : benchmarkPayloadNoQuery;
+
+// Track summary of each function run.
+let RUN_SUMMARY_STRUCTURE = {
+  header: `| Measurement (ms) |`,
+  sep: '|-------------|',
+  avgWarm: '| Average warm start response time |',
+  avgCold: '| Average cold start response time |',
+  fastestWarm: '| Fastest warm response time |',
+  slowestWarm: '| Slowest warm response time |',
+  fastestCold: '| Fastest cold response time  |',
+  slowestCold: '| Slowest cold response time |',
+};
+
+let RUN_SUMMARY = {
+  ...RUN_SUMMARY_STRUCTURE,
+};
 
 /**
  * Map of memory configuration and their benchmark results.
@@ -121,13 +143,13 @@ interface SubSegment {
  * fetching of XRay traces, and instead load the existing traces from `traces.json` and generate
  * the output again.
  */
-const main = async (functionName: string) => {
+const main = async (functionName: string): Promise<typeof RUN_SUMMARY_STRUCTURE> => {
   const memoryTimes: MemoryTimes[] = [];
   if (DRY_RUN === 'true') {
     // If we are running a dry run, we only need to load in the existing traces and process them.
-    const memoryTraces = JSON.parse(fs.readFileSync(`./traces/${FN_NAME}-${RUN_ID}-traces.json`).toString());
+    const memoryTraces = JSON.parse(fs.readFileSync(`./traces/${functionName}-${RUN_ID}-traces.json`).toString());
     memoryTraces.forEach(({ memorySize, traces: traceBatches }: MemoryTraces) => {
-      const times = processXRayTraces(traceBatches);
+      const times = processXRayTraces(functionName, traceBatches);
       memoryTimes.push({
         memorySize,
         times,
@@ -135,6 +157,7 @@ const main = async (functionName: string) => {
     });
   } else {
     // For each memory configuration, run through all invocations first.
+    console.log(`[MAIN][${functionName}] Initiating benchmarking.`);
     const benchmarkStartTimes: Date[] = [];
     for (let i = 0; i < MEMORY_SIZES.length; i++) {
       const benchmarkStartTime = new Date();
@@ -143,28 +166,37 @@ const main = async (functionName: string) => {
       await invokeFunctions(functionName, memorySize);
       await sleep(1000);
     }
+
+    console.log(`[MAIN][${functionName}] Gathering XRay traces.`);
     // The XRay traces should now be ready for us to fetch.
     const memoryTraces: MemoryTraces[] = [];
     for (let i = 0; i < MEMORY_SIZES.length; i++) {
       const benchmarkStartTime = benchmarkStartTimes[i];
       const memorySize = MEMORY_SIZES[i];
+      // Wait to let XRay gather all the traces.
+      await Bun.sleep(WAIT_FOR_XRAY * 1000);
+      console.log(`[MAIN][${functionName}] Fetching trace summaries.`);
       const traceSummaries = await fetchXRayTraceSummaries(functionName, benchmarkStartTime);
-      const traceBatches = await fetchXRayTraceBatches(traceSummaries);
+      console.log(`[MAIN][${functionName}] Fetching trace batches.`);
+      const traceBatches = await fetchXRayTraceBatches(functionName, traceSummaries);
       memoryTraces.push({
         memorySize,
         traces: traceBatches,
       });
-      const times = processXRayTraces(traceBatches);
+      const times = processXRayTraces(functionName, traceBatches);
       memoryTimes.push({
         memorySize,
         times,
       });
     }
-    fs.writeFileSync(`./traces/${FN_NAME}-${RUN_ID}-traces.json`, JSON.stringify(memoryTraces));
+    console.log(`[MAIN][${functionName}] Writing traces to file.`);
+    fs.writeFileSync(`./traces/${functionName}-${RUN_ID}-traces.json`, JSON.stringify(memoryTraces));
   }
 
-  outputBenchmarkMarkdown(memoryTimes);
-  outputBenchmarkChart(memoryTimes);
+  console.log(`[MAIN][${functionName}] Summarizing output to markdown.`);
+  const summary = outputBenchmarkMarkdown(functionName, memoryTimes);
+  // outputBenchmarkChart(functionName, memoryTimes);
+  return summary;
 };
 
 /**
@@ -190,6 +222,11 @@ const invokeFunctions = async (functionName: string, memorySize: number) => {
       FunctionName: functionName,
     }),
   );
+  const fnUrlConfig = await lambdaClient.send(
+    new GetFunctionUrlConfigCommand({
+      FunctionName: functionName,
+    }),
+  );
 
   // We generate the update configuration on the fly to always provide a unique
   // benchmark run time.
@@ -203,20 +240,16 @@ const invokeFunctions = async (functionName: string, memorySize: number) => {
       },
     },
   });
-  const testPayload: () => InvokeCommandInput = () => {
+  const mkPayload: () => string = () => {
     // Dynamically replace placeholders in the payload, so we can generate unique
     // test data per invocation.
-    const payload = JSON.stringify(benchmarkPayload)
+    return JSON.stringify(benchmarkPayload)
       .replace('##DATE##', new Date().toISOString())
       .replace('##NUM##', `${Math.floor(Math.random() * 10000)}`);
-    return {
-      FunctionName: functionName,
-      Payload: Buffer.from(payload),
-    };
   };
 
   for (let cI = 0; cI < COLD_STARTS; cI++) {
-    console.log('[BENCHMARK] Updating the function to ensure a cold start.');
+    console.log(`[BENCHMARK][${functionName}] Updating the function to ensure a cold start.`);
     try {
       await lambdaClient.send(new UpdateFunctionConfigurationCommand(updateConfiguration()));
     } catch (err: any) {
@@ -230,20 +263,57 @@ const invokeFunctions = async (functionName: string, memorySize: number) => {
           if (err.name !== 'ResourceConflictException') {
             throw err;
           } else {
-            console.error('[BENCHMARK] Failed to update the function, giving up.');
+            console.error(`[BENCHMARK][${functionName}] Failed to update the function, giving up.`);
           }
         }
       }
     }
     const s = Date.now();
-    await lambdaClient.send(new InvokeCommand(testPayload()));
-    console.log(`[BENCHMARK] Invoked cold-start function: ${Date.now() - s}ms.`);
+
+    // Lambda invoke version:
+    // const res = await lambdaClient.send(new InvokeCommand(testPayload()));
+    // const payload = res.Payload?.transformToString();
+    // const statusCode = res.StatusCode;
+
+    // HTTP invoke version:
+    const res = await fetch(fnUrlConfig.FunctionUrl!, {
+      method: 'POST',
+      body: mkPayload(),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const payload = await res.json();
+    const statusCode = res.status;
+
+    if (statusCode !== 200 || payload.error || payload.errorMessage || payload.errorType || !payload.data) {
+      console.error(statusCode, payload);
+    }
+    console.log(
+      `[BENCHMARK][${functionName}] Invoked cold-start function: ${Date.now() - s}ms. (status ${statusCode})`,
+    );
     await sleep(500);
   }
   for (let wI = 0; wI < WARM_STARTS; wI++) {
     const s = Date.now();
-    await lambdaClient.send(new InvokeCommand(testPayload()));
-    console.log(`[BENCHMARK] Invoked warm-start function: ${Date.now() - s}ms.`);
+    // Lambda invoke version:
+    // const res = await lambdaClient.send(new InvokeCommand(testPayload()));
+    // const payload = res.Payload?.transformToString();
+    // const statusCode = res.StatusCode;
+
+    // HTTP invoke version:
+    const res = await fetch(fnUrlConfig.FunctionUrl!, {
+      method: 'POST',
+      body: mkPayload(),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const payload = await res.json();
+    const statusCode = res.status;
+
+    if (statusCode !== 200 || payload.error || payload.errorMessage || payload.errorType || !payload.data) {
+      console.error(statusCode, payload);
+    }
+    console.log(
+      `[BENCHMARK][${functionName}] Invoked warm-start function: ${Date.now() - s}ms. (status ${statusCode})`,
+    );
     await sleep(500);
   }
 };
@@ -280,10 +350,10 @@ const fetchXRayTraceSummaries = async (functionName: string, benchmarkStartTime:
     if ((traceSummariesRes.TraceSummaries?.length ?? 0) + traceSummaries.length < (COLD_STARTS + WARM_STARTS) * 0.8) {
       if (retries >= 40) {
         throw new Error(
-          `[TEARDOWN] Failed to get all traces for the invocations, was only able to find '${traceSummariesRes.TraceSummaries?.length}' traces.`,
+          `[TEARDOWN][${functionName}] Failed to get all traces for the invocations, was only able to find '${traceSummariesRes.TraceSummaries?.length}' traces.`,
         );
       }
-      console.log('[TRACES] Traces has still not appeared, waiting 1 seconds and trying again...');
+      console.log(`[TRACES][${functionName}] Traces has still not appeared, waiting 1 seconds and trying again...`);
       await sleep(1000);
       retries++;
     } else {
@@ -294,7 +364,7 @@ const fetchXRayTraceSummaries = async (functionName: string, benchmarkStartTime:
       break;
     }
   }
-  console.log('[TRACES] Fetched trace summaries, fetching detailed trace information.');
+  console.log(`[TRACES][${functionName}] Fetched trace summaries, fetching detailed trace information.`);
   return traceSummaries;
 };
 
@@ -302,7 +372,7 @@ const fetchXRayTraceSummaries = async (functionName: string, benchmarkStartTime:
  * Split an array into chunks based on the `size`.
  */
 const chunkArray = (arr: any[], size: number) => {
-  var results = [];
+  var results: any[] = [];
   while (arr.length) {
     results.push(arr.splice(0, size));
   }
@@ -318,7 +388,10 @@ const chunkArray = (arr: any[], size: number) => {
  *
  * NOTE: To avoid leaking information, all traces are stripped of information and only a whitelist is saved.
  */
-const fetchXRayTraceBatches = async (traceSummaries: Pick<TraceSummary, 'Id'>[]): Promise<MinimalTrace[]> => {
+const fetchXRayTraceBatches = async (
+  functionName: string,
+  traceSummaries: Pick<TraceSummary, 'Id'>[],
+): Promise<MinimalTrace[]> => {
   const xRayClient = new XRayClient({});
   const batchTraces: MinimalTrace[] = [];
 
@@ -330,14 +403,16 @@ const fetchXRayTraceBatches = async (traceSummaries: Pick<TraceSummary, 'Id'>[])
     const batchSummaryChunk = batchSummaryChunks[i];
     while (true) {
       const batchInput: BatchGetTracesCommandInput = {
-        TraceIds: [...new Set(batchSummaryChunk.filter((t) => t.Id).map((t) => t.Id!))],
+        TraceIds: [...new Set<any>(batchSummaryChunk.filter((t) => t.Id).map((t) => t.Id!))],
         NextToken: nextTokenBatch,
       };
       const batchTracesRes = await xRayClient.send(new BatchGetTracesCommand(batchInput));
 
       // Check if there are any unprocessed traces. If there are, we wait 1 second and retry the loop.
       if ((batchTracesRes.UnprocessedTraceIds?.length ?? 0) > 0) {
-        console.log('[TRACES] Detailed traces are still being processed, waiting 1 second and trying again...');
+        console.log(
+          `[TRACES][${functionName}] Detailed traces are still being processed, waiting 1 second and trying again...`,
+        );
         await sleep(1000);
         continue;
       }
@@ -378,8 +453,8 @@ const fetchXRayTraceBatches = async (traceSummaries: Pick<TraceSummary, 'Id'>[])
  * Process a list of XRay detailed traces, extracting the timings for the various
  * segments, along with overall metrics.
  */
-const processXRayTraces = (traces: MinimalTrace[]): BenchmarkResults => {
-  console.log('[TRACES] Processing trace information.');
+const processXRayTraces = (functionName: string, traces: MinimalTrace[]): BenchmarkResults => {
+  console.log(`[TRACES][${functionName}] Processing trace information.`);
   // Gather overall metrics.
   let avgWarmMs: number | undefined;
   let avgColdMs: number | undefined;
@@ -421,14 +496,14 @@ const processXRayTraces = (traces: MinimalTrace[]): BenchmarkResults => {
     const otherTime = (initTime || 0) + (invocTime || 0) + (overheadTime || 0);
     if (totalTime! < otherTime) {
       console.error(
-        `[TRACES] Invalid trace with total time '${totalTime}' less than sum of other times '${otherTime}'. ID = ${trace.Id}.`,
+        `[TRACES][${functionName}] Invalid trace with total time '${totalTime}' less than sum of other times '${otherTime}'. ID = ${trace.Id}.`,
       );
       return;
     }
     // 2. Similarly, XRay sometimes only catches the Lambda service part, but not the function metrics
     // themselves. We are then unable to tell if it was a cold start or not.
     if (!invocTime) {
-      console.error(`[TRACES] Invalid trace with missing invocation time. ID = ${trace.Id}.`);
+      console.error(`[TRACES][${functionName}] Invalid trace with missing invocation time. ID = ${trace.Id}.`);
       return;
     }
 
@@ -469,22 +544,27 @@ const processXRayTraces = (traces: MinimalTrace[]): BenchmarkResults => {
  * Output the results to the `response-times.md` markdown file by manually piecing together the
  * markdown content.
  */
-const outputBenchmarkMarkdown = async (memoryTimes: MemoryTimes[]) => {
-  console.log("[OUTPUT] Saving benchmark times to 'response-times.md'.");
-
+const outputBenchmarkMarkdown = async (
+  functionName: string,
+  memoryTimes: MemoryTimes[],
+): Promise<typeof RUN_SUMMARY_STRUCTURE> => {
+  console.log(`[OUTPUT][${functionName}] Saving benchmark times to 'response-times.md'.`);
+  let summary = {
+    header: '',
+    sep: '',
+    avgWarm: '',
+    avgCold: '',
+    fastestWarm: '',
+    slowestWarm: '',
+    fastestCold: '',
+    slowestCold: '',
+  };
   // Generate the measurement tables for each memory configuration section.
   let overviewData = `
 
 ## Summary of Results`;
   let overviewTableData = {
-    header: `| Measurement (ms) |`,
-    sep: '|-------------|',
-    avgWarm: '| Average warm start response time |',
-    avgCold: '| Average cold start response time |',
-    fastestWarm: '| Fastest warm response time |',
-    slowestWarm: '| Slowest warm response time |',
-    fastestCold: '| Fastest cold response time  |',
-    slowestCold: '| Slowest cold response time |',
+    ...RUN_SUMMARY_STRUCTURE,
   };
 
   let benchmarkData = '';
@@ -505,14 +585,32 @@ const outputBenchmarkMarkdown = async (memoryTimes: MemoryTimes[]) => {
   `;
 
     benchmarkData += results;
-    overviewTableData.header += ` ${memorySize} MB |`;
-    overviewTableData.sep += '-------------|';
-    overviewTableData.avgWarm += ` ${Math.floor(times.overallTimes.avgWarmMs! * 10000) / 10} ms |`;
-    overviewTableData.avgCold += ` ${Math.floor(times.overallTimes.avgColdMs! * 10000) / 10} ms |`;
-    overviewTableData.fastestWarm += ` ${Math.floor(times.overallTimes.fastestWarmMs! * 10000) / 10} ms |`;
-    overviewTableData.slowestWarm += ` ${Math.floor(times.overallTimes.slowestWarmMs! * 10000) / 10} ms |`;
-    overviewTableData.fastestCold += ` ${Math.floor(times.overallTimes.fastestColdMs! * 10000) / 10} ms |`;
-    overviewTableData.slowestCold += ` ${Math.floor(times.overallTimes.slowestColdMs! * 10000) / 10} ms |`;
+    const header = ` ${functionName} (${memorySize} MB) |`;
+    const sep = '-------------|';
+    const avgWarm = ` ${Math.floor(times.overallTimes.avgWarmMs! * 10000) / 10} ms |`;
+    const avgCold = ` ${Math.floor(times.overallTimes.avgColdMs! * 10000) / 10} ms |`;
+    const fastestWarm = ` ${Math.floor(times.overallTimes.fastestWarmMs! * 10000) / 10} ms |`;
+    const slowestWarm = ` ${Math.floor(times.overallTimes.slowestWarmMs! * 10000) / 10} ms |`;
+    const fastestCold = ` ${Math.floor(times.overallTimes.fastestColdMs! * 10000) / 10} ms |`;
+    const slowestCold = ` ${Math.floor(times.overallTimes.slowestColdMs! * 10000) / 10} ms |`;
+
+    summary.header += header;
+    summary.sep += sep;
+    summary.avgWarm += avgWarm;
+    summary.avgCold += avgCold;
+    summary.fastestWarm += fastestWarm;
+    summary.slowestWarm += slowestWarm;
+    summary.fastestCold += fastestCold;
+    summary.slowestCold += slowestCold;
+
+    overviewTableData.header += header;
+    overviewTableData.sep += sep;
+    overviewTableData.avgWarm += avgWarm;
+    overviewTableData.avgCold += avgCold;
+    overviewTableData.fastestWarm += fastestWarm;
+    overviewTableData.slowestWarm += slowestWarm;
+    overviewTableData.fastestCold += fastestCold;
+    overviewTableData.slowestCold += slowestCold;
 
     benchmarkData += `
 
@@ -548,15 +646,15 @@ ${overviewTableData.slowestCold}
 The following are the response time results from AWS XRay, generated after running \`bun run benchmark\`.
 
 - Run ID: ${RUN_ID}
-- Function Name: ${FN_NAME}
+- Function Name: ${functionName}
 - Payload: ${benchmarkPayload === benchmarkPayloadProducts ? 'Products' : 'No Query'}
 
-![Average Cold/Warm Response Times](./${FN_NAME}-${RUN_ID}-response-times-average.svg)
+![Average Cold/Warm Response Times](./${functionName}-${RUN_ID}-response-times-average.svg)
 
 - 🔵: Average cold startup times
 - 🔴: Average warm startup times
 
-![Fastest and Slowest Response Times](./${FN_NAME}-${RUN_ID}-response-times-extremes.svg)
+![Fastest and Slowest Response Times](./${functionName}-${RUN_ID}-response-times-extremes.svg)
 
 - 🔵: Fastest warm response time
 - 🔴: Slowest warm response time
@@ -587,7 +685,9 @@ The following are the response time results from AWS XRay, generated after runni
 <img width="1479" alt="Screenshot 2020-10-07 at 23 01 23" src="https://user-images.githubusercontent.com/1189998/95387509-1953e080-08f1-11eb-8d46-ac25efa235e4.png">
 `;
   const markdown = [header, tableOfContents, overviewData, overviewTable, benchmarkData, footer].join('\n');
-  fs.writeFileSync(`./traces/${FN_NAME}-${RUN_ID}-response-times.md`, markdown);
+  fs.writeFileSync(`./traces/${functionName}-${RUN_ID}-response-times.md`, markdown);
+
+  return summary;
 };
 
 /**
@@ -596,88 +696,117 @@ The following are the response time results from AWS XRay, generated after runni
  * - response-times-extremes.svg: Shows the fastest and slowests response times for both cold and warm
  *   starts, for each memory configuration.
  */
-const outputBenchmarkChart = async (memoryTimes: MemoryTimes[]) => {
-  console.log(`[OUTPUT] Charting benchmark times to './traces/${FN_NAME}-${RUN_ID}-response-times.svg'.`);
+// const outputBenchmarkChart = async (functionName: string, memoryTimes: MemoryTimes[]) => {
+//   console.log(
+//     `[OUTPUT][${functionName}] Charting benchmark times to './traces/${functionName}-${RUN_ID}-response-times.svg'.`,
+//   );
 
-  const opts = {
-    options: {
-      width: 700,
-      height: 300,
-      axisX: {
-        showLabel: true,
-        showGrid: false,
-      },
-      axisY: {
-        labelInterpolationFnc: function (value: any) {
-          return value + 'ms';
-        },
-        scaleMinSpace: 15,
-      },
-    },
-    title: {
-      height: 50,
-      fill: '#4A5572',
-    },
-    css: `.ct-series-a .ct-bar, .ct-series-a .ct-line, .ct-series-a .ct-point, .ct-series-a .ct-slice-donut{
-      stroke: #4A5572
-    }`,
-  };
+//   const opts = {
+//     options: {
+//       width: 700,
+//       height: 300,
+//       axisX: {
+//         showLabel: true,
+//         showGrid: false,
+//       },
+//       axisY: {
+//         labelInterpolationFnc: function (value: any) {
+//           return value + 'ms';
+//         },
+//         scaleMinSpace: 15,
+//       },
+//     },
+//     title: {
+//       height: 50,
+//       fill: '#4A5572',
+//     },
+//     css: `.ct-series-a .ct-bar, .ct-series-a .ct-line, .ct-series-a .ct-point, .ct-series-a .ct-slice-donut{
+//       stroke: #4A5572
+//     }`,
+//   };
 
-  const labels: string[] = [];
-  const avgSeries: number[][] = [
-    [], // Avg. Cold
-    [], // Avg. Warm
-  ];
-  const extremesSeries: number[][] = [
-    [], // Fastest Warm
-    [], // Slowest Warm
-    [], // Fastest Cold
-    [], // Slowest Cold
-  ];
-  memoryTimes.map(({ memorySize, times }) => {
-    labels.push(`${memorySize}MB`);
-    // Add the average data to the first chart series.
-    avgSeries[0].push(Math.floor(times.overallTimes.avgColdMs! * 10000) / 10);
-    avgSeries[1].push(Math.floor(times.overallTimes.avgWarmMs! * 10000) / 10);
-    // Add the extremes data to the second chart series.
-    extremesSeries[0].push(Math.floor(times.overallTimes.fastestWarmMs! * 10000) / 10);
-    extremesSeries[1].push(Math.floor(times.overallTimes.slowestWarmMs! * 10000) / 10);
-    extremesSeries[2].push(Math.floor(times.overallTimes.fastestColdMs! * 10000) / 10);
-    extremesSeries[3].push(Math.floor(times.overallTimes.slowestColdMs! * 10000) / 10);
-  });
+//   const labels: string[] = [];
+//   const avgSeries: number[][] = [
+//     [], // Avg. Cold
+//     [], // Avg. Warm
+//   ];
+//   const extremesSeries: number[][] = [
+//     [], // Fastest Warm
+//     [], // Slowest Warm
+//     [], // Fastest Cold
+//     [], // Slowest Cold
+//   ];
+//   memoryTimes.map(({ memorySize, times }) => {
+//     labels.push(`${memorySize}MB`);
+//     // Add the average data to the first chart series.
+//     avgSeries[0].push(Math.floor(times.overallTimes.avgColdMs! * 10000) / 10);
+//     avgSeries[1].push(Math.floor(times.overallTimes.avgWarmMs! * 10000) / 10);
+//     // Add the extremes data to the second chart series.
+//     extremesSeries[0].push(Math.floor(times.overallTimes.fastestWarmMs! * 10000) / 10);
+//     extremesSeries[1].push(Math.floor(times.overallTimes.slowestWarmMs! * 10000) / 10);
+//     extremesSeries[2].push(Math.floor(times.overallTimes.fastestColdMs! * 10000) / 10);
+//     extremesSeries[3].push(Math.floor(times.overallTimes.slowestColdMs! * 10000) / 10);
+//   });
 
-  const avgSeriesData = {
-    title: 'Average Cold/Warm Response Times Across Memory Configurations',
-    labels,
-    series: avgSeries,
-  };
-  const extremesSeriesData = {
-    title: 'Fastest and Slowest Response Times Across Memory Configurations',
-    labels,
-    series: extremesSeries,
-  };
+//   const avgSeriesData = {
+//     title: 'Average Cold/Warm Response Times Across Memory Configurations',
+//     labels,
+//     series: avgSeries,
+//   };
+//   const extremesSeriesData = {
+//     title: 'Fastest and Slowest Response Times Across Memory Configurations',
+//     labels,
+//     series: extremesSeries,
+//   };
 
-  chartistSvg('bar', avgSeriesData, opts).then((html: any) => {
-    fs.writeFileSync(`./traces/${FN_NAME}-${RUN_ID}-response-times-average.svg`, html);
-  });
-  chartistSvg('bar', extremesSeriesData, opts).then((html: any) => {
-    fs.writeFileSync(`./traces/${FN_NAME}-${RUN_ID}-response-times-extremes.svg`, html);
-  });
-};
+//   chartistSvg('bar', avgSeriesData, opts).then((html: any) => {
+//     fs.writeFileSync(`./traces/${functionName}-${RUN_ID}-response-times-average.svg`, html);
+//   });
+//   chartistSvg('bar', extremesSeriesData, opts).then((html: any) => {
+//     fs.writeFileSync(`./traces/${functionName}-${RUN_ID}-response-times-extremes.svg`, html);
+//   });
+// };
 
 (async () => {
-  const functionName = FN_NAME;
-  console.log(`[SETUP] Function Name = ${functionName}`);
-  console.log(`[SETUP] Run ID = ${RUN_ID}`);
-  if (!functionName) {
-    console.error("No 'FUNCTION_NAME' was set!");
-    process.exit(1);
-  }
+  console.log('[SETUP] Starting benchmark of:', FN_NAMES);
+  const benchmarkRuns = FN_NAMES.map(async (functionName) => {
+    console.log(`[SETUP] Function Name = ${functionName}`);
+    console.log(`[SETUP][${functionName}] Run ID = ${RUN_ID}`);
+    if (!functionName) {
+      console.error("No 'FUNCTION_NAME' was set!");
+      process.exit(1);
+    }
 
-  try {
-    await main(functionName);
-  } catch (err) {
-    console.error('[ERROR] Benchmark failed unexpectedly:', err);
-    process.exit(1);
-  }
+    try {
+      const summary = await main(functionName);
+      RUN_SUMMARY.header += summary.header;
+      RUN_SUMMARY.sep += summary.sep;
+      RUN_SUMMARY.avgWarm += summary.avgWarm;
+      RUN_SUMMARY.avgCold += summary.avgCold;
+      RUN_SUMMARY.fastestWarm += summary.fastestWarm;
+      RUN_SUMMARY.slowestWarm += summary.slowestWarm;
+      RUN_SUMMARY.fastestCold += summary.fastestCold;
+      RUN_SUMMARY.slowestCold += summary.slowestCold;
+    } catch (err) {
+      console.error(`[ERROR][${functionName}] Benchmark failed unexpectedly:`, err);
+      process.exit(1);
+    }
+  });
+  await Promise.all(benchmarkRuns);
+  console.log(RUN_SUMMARY);
+  fs.writeFileSync(
+    `./traces/${RUN_ID}-summary.md`,
+    `
+# Benchmark: Summary of run ${RUN_ID}
+
+${RUN_SUMMARY.header}
+${RUN_SUMMARY.sep}
+${RUN_SUMMARY.avgWarm}
+${RUN_SUMMARY.avgCold}
+${RUN_SUMMARY.fastestWarm}
+${RUN_SUMMARY.slowestWarm}
+${RUN_SUMMARY.fastestCold}
+${RUN_SUMMARY.slowestCold}
+`,
+  );
 })();

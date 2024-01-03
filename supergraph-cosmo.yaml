@@ -1,0 +1,15 @@
+version: 1
+subgraphs:
+  # You can either provide schema file or introspection. File takes precedence
+  - name: users
+    routing_url: http://localhost:3065/
+    introspection:
+      url: http://localhost:3065/
+  - name: products
+    routing_url: http://localhost:3075/
+    introspection:
+      url: http://localhost:3075/
+  - name: reviews
+    routing_url: http://localhost:3085/
+    introspection:
+      url: http://localhost:3085/

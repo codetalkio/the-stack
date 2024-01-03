@@ -1,0 +1,107 @@
+{
+  "hostRequirements": {
+    // Available configurations:
+    // - cpus: 2, memory 4gb, storage 32gb
+    // - cpus: 4, memory 16gb, storage 32gb
+    // - cpus: 8, memory 32gb, storage 64gb
+    // - cpus: 16, memory 64gb, storage 128gb
+    "cpus": 2,
+    "memory": "8gb",
+    "storage": "64gb"
+  },
+  "name": "Development",
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  // Adjust the container to allow Docker commands to be executed inside it.
+  "runArgs": [
+    "--volume=/var/lib/docker",
+    "--cap-add=SYS_PTRACE",
+    "--security-opt",
+    "seccomp=unconfined",
+    "--privileged",
+    "--init"
+  ],
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "dockerDashComposeVersion": "v2"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/lukewiwa/features/shellcheck:0": {},
+    "ghcr.io/guiyomh/features/just:0": {},
+    "ghcr.io/devcontainers-contrib/features/tldr:2": {}
+    // "ghcr.io/devcontainers/features/aws-cli:1": {},
+    // "ghcr.io/devcontainers/features/git:1": {}
+  },
+
+  // Use 'forwardPorts' to make a list of ports inside the container available locally.
+  "forwardPorts": [3000, 3010, 4000, 3065, 3075, 3085],
+  "portsAttributes": {
+    "3000": { "label": "ui-app" },
+    "3010": { "label": "ui-internal" },
+    // "3306": { "label": "MySQL" },
+    "4000": {
+      "label": "router",
+      "elevateIfNeeded": false,
+      "requireLocalPort": true
+    },
+    "3065": {
+      "label": "ms-gql-users",
+      "elevateIfNeeded": false,
+      "requireLocalPort": true
+    },
+    "3075": {
+      "label": "ms-gql-products",
+      "elevateIfNeeded": false,
+      "requireLocalPort": true
+    },
+    "3085": {
+      "label": "ms-gql-reviews",
+      "elevateIfNeeded": false,
+      "requireLocalPort": true
+    }
+  },
+  "otherPortsAttributes": { "onAutoForward": "silent" },
+
+  // See the following for details on the lifecycle commands for prebuilds:
+  // - https://docs.github.com/en/codespaces/prebuilding-your-codespaces/configuring-prebuilds
+  // onCreateCommand is run only once, when the prebuild template is created.
+  "onCreateCommand": "${containerWorkspaceFolder}/.devcontainer/prebuild-setup.sh",
+
+  // updateContentCommand is run at template creation and at subsequent template updates. Incremental builds
+  // should be included in updateContentCommand since they represent the source of your project
+  // and need to be included for every prebuild template update.
+  "updateContentCommand": "${containerWorkspaceFolder}/.devcontainer/prebuild-update.sh",
+
+  // Lifecycles https://github.com/devcontainers/spec/blob/main/docs/specs/devcontainer-reference.md.
+  // postCreateCommand runs after creating the Codespace and it gets provisioned.
+  // "postCreateCommand": "${containerWorkspaceFolder}/.devcontainer/post-create.sh",
+  // postAttachCommand runs each time you attach to a Codespace session.
+  // "postAttachCommand": "${containerWorkspaceFolder}/.devcontainer/post-attach.sh",
+
+  "customizations": {
+    // Set up access to our other repositories (https://docs.github.com/en/codespaces/managing-your-codespaces/managing-repository-access-for-your-codespaces).
+    // NOTE: Only HTTPS cloning will not, not SSH!
+    // "repositories": {
+    //   "codetalkio/other-repo": {
+    //     "permissions": "write-all"
+    //   }
+    // },
+    "codespaces": {
+      "openFiles": []
+    },
+    "vscode": {
+      // Set *default* container specific settings.json values on container create.
+      "settings": {},
+      // Add the IDs of extensions you want installed when the container is created.
+      "extensions": [
+        // UI development.
+        "bradlc.vscode-tailwindcss",
+        // Rust extension.
+        "rust-lang.rust-analyzer",
+        // Go extension.
+        "golang.go",
+        // General tooling.
+        "skellock.just"
+      ]
+    }
+  }
+}

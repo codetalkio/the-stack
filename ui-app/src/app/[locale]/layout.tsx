@@ -2,6 +2,7 @@ import '../globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
+import { unstable_setRequestLocale, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { ReactNode } from 'react';
 import { promises as fs } from 'fs';
@@ -35,14 +36,30 @@ async function messagesContent(locale: string) {
   }
 }
 
-type Props = {
-  children: ReactNode;
-  params: {
-    locale: string;
-  };
+type Params = {
+  params: Awaited<ReturnType<typeof generateStaticParams>>[0];
 };
 
+type Props = {
+  children: ReactNode;
+} & Params;
+
+/**
+ * Set the metadata of the page.
+ */
+export async function generateMetadata({ params: { locale } }: Params) {
+  const t = await getTranslations({ locale, namespace: 'home' });
+
+  return {
+    title: t('intro'),
+  };
+}
+
 export default async function Layout({ children, params: { locale } }: Props) {
+  // Required workaround for static rendering with next-intl.
+  // https://next-intl-docs.vercel.app/docs/getting-started/app-router#static-rendering
+  unstable_setRequestLocale(locale);
+
   const messages = await messagesContent(locale);
   return (
     <html lang={locale}>

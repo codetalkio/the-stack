@@ -1,32 +1,19 @@
 schema
   @link(url: "https://specs.apollo.dev/link/v1.0")
-  @link(url: "https://specs.apollo.dev/join/v0.3", for: EXECUTION) {
+  @link(url: "https://specs.apollo.dev/join/v0.3", for: EXECUTION)
+{
   query: Query
 }
 
 directive @join__enumValue(graph: join__Graph!) repeatable on ENUM_VALUE
 
-directive @join__field(
-  graph: join__Graph
-  requires: join__FieldSet
-  provides: join__FieldSet
-  type: String
-  external: Boolean
-  override: String
-  usedOverridden: Boolean
-) repeatable on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
+directive @join__field(graph: join__Graph, requires: join__FieldSet, provides: join__FieldSet, type: String, external: Boolean, override: String, usedOverridden: Boolean) repeatable on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
 directive @join__graph(name: String!, url: String!) on ENUM_VALUE
 
 directive @join__implements(graph: join__Graph!, interface: String!) repeatable on OBJECT | INTERFACE
 
-directive @join__type(
-  graph: join__Graph!
-  key: join__FieldSet
-  extension: Boolean! = false
-  resolvable: Boolean! = true
-  isInterfaceObject: Boolean! = false
-) repeatable on OBJECT | INTERFACE | UNION | ENUM | INPUT_OBJECT | SCALAR
+directive @join__type(graph: join__Graph!, key: join__FieldSet, extension: Boolean! = false, resolvable: Boolean! = true, isInterfaceObject: Boolean! = false) repeatable on OBJECT | INTERFACE | UNION | ENUM | INPUT_OBJECT | SCALAR
 
 directive @join__unionMember(graph: join__Graph!, member: String!) repeatable on UNION
 
@@ -54,17 +41,22 @@ enum link__Purpose {
   EXECUTION
 }
 
-"""
-Define the Product entity so that we can extend it.
-"""
-type Product @join__type(graph: PRODUCTS, key: "id") @join__type(graph: REVIEWS, key: "id") {
+"""Define the Product entity so that we can extend it."""
+type Product
+  @join__type(graph: PRODUCTS, key: "id")
+  @join__type(graph: REVIEWS, key: "id")
+{
   id: ID!
   name: String! @join__field(graph: PRODUCTS)
   price: String! @join__field(graph: PRODUCTS)
   reviews: [Review!]! @join__field(graph: REVIEWS)
 }
 
-type Query @join__type(graph: PRODUCTS) @join__type(graph: REVIEWS) @join__type(graph: USERS) {
+type Query
+  @join__type(graph: PRODUCTS)
+  @join__type(graph: REVIEWS)
+  @join__type(graph: USERS)
+{
   product(id: ID!): Product! @join__field(graph: PRODUCTS)
   products: [Product!]! @join__field(graph: PRODUCTS)
   review(id: ID!): Review! @join__field(graph: REVIEWS)
@@ -73,20 +65,21 @@ type Query @join__type(graph: PRODUCTS) @join__type(graph: REVIEWS) @join__type(
   users: [User!]! @join__field(graph: USERS)
 }
 
-type Review @join__type(graph: REVIEWS, key: "id") {
+type Review
+  @join__type(graph: REVIEWS, key: "id")
+{
   id: ID!
   body: String!
   author: User!
   product: Product!
 }
 
-"""
-Define the User entity so that we can extend it.
-"""
+"""Define the User entity so that we can extend it."""
 type User
   @join__type(graph: PRODUCTS, key: "id")
   @join__type(graph: REVIEWS, key: "id")
-  @join__type(graph: USERS, key: "id") {
+  @join__type(graph: USERS, key: "id")
+{
   id: ID!
   purchases: [Product!]! @join__field(graph: PRODUCTS)
   reviews: [Review!]! @join__field(graph: REVIEWS)

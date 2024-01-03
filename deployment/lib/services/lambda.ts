@@ -1,8 +1,8 @@
 import * as cdk from 'aws-cdk-lib';
-import { Construct } from 'constructs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as path from 'path';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
+import { Construct } from 'constructs';
+import * as path from 'path';
 
 export interface StackProps extends cdk.StackProps {
   /**
@@ -83,7 +83,7 @@ export class Stack extends cdk.Stack {
       functionName: props.functionName,
       code: lambda.Code.fromAsset(path.resolve(props.assets)),
       memorySize: 1024,
-      runtime: props.runtime ?? lambda.Runtime.PROVIDED_AL2,
+      runtime: props.runtime ?? lambda.Runtime.PROVIDED_AL2023,
       architecture: props.architecture ?? lambda.Architecture.ARM_64,
       layers: [...(props.layers ?? [])],
       handler: props.handler ?? 'not.required',

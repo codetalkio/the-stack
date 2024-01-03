@@ -37,7 +37,7 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         if: ${{ !steps.cached-artifact.outputs.cache-hit }}
         with:
-          toolchain: nightly-2023-10-11
+          toolchain: nightly-2023-11-29
           target: wasm32-unknown-unknown
           cache: false
 

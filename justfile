@@ -4,6 +4,10 @@ set dotenv-load
 # https://github.com/apollographql/router/releases.
 router-version := "1.33.1"
 
+# The version of the Apollo Router we will be using. Check the latest version at
+# https://github.com/wundergraph/cosmo/releases
+cosmo-version := "0.25.1"
+
 # Display help information.
 help:
   @ just --list
@@ -16,36 +20,41 @@ code:
 [linux]
 install-tooling:
   @ just _install-tooling-all-platforms
+  # Install trunk for building Rust WebAssembly.
+  # NOTE: The binstall version installs a variant that is sometimes incompatible with the GLIBC
+  # version installed on the system.
+  command -v trunk >/dev/null 2>&1 || cargo install --locked trunk
 
 # Install tooling for working with The Stack.
 [macos]
 install-tooling:
   @ just _install-tooling-all-platforms
-
-# Not covered:
-# - brew install protobuf / sudo apt-get install protobuf
-# - python3 -m pip install localstack==1.3.0
-# - npm install --global sass
+  # Install trunk for building Rust WebAssembly.
+  command -v trunk >/dev/null 2>&1 || cargo binstall --no-confirm trunk
 
 _install-tooling-all-platforms:
   # Install bun.
   command -v bun >/dev/null 2>&1 || curl -fsSL https://bun.sh/install | bash
   # Install the zig compiler for cross-compilation.
-  command -v zig >/dev/null 2>&1 || bun install --global zig
+  command -v zig >/dev/null 2>&1 || bun install --global @ziglang/cli && zig-install
+  # Install rustup.
+  command -v rustup >/dev/null 2>&1 || curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+  # Install go.
+  command -v go >/dev/null 2>&1 || curl -fsSL https://git.io/go-installer | bash
   # Install cargo-binstall for installing binaries from crates.io.
   command -v cargo-binstall >/dev/null 2>&1 || curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
   # Install the rover CLI tool to manage Apollo supergraphs.
   command -v rover >/dev/null 2>&1 || curl -sSL https://rover.apollo.dev/nix/latest | sh
-  # Install trunk for building Rust WebAssembly.
-  cargo binstall --no-confirm trunk
   # Install cargo-watch for watching Rust files.
-  cargo binstall --no-confirm cargo-watch
+  command -v cargo-watch >/dev/null 2>&1 || cargo binstall --no-confirm cargo-watch
   # Install cargo-edit for managing dependencies.
-  cargo binstall --no-confirm cargo-edit
+  command -v cargo-add >/dev/null 2>&1 || cargo binstall --no-confirm cargo-edit
   # Install cargo-lambda for building Rust Lambda functions.
-  cargo binstall --no-confirm cargo-lambda
+  command -v cargo-lambda >/dev/null 2>&1 || cargo binstall --no-confirm cargo-lambda
   # Install leptosfmt for formatting Leptos View macros.
-  cargo binstall --no-confirm leptosfmt
+  command -v leptosfmt >/dev/null 2>&1 || cargo binstall --no-confirm leptosfmt
+  # Install kondo to manage and clean up dependencies.
+  command -v kondo >/dev/null 2>&1 || cargo binstall --no-confirm kondo
 
 # Setup dependencies and tooling for <project>, e.g. `just setup deployment`.
 setup project:
@@ -61,6 +70,7 @@ setup-all:
   just _setup-ms-gql-products
   just _setup-ms-gql-reviews
   just _setup-ms-router
+  just _setup-ms-cosmo
   just _setup-ms-gateway
   just _setup-ms-mesh
 
@@ -90,7 +100,7 @@ _setup-ms-mesh:
 
 [linux]
 _setup-ms-mesh:
-  cd ms-mesh && npm install
+  cd ms-mesh && bun install
 
 _setup-ms-router:
   #!/usr/bin/env bash
@@ -100,8 +110,18 @@ _setup-ms-router:
   # Download the Apollo Router binary that we will use for local development.
   curl -sSL https://router.apollo.dev/download/nix/v{{router-version}} | sh
 
+  # Download the Cosmo Router binary that we will use for local development.
+  export TMP_DIR=$(mktemp -d -t "cosmo.XXXXXXXXXX")
+  curl -sSfL https://github.com/wundergraph/cosmo/releases/download/router%40{{cosmo-version}}/router-router@{{cosmo-version}}-{{ if os() == "macos" { "darwin" } else { os() } }}-{{ if arch() == "aarch64" { "arm64" } else { "amd64" } }}.tar.gz -o $TMP_DIR/cosmo.tar.gz
+  tar xf $TMP_DIR/cosmo.tar.gz -C $TMP_DIR
+  mv $TMP_DIR/router ./cosmo
+  rm -r $TMP_DIR
+
   # Generate schema to validate our configuration against.
   ./router config schema > ../configuration_schema.json
+
+_setup-ms-cosmo:
+  cd ms-cosmo && go mod tidy
 
 _setup-ms-gql-users: (_setup-rust "ms-gql-users")
 
@@ -113,8 +133,8 @@ _setup-rust-wasm project:
   #!/usr/bin/env bash
   set -euxo pipefail
   cd {{project}}
-  rustup toolchain install nightly-2023-10-11
-  rustup default nightly-2023-10-11
+  rustup toolchain install nightly-2023-11-29
+  rustup default nightly-2023-11-29
   rustup target add wasm32-unknown-unknown
 
 _setup-rust project:
@@ -166,6 +186,7 @@ deploy-validate-artifacts:
   @ just _deploy-validate-artifacts ms-gateway
   @ just _deploy-validate-artifacts ms-mesh
   @ just _deploy-validate-artifacts ms-router
+  @ just _deploy-validate-artifacts ms-cosmo
 
 _deploy-validate-artifacts project:
   @ [ -d "./deployment/artifacts/{{project}}" ] && echo "✅ {{project}} exists" || (echo "❌ {{project}} missing" && exit 1)
@@ -176,10 +197,14 @@ destroy-stack +stack:
 
 # Compose the supergraph from all of our subgraphs (requires them to be running).
 compose:
+  # Set up Apollo supergraph.
   rover supergraph compose --config supergraph-config.yaml --output supergraph.graphql
   cp supergraph.graphql ms-router/supergraph.graphql
   cp supergraph.graphql ms-gateway/src/supergraph.graphql
   cp supergraph.graphql ms-mesh/supergraph.graphql
+  # Set up Cosmo supergraph.
+  bunx wgc router compose -i supergraph-cosmo.yaml > supergraph.json
+  cp supergraph.json ms-router/supergraph.json
 
 # Run tests for <project>, e.g. `just test deployment`.
 test project:
@@ -211,6 +236,12 @@ _dev-ui-internal:
 _dev-ms-router:
   cd ms-router/bin && ./router --anonymous-telemetry-disabled --config ../router-app.yaml --supergraph=../../supergraph.graphql --dev --hot-reload --log debug
 
+_dev-ms-cosmo-binary:
+  GRAPH_API_TOKEN='fake' CONFIG_PATH="./ms-router/cosmo.yaml" ROUTER_CONFIG_PATH="supergraph.json" ./ms-router/bin/cosmo
+
+_dev-ms-cosmo:
+  cd ms-cosmo && SUBGRAPH_PRODUCTS_URL=https://ckvmnxg6sssbvn76ghbjfoyg3y0prbgg.lambda-url.eu-west-1.on.aws/ ENGINE_ENABLE_REQUEST_TRACING=false CONFIG_PATH="cosmo.yaml" ROUTER_CONFIG_PATH="supergraph.json" HTTP_PORT=4000 bunx nodemon --watch './**/*.go' --signal SIGTERM --exec 'go' run cmd/main.go
+
 _dev-ms-gateway:
   cd ms-gateway && bun dev
 
@@ -234,17 +265,18 @@ build project build="release":
   just _build-{{project}} {{build}}
 
 # Build all deployment artifacts and move them to deployment/artifacts/.
-build-all:
+build-all build="release":
   @ just deploy-clean
   @ mkdir -p ./deployment/artifacts
-  @ just _build-ui-app
-  @ just _build-ui-internal
-  @ just _build-ms-gql-users
-  @ just _build-ms-gql-products
-  @ just _build-ms-gql-reviews
-  @ just _build-ms-router-lambda
-  @ just _build-ms-gateway
-  @ just _build-ms-mesh
+  @ just _build-ui-app {{build}}
+  @ just _build-ui-internal {{build}}
+  @ just _build-ms-gql-users {{build}}
+  @ just _build-ms-gql-products {{build}}
+  @ just _build-ms-gql-reviews {{build}}
+  @ just _build-ms-router-lambda {{build}}
+  @ just _build-ms-cosmo {{build}}
+  @ just _build-ms-gateway {{build}}
+  @ just _build-ms-mesh {{build}}
 
 _build-ui-app build="release":
   cd ui-app && bun run build
@@ -267,17 +299,17 @@ _build-ms-mesh build="release":
   @ mkdir -p ./deployment/artifacts && cp -r ./ms-mesh/dist ./deployment/artifacts/ms-mesh
 
 _build-ms-gql-users build="release":
-  cd ms-gql-users && cargo lambda build --arm64 {{ if build == "debug" { "" } else { "--release" } }}
+  cd ms-gql-users && {{ if build == "debug" { "cargo lambda build --arm64" } else if build == "local" { "cargo build --features local" } else { "cargo lambda build --arm64 --release" } }}
   @ rm -r ./deployment/artifacts/ms-gql-users || true
   @ mkdir -p ./deployment/artifacts && cp -r ./target/lambda/ms-gql-users ./deployment/artifacts/ms-gql-users
 
 _build-ms-gql-products build="release":
-  cd ms-gql-products && cargo lambda build --arm64 {{ if build == "debug" { "" } else { "--release" } }}
+  cd ms-gql-products && {{ if build == "debug" { "cargo lambda build --arm64" } else if build == "local" { "cargo build --features local" } else { "cargo lambda build --arm64 --release" } }}
   @ rm -r ./deployment/artifacts/ms-gql-products || true
   @ mkdir -p ./deployment/artifacts && cp -r ./target/lambda/ms-gql-products ./deployment/artifacts/ms-gql-products
 
 _build-ms-gql-reviews build="release":
-  cd ms-gql-reviews && cargo lambda build --arm64 {{ if build == "debug" { "" } else { "--release" } }}
+  cd ms-gql-reviews && {{ if build == "debug" { "cargo lambda build --arm64" } else if build == "local" { "cargo build --features local" } else { "cargo lambda build --arm64 --release" } }}
   @ rm -r ./deployment/artifacts/ms-gql-reviews || true
   @ mkdir -p ./deployment/artifacts && cp -r ./target/lambda/ms-gql-reviews ./deployment/artifacts/ms-gql-reviews
 
@@ -291,6 +323,38 @@ _build-ms-router-lambda build="release":
 
   # Download the prebuilt Apollo Router binary that we will use for deployment.
   curl -sSL https://github.com/codetalkio/apollo-router-lambda/releases/latest/download/bootstrap-directly-optimized-graviton-arm-{{ if build == "speed" { "speed" } else { "size" } }} -o ./deployment/artifacts/ms-router/bootstrap
+
+_build-ms-cosmo-binary build="release":
+  #!/usr/bin/env bash
+  set -euxo pipefail
+  rm -r ./deployment/artifacts/ms-cosmo || true
+  mkdir -p ./deployment/artifacts/ms-cosmo
+  cp ms-router/cosmo.yaml ./deployment/artifacts/ms-cosmo/cosmo.yaml
+  cp supergraph.json ./deployment/artifacts/ms-cosmo/supergraph.json
+
+  # Download the Cosmo Router binary that we will use for AWS Lambda.
+  export TMP_DIR=$(mktemp -d -t "cosmo.XXXXXXXXXX")
+  curl -sSfL https://github.com/wundergraph/cosmo/releases/download/router%40{{cosmo-version}}/router-router@{{cosmo-version}}-linux-arm64.tar.gz -o $TMP_DIR/cosmo.tar.gz
+  tar xf $TMP_DIR/cosmo.tar.gz -C $TMP_DIR
+  mv $TMP_DIR/router ./deployment/artifacts/ms-cosmo/router
+  rm -r $TMP_DIR
+
+  # Download the prebuilt Router launcher binary that we will use for deployment.
+  curl -sSL https://github.com/codetalkio/apollo-router-lambda/releases/latest/download/bootstrap-cosmo-arm -o ./deployment/artifacts/ms-cosmo/bootstrap
+
+_build-ms-cosmo build="release":
+  #!/usr/bin/env bash
+  set -euxo pipefail
+  rm -r ./deployment/artifacts/ms-cosmo || true
+  mkdir -p ./deployment/artifacts/ms-cosmo
+  cp ms-cosmo/cosmo.yaml ./deployment/artifacts/ms-cosmo/cosmo.yaml
+  cp supergraph.json ./deployment/artifacts/ms-cosmo/supergraph.json
+
+  cd ms-cosmo
+  # Build the go module for Arm64 and without RPC.
+  # See here for more info https://aws.amazon.com/blogs/compute/migrating-aws-lambda-functions-from-the-go1-x-runtime-to-the-custom-runtime-on-amazon-linux-2/.
+  GOOS=linux GOARCH=arm64 go build -tags lambda.norpc -o bin/bootstrap cmd/main.go
+  cp bin/bootstrap ../deployment/artifacts/ms-cosmo/bootstrap
 
 _build-ms-router-app build="release":
   @ just docker-prepare ms-router

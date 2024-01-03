@@ -128,4 +128,10 @@ export type Supergraph =
       service: 'router';
       runtime: 'app-runner';
       path: string;
+    }
+  | {
+      service: 'cosmo';
+      runtime: 'lambda';
+      path: string;
+      pinToVersionedApi: boolean;
     };

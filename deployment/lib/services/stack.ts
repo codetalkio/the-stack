@@ -66,7 +66,7 @@ export class Stack extends cdk.Stack {
         ...props,
         functionName: 'ms-gateway',
         handler: 'lambda.graphqlHandler',
-        runtime: lambda.Runtime.NODEJS_LATEST,
+        runtime: lambda.Runtime.NODEJS_20_X,
         lambdaInsights: false,
         assets: 'artifacts/ms-gateway',
         billingGroup: 'ms-gateway',
@@ -85,7 +85,7 @@ export class Stack extends cdk.Stack {
         ...props,
         functionName: 'ms-mesh',
         handler: 'lambda.graphqlHandler',
-        runtime: lambda.Runtime.NODEJS_LATEST,
+        runtime: lambda.Runtime.NODEJS_20_X,
         lambdaInsights: false,
         assets: 'artifacts/ms-mesh',
         billingGroup: 'ms-mesh',
@@ -106,6 +106,7 @@ export class Stack extends cdk.Stack {
         assets: 'artifacts/ms-router',
         billingGroup: 'ms-router',
         // architecture: lambda.Architecture.X86_64,
+        runtime: lambda.Runtime.PROVIDED_AL2023,
         lambdaInsights: false,
         environmentFromSsm: {
           ...subgraphEnvsSsm,
@@ -132,6 +133,49 @@ export class Stack extends cdk.Stack {
       supergraphs.push(supergraph);
       subgraphs.forEach((subgraph) => supergraph.addDependency(subgraph));
       return supergraph.urlParameterName;
+    });
+
+    // Set up our Cosmo Router Lambda that pieces together the microservices.
+    // setupSupergraph('cosmo', 'lambda', supergraphRoutesSsm, (config) => {
+    //   const supergraph = new lambdaFn.Stack(this, 'MsCosmo', {
+    //     ...props,
+    //     functionName: 'ms-cosmo',
+    //     assets: 'artifacts/ms-cosmo',
+    //     billingGroup: 'ms-cosmo',
+    //     runtime: lambda.Runtime.PROVIDED_AL2023,
+    //     lambdaInsights: false,
+    //     environmentFromSsm: {
+    //       ...subgraphEnvsSsm,
+    //     },
+    //     environment: {
+    //       PATH_ROUTER: './router',
+    //     },
+    //   });
+    //   supergraphs.push(supergraph);
+    //   subgraphs.forEach((subgraph) => supergraph.addDependency(subgraph));
+    //   return config?.pinToVersionedApi ? supergraph.aliasUrlParameterName : supergraph.latestUrlParameterName;
+    // });
+
+    setupSupergraph('cosmo', 'lambda', supergraphRoutesSsm, (config) => {
+      const supergraph = new lambdaFn.Stack(this, 'MsCosmo', {
+        ...props,
+        functionName: 'ms-cosmo',
+        assets: 'artifacts/ms-cosmo',
+        billingGroup: 'ms-cosmo',
+        runtime: lambda.Runtime.PROVIDED_AL2023,
+        lambdaInsights: false,
+        environmentFromSsm: {
+          ...subgraphEnvsSsm,
+        },
+        environment: {
+          CONFIG_PATH: 'cosmo.yaml',
+          ROUTER_CONFIG_PATH: 'supergraph.json',
+          ENGINE_ENABLE_REQUEST_TRACING: 'false',
+        },
+      });
+      supergraphs.push(supergraph);
+      subgraphs.forEach((subgraph) => supergraph.addDependency(subgraph));
+      return config?.pinToVersionedApi ? supergraph.aliasUrlParameterName : supergraph.latestUrlParameterName;
     });
 
     // Fetch the ARN of our CloudFront ACM Certificate from us-east-1.

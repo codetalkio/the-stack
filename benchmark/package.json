@@ -13,6 +13,7 @@
     "@aws-sdk/client-xray": "3.450.0",
     "@types/node": "20.8.3",
     "bun-types": "latest",
+    "oxlint": "^0.0.18",
     "svg-chartist": "1.0.1",
     "typescript": "5.2.2"
   }

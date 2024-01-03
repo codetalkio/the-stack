@@ -53,6 +53,28 @@ const development: Config = {
     path: '/graphql',
     pinToVersionedApi: false,
   },
+  experimental: {
+    additionalSupergraphs: [
+      {
+        service: 'cosmo',
+        runtime: 'lambda',
+        path: '/graphql-cosmo',
+        pinToVersionedApi: false,
+      },
+      {
+        service: 'gateway',
+        runtime: 'lambda',
+        path: '/graphql-gateway',
+        pinToVersionedApi: false,
+      },
+      {
+        service: 'mesh',
+        runtime: 'lambda',
+        path: '/graphql-mesh',
+        pinToVersionedApi: false,
+      },
+    ],
+  },
 };
 
 const production: Config = {
