@@ -9,6 +9,8 @@ echo "Who am i: $(whoami)"
 export PROJECT_NAME=$(pwd | cut -d'/' -f3)
 export CI=true
 
+source /workspaces/.config/shell-config
+
 echo "Rerunning tooling install..."
 just install-tooling
 
