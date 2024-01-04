@@ -22,10 +22,10 @@ jobs:
         id: cached-artifact
         uses: actions/cache/restore@v3
         with:
-          path: ./deployment/artifacts/ms-router-lambda
-          key: ${{ hashFiles('ms-router-lambda/**') }}-${{ hashFiles('.github/workflows/wf-build-ms-router-lambda.yml') }}
+          path: ./deployment/artifacts/ms-router
+          key: ${{ hashFiles('ms-router/**') }}-${{ hashFiles('.github/workflows/wf-build-ms-router.yml') }}
           # Restore keys matche on the prefix, which will hit our uniquely generated key.
-          restore-keys: ${{ hashFiles('ms-router-lambda/**') }}-${{ hashFiles('.github/workflows/wf-build-ms-router-lambda.yml') }}
+          restore-keys: ${{ hashFiles('ms-router/**') }}-${{ hashFiles('.github/workflows/wf-build-ms-router.yml') }}
 
       - uses: extractions/setup-just@v1
         if: ${{ !steps.cached-artifact.outputs.cache-hit }}
@@ -38,14 +38,14 @@ jobs:
         if: ${{ inputs.upload-artifact }}
         uses: actions/cache/save@v3
         with:
-          path: ./deployment/artifacts/ms-router-lambda
+          path: ./deployment/artifacts/ms-router
           # Caches are immutable, so we need to use a new key every time, hence the run_id.
           key: ${{ steps.cached-artifact.outputs.cache-primary-key }}-${{ github.run_id }}
 
       - uses: actions/upload-artifact@v3
         if: ${{ inputs.upload-artifact }}
         with:
-          name: ms-router-lambda
+          name: ms-router
           path: ./deployment/artifacts/ms-router
           if-no-files-found: error
           retention-days: 1
