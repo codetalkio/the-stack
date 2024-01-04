@@ -1,4 +1,4 @@
-name: 'Build: ms-cosmo'
+name: 'Build: ms-router-lambda'
 
 on:
   workflow_call:
@@ -11,7 +11,7 @@ on:
         default: false
 
 jobs:
-  ms-cosmo:
+  ms-router-lambda:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -22,38 +22,30 @@ jobs:
         id: cached-artifact
         uses: actions/cache/restore@v3
         with:
-          path: ./deployment/artifacts/ms-cosmo
-          key: ${{ hashFiles('ms-cosmo/**') }}-${{ hashFiles('.github/workflows/wf-build-ms-cosmo.yml') }}
+          path: ./deployment/artifacts/ms-router-lambda
+          key: ${{ hashFiles('ms-router-lambda/**') }}-${{ hashFiles('.github/workflows/wf-build-ms-router-lambda.yml') }}
           # Restore keys matche on the prefix, which will hit our uniquely generated key.
-          restore-keys: ${{ hashFiles('ms-cosmo/**') }}-${{ hashFiles('.github/workflows/wf-build-ms-cosmo.yml') }}
+          restore-keys: ${{ hashFiles('ms-router-lambda/**') }}-${{ hashFiles('.github/workflows/wf-build-ms-router-lambda.yml') }}
 
-      - uses: actions/setup-go@v4
-        if: ${{ !steps.cached-artifact.outputs.cache-hit }}
-        with:
-          go-version: 1.21.4
       - uses: extractions/setup-just@v1
         if: ${{ !steps.cached-artifact.outputs.cache-hit }}
 
-      - name: Install dependencies
-        if: ${{ !steps.cached-artifact.outputs.cache-hit }}
-        run: just setup ms-cosmo
-
       - name: Build project
         if: ${{ !steps.cached-artifact.outputs.cache-hit }}
-        run: just build ms-cosmo
+        run: just build ms-router-lambda
 
       - name: Save artifact to cache
         if: ${{ inputs.upload-artifact }}
         uses: actions/cache/save@v3
         with:
-          path: ./deployment/artifacts/ms-cosmo
+          path: ./deployment/artifacts/ms-router-lambda
           # Caches are immutable, so we need to use a new key every time, hence the run_id.
           key: ${{ steps.cached-artifact.outputs.cache-primary-key }}-${{ github.run_id }}
 
       - uses: actions/upload-artifact@v3
         if: ${{ inputs.upload-artifact }}
         with:
-          name: ms-cosmo
-          path: ./deployment/artifacts/ms-cosmo
+          name: ms-router-lambda
+          path: ./deployment/artifacts/ms-router
           if-no-files-found: error
           retention-days: 1

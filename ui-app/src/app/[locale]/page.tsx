@@ -1,9 +1,16 @@
-'use client';
-
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { unstable_setRequestLocale } from 'next-intl/server';
 
-export default function Home() {
+type Props = {
+  params: { locale: string };
+};
+
+export default function Home({ params: {locale} }: Props) {
+  // Required workaround for static rendering with next-intl.
+  // https://next-intl-docs.vercel.app/docs/getting-started/app-router#static-rendering
+  unstable_setRequestLocale(locale);
+
   const t = useTranslations('home');
 
   return (

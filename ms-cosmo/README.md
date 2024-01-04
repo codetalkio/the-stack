@@ -8,13 +8,13 @@ Install dependencies:
 $ go mod tidy
 ```
 
-Build the go module for Arm64 and without RPC:
+Build the go module for Linux Arm64 (`GOOS=linux GOARCH=arm64`), without RPC (`-tags lambda.norpc`), and stripping debug info (`-ldflags "-s -w"`):
 
 ```bash
-$ GOOS=linux GOARCH=arm64 go build -tags lambda.norpc -o bin/bootstrap cmd/main.go
+$ GOOS=linux GOARCH=arm64 go build -ldflags "-s -w" -tags lambda.norpc -o bin/bootstrap cmd/main.go
 ```
 
-You can see more about build recommendations here https://aws.amazon.com/blogs/compute/migrating-aws-lambda-functions-from-the-go1-x-runtime-to-the-custom-runtime-on-amazon-linux-2/.
+You can see more about build recommendations here https://aws.amazon.com/blogs/compute/migrating-aws-lambda-functions-from-the-go1-x-runtime-to-the-custom-runtime-on-amazon-linux-2/, and here for the linking flags https://pkg.go.dev/cmd/link (`-w` is "Omit the DWARF symbol table", and `-s` is `Omit the symbol table and debug information.`).
 
 Finally, zip the binary:
 

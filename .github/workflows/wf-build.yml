@@ -58,3 +58,9 @@ jobs:
     with:
       release: true
       upload-artifact: true
+
+  ms-router:
+    uses: ./.github/workflows/wf-build-ms-router.yml
+    with:
+      release: true
+      upload-artifact: true

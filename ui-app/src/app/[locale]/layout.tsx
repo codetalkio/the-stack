@@ -1,16 +1,10 @@
 import '../globals.css';
-import type { Metadata } from 'next';
+// import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import { NextIntlClientProvider } from 'next-intl';
 import { unstable_setRequestLocale, getTranslations } from 'next-intl/server';
-import { notFound } from 'next/navigation';
+// import { notFound } from 'next/navigation';
 import { ReactNode } from 'react';
 import { promises as fs } from 'fs';
-
-export const metadata: Metadata = {
-  title: 'Hello, World!',
-  description: 'Ready to set things up',
-};
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -27,14 +21,14 @@ export async function generateStaticParams() {
 /**
  * Load the contents of a given locale's messages file.
  */
-async function messagesContent(locale: string) {
-  try {
-    return (await import(`../../../messages/${locale}.json`)).default;
-  } catch (error) {
-    console.error('Something went wrong', error);
-    notFound();
-  }
-}
+// async function messagesContent(locale: string) {
+//   try {
+//     return (await import(`../../../messages/${locale}.json`)).default;
+//   } catch (error) {
+//     console.error('[messagesContent] Something went wrong importing the message content', error);
+//     notFound();
+//   }
+// }
 
 type Params = {
   params: Awaited<ReturnType<typeof generateStaticParams>>[0];
@@ -52,6 +46,7 @@ export async function generateMetadata({ params: { locale } }: Params) {
 
   return {
     title: t('intro'),
+    description: 'Ready to set things up',
   };
 }
 
@@ -59,15 +54,16 @@ export default async function Layout({ children, params: { locale } }: Props) {
   // Required workaround for static rendering with next-intl.
   // https://next-intl-docs.vercel.app/docs/getting-started/app-router#static-rendering
   unstable_setRequestLocale(locale);
-
-  const messages = await messagesContent(locale);
   return (
     <html lang={locale}>
-      <body className={inter.className}>
-        <NextIntlClientProvider locale={locale} messages={messages}>
-          {children}
-        </NextIntlClientProvider>
-      </body>
+      <body className={inter.className}>{children}</body>
     </html>
   );
+}
+
+{
+  /* import { NextIntlClientProvider } from 'next-intl';
+  <NextIntlClientProvider locale={locale} messages={messages}>
+  {children}
+</NextIntlClientProvider> */
 }
