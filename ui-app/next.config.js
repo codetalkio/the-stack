@@ -7,7 +7,7 @@ const nextConfig = withNextIntl({
   trailingSlash: true,
   experimental: {
     // Not supported with Turbo yet.
-    // typedRoutes: true,
+    typedRoutes: true,
   },
 });
 
