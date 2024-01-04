@@ -36,7 +36,7 @@ _install-tooling-all-platforms:
   # Install bun.
   command -v bun >/dev/null 2>&1 || curl -fsSL https://bun.sh/install | bash
   # Install the zig compiler for cross-compilation.
-  command -v zig >/dev/null 2>&1 || bun install --global @ziglang/cli && zig-install
+  command -v zig >/dev/null 2>&1 || (bun install --global @ziglang/cli && zig-install)
   # Install rustup.
   command -v rustup >/dev/null 2>&1 || curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
   # Install go.
@@ -64,6 +64,7 @@ setup project:
 setup-all:
   @ just deploy-clean
   @ mkdir -p ./deployment/artifacts
+  just _setup-deployment
   just _setup-ui-app
   just _setup-ui-internal
   just _setup-ms-gql-users
@@ -94,11 +95,6 @@ _setup-ui-internal: (_setup-rust-wasm "ui-internal")
 _setup-ms-gateway:
   cd ms-gateway && bun install
 
-[macos]
-_setup-ms-mesh:
-  cd ms-mesh && npm_config_curl_include_dirs="$(xcrun --show-sdk-path)/usr/include" npm install
-
-[linux]
 _setup-ms-mesh:
   cd ms-mesh && bun install
 
