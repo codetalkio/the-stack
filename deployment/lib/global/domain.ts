@@ -1,6 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
-import { Construct } from 'constructs';
 import * as route53 from 'aws-cdk-lib/aws-route53';
+import { Construct } from 'constructs';
 
 export interface StackProps extends cdk.StackProps {
   /**

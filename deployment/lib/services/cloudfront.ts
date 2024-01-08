@@ -1,6 +1,6 @@
-import { Construct } from 'constructs';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as cr from 'aws-cdk-lib/custom-resources';
+import { Construct } from 'constructs';
 
 export interface Props {
   /**

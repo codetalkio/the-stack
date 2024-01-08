@@ -1,7 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
-import { Construct } from 'constructs';
 import * as ecr from 'aws-cdk-lib/aws-ecr';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
+import { Construct } from 'constructs';
 
 export interface StackProps extends cdk.StackProps {
   /**

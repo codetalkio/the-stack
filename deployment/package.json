@@ -8,13 +8,15 @@
     "build": "tsc",
     "watch": "tsc -w",
     "test": "bun test",
+    "lint": "oxlint",
     "cdk": "cdk"
   },
   "devDependencies": {
     "@types/node": "20.8.3",
     "aws-cdk": "2.118.0",
-    "typescript": "5.2.2",
-    "bun-types": "latest"
+    "bun-types": "latest",
+    "oxlint": "^0.1.2",
+    "typescript": "5.2.2"
   },
   "dependencies": {
     "@aws-cdk/aws-apprunner-alpha": "2.118.0-alpha.0",

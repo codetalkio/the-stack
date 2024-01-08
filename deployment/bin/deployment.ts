@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 import * as cdk from 'aws-cdk-lib';
-import { matchesStack, validateEnv } from './helpers';
 import { Stack as CloudStack } from '../lib/cloud/stack';
 import { Stack as GlobalStack } from '../lib/global/stack';
 import { Stack as ServicesStack } from '../lib/services/stack';
+import { matchesStack, validateEnv } from './helpers';
 
 const app = new cdk.App();
 

@@ -1,11 +1,11 @@
+import * as appRunner from '@aws-cdk/aws-apprunner-alpha';
 import * as cdk from 'aws-cdk-lib';
-import { Construct } from 'constructs';
+import * as cfnAppRunner from 'aws-cdk-lib/aws-apprunner';
 import * as ecr from 'aws-cdk-lib/aws-ecr';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import * as cfnAppRunner from 'aws-cdk-lib/aws-apprunner';
-import * as cr from 'aws-cdk-lib/custom-resources';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
-import * as appRunner from '@aws-cdk/aws-apprunner-alpha';
+import * as cr from 'aws-cdk-lib/custom-resources';
+import { Construct } from 'constructs';
 
 export interface StackProps extends cdk.StackProps {
   /**

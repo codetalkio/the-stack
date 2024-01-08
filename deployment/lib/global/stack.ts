@@ -1,7 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import * as domain from './domain';
 import * as certificate from './certificate';
+import * as domain from './domain';
 
 interface StackProps extends cdk.StackProps, domain.StackProps, certificate.StackProps {}
 
