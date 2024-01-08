@@ -37,12 +37,12 @@ jobs:
       name: 'Setup sccache'
 
     - uses: extractions/setup-just@v1
+    - uses: oven-sh/setup-bun@v1
 
     - name: Build release build
       working-directory: ./ui-internal
       run: just build ui-internal
 
-    - uses: oven-sh/setup-bun@v1
 
     - name: Install Vercel CLI
       run: bun install --global vercel@latest
