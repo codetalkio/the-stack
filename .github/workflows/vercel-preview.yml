@@ -54,7 +54,7 @@ jobs:
         vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
         vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_UI_INTERNAL }}
         github-comment: true
-        working-directory: ./dist
+        working-directory: ./ui-internal/dist
 
     - name: Display Deployed URL
       run: |
