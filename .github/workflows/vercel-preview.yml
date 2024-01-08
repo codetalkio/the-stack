@@ -1,0 +1,60 @@
+name: Preview with Vercel
+
+on:
+  push:
+    branches-ignore:
+      - main
+    paths:
+      - '.github/workflows/ci-ui-internal.yml'
+      - '.github/workflows/wf-build-ui-internal.yml'
+      - '.github/workflows/vercel-preview.yml'
+      - 'ui-internal/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+    - name: git-checkout
+      uses: actions/checkout@v3
+
+    - uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        toolchain: nightly-2023-11-29
+        target: wasm32-unknown-unknown
+        cache: false
+
+    - name: Install trunk
+      uses: jaxxstorm/action-install-gh-release@v1.9.0
+      with:
+        repo: thedodd/trunk
+        platform: linux # Other valid options: 'windows' or 'darwin'.
+        arch: x86_64
+
+    - uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: ui-internal
+    - uses: mozilla-actions/sccache-action@v0.0.3
+      name: 'Setup sccache'
+
+    - uses: extractions/setup-just@v1
+
+    - name: Build release build
+      working-directory: ./ui-internal
+      run: just build ui-internal
+
+    - name: Preview Deploy
+      id: preview
+      uses: amondnet/vercel-action@v25.1.1
+      with:
+        vercel-token: ${{ secrets.VERCEL_TOKEN }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_UI_INTERNAL }}
+        github-comment: true
+        working-directory: ./dist
+
+    - name: Display Deployed URL
+      run: |
+        echo "Deployed app URL: ${{ steps.preview.outputs.preview-url }}" >> $GITHUB_STEP_SUMMARY

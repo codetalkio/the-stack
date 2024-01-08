@@ -1,0 +1,59 @@
+name: Release to Vercel
+
+on:
+  push:
+      branches:
+      - main
+
+env:
+  CARGO_TERM_COLOR: always
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_UI_INTERNAL }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: git-checkout
+      uses: actions/checkout@v3
+
+    - uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        toolchain: nightly-2023-11-29
+        target: wasm32-unknown-unknown
+        cache: false
+
+    - name: Install trunk
+      uses: jaxxstorm/action-install-gh-release@v1.9.0
+      with:
+        repo: thedodd/trunk
+        platform: linux # Other valid options: 'windows' or 'darwin'.
+        arch: x86_64
+
+    - uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: ui-internal
+    - uses: mozilla-actions/sccache-action@v0.0.3
+      name: 'Setup sccache'
+
+    - uses: extractions/setup-just@v1
+
+    - name: Build release build
+      working-directory: ./ui-internal
+      run: just build ui-internal
+
+    - uses: oven-sh/setup-bun@v1
+
+    - name: Install Vercel CLI
+      run: bun install --global vercel@latest
+
+    - name: Pull Vercel Environment Information
+      working-directory: ./ui-internal
+      run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+    - name: Deploy to Vercel & Display URL
+      id: deployment
+      working-directory: ./ui-internal/dist
+      run: |
+        vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} >> $GITHUB_STEP_SUMMARY
+        echo $GITHUB_STEP_SUMMARY
