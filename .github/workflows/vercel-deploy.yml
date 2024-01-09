@@ -1,21 +1,15 @@
-name: Release to Vercel
+name: "Vercel: Deploy"
 
 on:
   push:
       branches:
       - main
 
-env:
-  CARGO_TERM_COLOR: always
-  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_UI_INTERNAL }}
-
 jobs:
-  deploy:
+  ui-internal:
     runs-on: ubuntu-latest
     steps:
-    - name: git-checkout
-      uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
@@ -41,18 +35,23 @@ jobs:
 
     - name: Build release build
       working-directory: ./ui-internal
-      run: just build ui-internal
-
-
-    - name: Install Vercel CLI
-      run: bun install --global vercel@latest
+      run: |
+        just build ui-internal
+        # Cleanup build artifacts to minimize upload size to Vercel.
+        rm -rf ./ui-internal/target
 
     - name: Pull Vercel Environment Information
       working-directory: ./ui-internal
-      run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      env:
+        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_UI_INTERNAL }}
+      run: bunx vercel pull --yes --environment=production --scope=${{ secrets.VERCEL_ORG_ID }} --token=${{ secrets.VERCEL_TOKEN }}
 
     - name: Deploy to Vercel & Display URL
       id: deployment
+      env:
+        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_UI_INTERNAL }}
       run: |
-        vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} >> $GITHUB_STEP_SUMMARY
+        bunx vercel deploy --prod --scope=${{ secrets.VERCEL_ORG_ID }} --token=${{ secrets.VERCEL_TOKEN }} >> $GITHUB_STEP_SUMMARY
         echo $GITHUB_STEP_SUMMARY
