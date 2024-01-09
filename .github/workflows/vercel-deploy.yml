@@ -56,5 +56,7 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_UI_INTERNAL }}
         run: |
-          bunx vercel deploy --prod --scope=${{ secrets.VERCEL_ORG_ID }} --token=${{ secrets.VERCEL_TOKEN }} >> $GITHUB_STEP_SUMMARY
+          echo "Preview URLs:" >> $GITHUB_STEP_SUMMARY
+          url="$(bunx vercel deploy --prod --scope=${{ secrets.VERCEL_ORG_ID }} --token=${{ secrets.VERCEL_TOKEN }})"
+          echo "- Direct URL: $url" >> $GITHUB_STEP_SUMMARY
           echo $GITHUB_STEP_SUMMARY
