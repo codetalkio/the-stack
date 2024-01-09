@@ -1,57 +1,60 @@
-name: "Vercel: Deploy"
+name: 'Vercel: Deploy'
 
 on:
   push:
-      branches:
+    branches:
       - main
 
 jobs:
   ui-internal:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - uses: actions-rust-lang/setup-rust-toolchain@v1
-      with:
-        toolchain: nightly-2023-11-29
-        target: wasm32-unknown-unknown
-        cache: false
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: nightly-2023-11-29
+          target: wasm32-unknown-unknown
+          cache: false
 
-    - name: Install trunk
-      uses: jaxxstorm/action-install-gh-release@v1.9.0
-      with:
-        repo: thedodd/trunk
-        platform: linux # Other valid options: 'windows' or 'darwin'.
-        arch: x86_64
+      - name: Install trunk
+        uses: jaxxstorm/action-install-gh-release@v1.9.0
+        with:
+          repo: thedodd/trunk
+          platform: linux # Other valid options: 'windows' or 'darwin'.
+          arch: x86_64
 
-    - uses: Swatinem/rust-cache@v2
-      with:
-        workspaces: ui-internal
-    - uses: mozilla-actions/sccache-action@v0.0.3
-      name: 'Setup sccache'
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ui-internal
+      - uses: mozilla-actions/sccache-action@v0.0.3
+        name: 'Setup sccache'
 
-    - uses: extractions/setup-just@v1
-    - uses: oven-sh/setup-bun@v1
+      - uses: extractions/setup-just@v1
+      - uses: oven-sh/setup-bun@v1
 
-    - name: Build release build
-      working-directory: ./ui-internal
-      run: |
-        just build ui-internal
-        # Cleanup build artifacts to minimize upload size to Vercel.
-        rm -rf ./ui-internal/target
+      - name: Build release build
+        working-directory: ./ui-internal
+        run: |
+          # Put index.vercel.html in place as the entrypoint for Trunk.
+          rm index.html
+          mv index.vercel.html index.html
+          just build ui-internal
+          # Cleanup build artifacts to minimize upload size to Vercel.
+          rm -rf ./ui-internal/target
 
-    - name: Pull Vercel Environment Information
-      working-directory: ./ui-internal
-      env:
-        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_UI_INTERNAL }}
-      run: bunx vercel pull --yes --environment=production --scope=${{ secrets.VERCEL_ORG_ID }} --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Pull Vercel Environment Information
+        working-directory: ./ui-internal
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_UI_INTERNAL }}
+        run: bunx vercel pull --yes --environment=production --scope=${{ secrets.VERCEL_ORG_ID }} --token=${{ secrets.VERCEL_TOKEN }}
 
-    - name: Deploy to Vercel & Display URL
-      id: deployment
-      env:
-        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_UI_INTERNAL }}
-      run: |
-        bunx vercel deploy --prod --scope=${{ secrets.VERCEL_ORG_ID }} --token=${{ secrets.VERCEL_TOKEN }} >> $GITHUB_STEP_SUMMARY
-        echo $GITHUB_STEP_SUMMARY
+      - name: Deploy to Vercel & Display URL
+        id: deployment
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_UI_INTERNAL }}
+        run: |
+          bunx vercel deploy --prod --scope=${{ secrets.VERCEL_ORG_ID }} --token=${{ secrets.VERCEL_TOKEN }} >> $GITHUB_STEP_SUMMARY
+          echo $GITHUB_STEP_SUMMARY

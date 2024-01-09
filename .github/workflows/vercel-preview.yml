@@ -1,4 +1,4 @@
-name: "Vercel: Preview"
+name: 'Vercel: Preview'
 
 on:
   push:
@@ -17,72 +17,62 @@ jobs:
     #   pull-requests: write
     #   contents: read
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - uses: actions-rust-lang/setup-rust-toolchain@v1
-      with:
-        toolchain: nightly-2023-11-29
-        target: wasm32-unknown-unknown
-        cache: false
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: nightly-2023-11-29
+          target: wasm32-unknown-unknown
+          cache: false
 
-    - name: Install trunk
-      uses: jaxxstorm/action-install-gh-release@v1.9.0
-      with:
-        repo: thedodd/trunk
-        platform: linux # Other valid options: 'windows' or 'darwin'.
-        arch: x86_64
+      - name: Install trunk
+        uses: jaxxstorm/action-install-gh-release@v1.9.0
+        with:
+          repo: thedodd/trunk
+          platform: linux # Other valid options: 'windows' or 'darwin'.
+          arch: x86_64
 
-    - uses: Swatinem/rust-cache@v2
-      with:
-        workspaces: ui-internal
-    - uses: mozilla-actions/sccache-action@v0.0.3
-      name: 'Setup sccache'
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ui-internal
+      - uses: mozilla-actions/sccache-action@v0.0.3
+        name: 'Setup sccache'
 
-    - uses: extractions/setup-just@v1
-    - uses: oven-sh/setup-bun@v1
+      - uses: extractions/setup-just@v1
+      - uses: oven-sh/setup-bun@v1
 
-    - name: Build release build
-      working-directory: ./ui-internal
-      run: |
-        just build ui-internal
-        # Cleanup build artifacts to minimize upload size to Vercel.
-        rm -rf ./ui-internal/target
+      - name: Build release build
+        working-directory: ./ui-internal
+        run: |
+          # Put index.vercel.html in place as the entrypoint for Trunk.
+          rm index.html
+          mv index.vercel.html index.html
+          just build ui-internal
+          # Cleanup build artifacts to minimize upload size to Vercel.
+          rm -rf ./ui-internal/target
 
-    - name: Pull Vercel Environment Information
-      working-directory: ./ui-internal
-      env:
-        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_UI_INTERNAL }}
-      run: bunx vercel pull --yes --environment=preview --scope=${{ secrets.VERCEL_ORG_ID }} --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Pull Vercel Environment Information
+        working-directory: ./ui-internal
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_UI_INTERNAL }}
+        run: bunx vercel pull --yes --environment=preview --scope=${{ secrets.VERCEL_ORG_ID }} --token=${{ secrets.VERCEL_TOKEN }}
 
-    - name: Deploy to Vercel & Display URL
-      id: preview
-      env:
-        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_UI_INTERNAL }}
-      run: |
-        url="$(bunx vercel deploy --scope=${{ secrets.VERCEL_ORG_ID }} --token=${{ secrets.VERCEL_TOKEN }})"
-        echo "preview-url=$url" >> $GITHUB_OUTPUT
-        aliasUrl="ui-internal-git-${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}-codetalk.vercel.app"
-        echo "preview-alias-url=https://$aliasUrl" >> $GITHUB_OUTPUT
-        vercel alias --scope=${{ secrets.VERCEL_ORG_ID }} --token=${{ secrets.VERCEL_TOKEN }} set "$url" "$aliasUrl"
+      - name: Deploy to Vercel & Display URL
+        id: preview
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_UI_INTERNAL }}
+        run: |
+          url="$(bunx vercel deploy --scope=${{ secrets.VERCEL_ORG_ID }} --token=${{ secrets.VERCEL_TOKEN }})"
+          echo "preview-url=$url" >> $GITHUB_OUTPUT
+          aliasUrl="ui-internal-git-${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}-codetalk.vercel.app"
+          echo "preview-alias-url=https://$aliasUrl" >> $GITHUB_OUTPUT
+          vercel alias --scope=${{ secrets.VERCEL_ORG_ID }} --token=${{ secrets.VERCEL_TOKEN }} set "$url" "$aliasUrl"
 
-    # - name: Preview Deploy
-    #   id: preview
-    #   uses: amondnet/vercel-action@v25.1.1
-    #   with:
-    #     # Set the alias to the branch to mimic the URL of the default deployment comment.
-    #     alias-domains: "ui-internal-git-{{BRANCH}}-codetalk.vercel.app"
-    #     vercel-token: ${{ secrets.VERCEL_TOKEN }}
-    #     vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-    #     vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_UI_INTERNAL }}
-    #     scope: ${{ secrets.VERCEL_ORG_ID }}
-    #     # github-token: ${{ secrets.GITHUB_TOKEN }}
-    #     github-comment: false
-
-    - name: Display Deployed URL
-      run: |
-        echo "Preview URLs:" >> $GITHUB_STEP_SUMMARY
-        echo "- Direct URL: ${{ steps.preview.outputs.preview-url }}" >> $GITHUB_STEP_SUMMARY
-        echo "- Alias URL: ${{ steps.preview.outputs.preview-alias-url }}" >> $GITHUB_STEP_SUMMARY
-        echo $GITHUB_STEP_SUMMARY
+      - name: Display Deployed URL
+        run: |
+          echo "Preview URLs:" >> $GITHUB_STEP_SUMMARY
+          echo "- Direct URL: ${{ steps.preview.outputs.preview-url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Alias URL: ${{ steps.preview.outputs.preview-alias-url }}" >> $GITHUB_STEP_SUMMARY
+          echo $GITHUB_STEP_SUMMARY
