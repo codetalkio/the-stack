@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-const SERVER = `https://internal.${process.env.DOMAIN}`;
+const SERVER = process.env.UI_APP_E2E_URL ?? `https://${process.env.DOMAIN}`;
 
 test('localization translates text when changing language', async ({ page }) => {
   await page.goto(`${SERVER}/`);

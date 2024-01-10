@@ -58,5 +58,15 @@ jobs:
         run: |
           echo "Preview URLs:" >> $GITHUB_STEP_SUMMARY
           url="$(bunx vercel deploy --prod --scope=${{ secrets.VERCEL_ORG_ID }} --token=${{ secrets.VERCEL_TOKEN }})"
+          echo "url=$url" >> $GITHUB_OUTPUT
           echo "- Direct URL: $url" >> $GITHUB_STEP_SUMMARY
           echo $GITHUB_STEP_SUMMARY
+
+      - name: Install dependencies and setup Playwright
+        run: just setup deployment
+
+      - name: End-to-end tests
+        working-directory: ./deployment
+        env:
+          UI_INTERNAL_E2E_URL: ${{ steps.deployment.outputs.url }}
+        run: just e2e deployment ui-internal

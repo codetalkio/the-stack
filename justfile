@@ -207,17 +207,17 @@ test project:
   just _test-{{project}}
 
 # Run End-to-End tests for <project>, e.g. `just e2e ui-internal`.
-e2e project:
-  just _e2e-{{project}}
+e2e project +tests="":
+  just _e2e-{{project}} {{tests}}
 
-_e2e-deployment:
-  cd deployment/end2end && bun run e2e
+_e2e-deployment +tests="":
+  cd deployment/end2end && bun run e2e {{tests}}
 
-_e2e-ui-app:
-  cd ui-app/end2end && bun run e2e
+_e2e-ui-app +tests="":
+  cd ui-app/end2end && bun run e2e {{tests}}
 
-_e2e-ui-internal:
-  cd ui-internal/end2end && bun run e2e
+_e2e-ui-internal +tests="":
+  cd ui-internal/end2end && bun run e2e {{tests}}
 
 # Run <project> development server, e.g. `just dev ui-app`.
 dev project:
