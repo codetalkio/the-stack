@@ -18,5 +18,7 @@ jobs:
       - name: End-to-end tests
         working-directory: ./deployment
         env:
-          UI_APP_E2E_URL: ${{ github.event.deployment_status.url }}
-        run: just e2e deployment ui-app
+          UI_APP_E2E_URL: ${{ github.event.deployment_status.environment_url }}
+        run: |
+          echo "Running tests against '${UI_APP_E2E_URL}'."
+          just e2e deployment ui-app
