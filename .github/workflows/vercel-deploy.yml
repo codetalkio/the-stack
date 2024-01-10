@@ -55,9 +55,13 @@ jobs:
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_UI_INTERNAL }}
+        # NOTE: An alternative paid option is to use "Protection Bypass for Automation", or "Shareable links":
+        # - https://vercel.com/docs/security/deployment-protection/methods-to-bypass-deployment-protection/protection-bypass-automation
+        # - https://vercel.com/docs/security/deployment-protection/methods-to-bypass-deployment-protection/sharable-links
+        # - Or, as done here, setting Vercel Authentication to only be on Preview Deployments.
         run: |
           echo "Preview URLs:" >> $GITHUB_STEP_SUMMARY
-          url="$(bunx vercel deploy --prod --public --scope=${{ secrets.VERCEL_ORG_ID }} --token=${{ secrets.VERCEL_TOKEN }})"
+          url="$(bunx vercel deploy --prod --scope=${{ secrets.VERCEL_ORG_ID }} --token=${{ secrets.VERCEL_TOKEN }})"
           echo "url=$url" >> $GITHUB_OUTPUT
           echo "- Direct URL: $url" >> $GITHUB_STEP_SUMMARY
           echo $GITHUB_STEP_SUMMARY
