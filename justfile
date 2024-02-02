@@ -104,7 +104,8 @@ _setup-ms-router:
   cd ms-router/bin
 
   # Download the Apollo Router binary that we will use for local development.
-  curl -sSL https://router.apollo.dev/download/nix/v{{router-version}} | sh
+  # FIXME: Breaks for ARM.
+  # curl -sSL https://router.apollo.dev/download/nix/v{{router-version}} | sh
 
   # Download the Cosmo Router binary that we will use for local development.
   export TMP_DIR=$(mktemp -d -t "cosmo.XXXXXXXXXX")
@@ -114,7 +115,8 @@ _setup-ms-router:
   rm -r $TMP_DIR
 
   # Generate schema to validate our configuration against.
-  ./router config schema > ../configuration_schema.json
+  # FIXME: Breaks for ARM.
+  # ./router config schema > ../configuration_schema.json
 
 _setup-ms-cosmo:
   cd ms-cosmo && go mod tidy
