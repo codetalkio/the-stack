@@ -8,6 +8,7 @@ const base: Config = {
     runtime: 'lambda',
     path: '/graphql',
     pinToVersionedApi: false,
+    developmentMode: false,
   },
 
   subgraphs: [
@@ -52,28 +53,7 @@ const development: Config = {
     runtime: 'lambda',
     path: '/graphql',
     pinToVersionedApi: false,
-  },
-  experimental: {
-    additionalSupergraphs: [
-      {
-        service: 'cosmo',
-        runtime: 'lambda',
-        path: '/graphql-cosmo',
-        pinToVersionedApi: false,
-      },
-      {
-        service: 'gateway',
-        runtime: 'lambda',
-        path: '/graphql-gateway',
-        pinToVersionedApi: false,
-      },
-      {
-        service: 'mesh',
-        runtime: 'lambda',
-        path: '/graphql-mesh',
-        pinToVersionedApi: false,
-      },
-    ],
+    developmentMode: true,
   },
 };
 
@@ -84,6 +64,7 @@ const production: Config = {
     runtime: 'lambda',
     path: '/graphql',
     pinToVersionedApi: false,
+    developmentMode: false,
   },
 };
 

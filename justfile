@@ -6,7 +6,11 @@ router-version := "1.33.1"
 
 # The version of the Apollo Router we will be using. Check the latest version at
 # https://github.com/wundergraph/cosmo/releases
-cosmo-version := "0.25.1"
+cosmo-version := "0.72.0"
+
+# The version of the Apollo Router we will be using. Check the latest version at
+# https://github.com/wundergraph/cosmo/releases?q=aws-lambda-router&expanded=true
+cosmo-lambda-version := "0.3.1"
 
 # Display help information.
 help:
@@ -65,6 +69,7 @@ setup-all:
   @ just deploy-clean
   @ mkdir -p ./deployment/artifacts
   just _setup-deployment
+  just _setup-benchmark
   just _setup-ui-app
   just _setup-ui-internal
   just _setup-ms-gql-users
@@ -79,6 +84,9 @@ _setup-deployment:
   cd deployment && bun install
   cd deployment/end2end && bun install
   cd deployment/end2end && bun run setup
+
+_setup-benchmark:
+  cd benchmark && bun install
 
 _setup-ui-app:
   cd ui-app && bun install
@@ -141,6 +149,10 @@ _setup-rust project:
   cd {{project}}
   rustup toolchain install stable
   rustup default stable
+
+# Run benchmark tests against the supplied <fnNames>, e.g. `just benchmark 'ms-router,ms-cosmo'`.
+benchmark fnNames="ms-router":
+  cd benchmark && FUNCTION_NAME="{{ fnNames }}" bun run benchmark
 
 # Deploy everything in order.
 deploy:
@@ -232,10 +244,10 @@ _dev-ui-internal:
   cd ui-internal && trunk serve
 
 _dev-ms-router:
-  cd ms-router/bin && ./router --anonymous-telemetry-disabled --config ../router-app.yaml --supergraph=../../supergraph.graphql --dev --hot-reload --log debug
+  SUBGRAPH_USERS_URL=http://127.0.0.1:3065/ SUBGRAPH_PRODUCTS_URL=http://127.0.0.1:3075/ SUBGRAPH_REVIEWS_URL=http://127.0.0.1:3085/ CONFIG_PATH="./ms-router/cosmo.yaml" ROUTER_CONFIG_PATH="supergraph.json" ./ms-router/bin/cosmo
 
-_dev-ms-cosmo-binary:
-  GRAPH_API_TOKEN='fake' CONFIG_PATH="./ms-router/cosmo.yaml" ROUTER_CONFIG_PATH="supergraph.json" ./ms-router/bin/cosmo
+_dev-ms-router-apollo:
+  cd ms-router/bin && ./router --anonymous-telemetry-disabled --config ../router-app.yaml --supergraph=../../supergraph.graphql --dev --hot-reload --log debug
 
 _dev-ms-cosmo:
   cd ms-cosmo && SUBGRAPH_PRODUCTS_URL=https://ckvmnxg6sssbvn76ghbjfoyg3y0prbgg.lambda-url.eu-west-1.on.aws/ ENGINE_ENABLE_REQUEST_TRACING=false CONFIG_PATH="cosmo.yaml" ROUTER_CONFIG_PATH="supergraph.json" HTTP_PORT=4000 bunx nodemon --watch './**/*.go' --signal SIGTERM --exec 'go' run cmd/main.go
@@ -271,7 +283,7 @@ build-all build="release":
   @ just _build-ms-gql-users {{build}}
   @ just _build-ms-gql-products {{build}}
   @ just _build-ms-gql-reviews {{build}}
-  @ just _build-ms-router-lambda {{build}}
+  @ just _build-ms-router {{build}}
   @ just _build-ms-cosmo {{build}}
   @ just _build-ms-gateway {{build}}
   @ just _build-ms-mesh {{build}}
@@ -311,7 +323,7 @@ _build-ms-gql-reviews build="release":
   @ rm -r ./deployment/artifacts/ms-gql-reviews || true
   @ mkdir -p ./deployment/artifacts && cp -r ./target/lambda/ms-gql-reviews ./deployment/artifacts/ms-gql-reviews
 
-_build-ms-router-lambda build="release":
+_build-ms-router-apollo build="release":
   #!/usr/bin/env bash
   set -euxo pipefail
   rm -r ./deployment/artifacts/ms-router || true
@@ -322,42 +334,39 @@ _build-ms-router-lambda build="release":
   # Download the prebuilt Apollo Router binary that we will use for deployment.
   curl -sSL https://github.com/codetalkio/apollo-router-lambda/releases/latest/download/bootstrap-directly-optimized-graviton-arm-{{ if build == "speed" { "speed" } else { "size" } }} -o ./deployment/artifacts/ms-router/bootstrap
 
-_build-ms-cosmo-binary build="release":
+_build-ms-router-app build="release":
+  @ just docker-prepare ms-router
+  @ just docker-build ms-router
+  @ just docker-push ms-router
+
+_build-ms-router build="release":
   #!/usr/bin/env bash
   set -euxo pipefail
-  rm -r ./deployment/artifacts/ms-cosmo || true
-  mkdir -p ./deployment/artifacts/ms-cosmo
-  cp ms-router/cosmo.yaml ./deployment/artifacts/ms-cosmo/cosmo.yaml
-  cp supergraph.json ./deployment/artifacts/ms-cosmo/supergraph.json
+  rm -r ./deployment/artifacts/ms-router || true
+  mkdir -p ./deployment/artifacts/ms-router
+  cp ms-router/cosmo.yaml ./deployment/artifacts/ms-router/cosmo.yaml
+  cp supergraph.json ./deployment/artifacts/ms-router/supergraph.json
 
-  # Download the Cosmo Router binary that we will use for AWS Lambda.
+  # Download the Cosmo Router binary that we will use for deployment.
   export TMP_DIR=$(mktemp -d -t "cosmo.XXXXXXXXXX")
-  curl -sSfL https://github.com/wundergraph/cosmo/releases/download/router%40{{cosmo-version}}/router-router@{{cosmo-version}}-linux-arm64.tar.gz -o $TMP_DIR/cosmo.tar.gz
+  curl -sSfL https://github.com/wundergraph/cosmo/releases/download/aws-lambda-router%40{{cosmo-lambda-version}}/bootstrap-aws-lambda-router@{{cosmo-lambda-version}}-linux-arm64.tar.gz  -o $TMP_DIR/cosmo.tar.gz
   tar xf $TMP_DIR/cosmo.tar.gz -C $TMP_DIR
-  mv $TMP_DIR/router ./deployment/artifacts/ms-cosmo/router
+  mv $TMP_DIR/bootstrap ./deployment/artifacts/ms-router/bootstrap
   rm -r $TMP_DIR
-
-  # Download the prebuilt Router launcher binary that we will use for deployment.
-  curl -sSL https://github.com/codetalkio/apollo-router-lambda/releases/latest/download/bootstrap-cosmo-arm -o ./deployment/artifacts/ms-cosmo/bootstrap
 
 _build-ms-cosmo build="release":
   #!/usr/bin/env bash
   set -euxo pipefail
   rm -r ./deployment/artifacts/ms-cosmo || true
   mkdir -p ./deployment/artifacts/ms-cosmo
-  cp ms-cosmo/cosmo.yaml ./deployment/artifacts/ms-cosmo/cosmo.yaml
-  cp supergraph.json ./deployment/artifacts/ms-cosmo/supergraph.json
+  cp ms-cosmo/cosmo.yaml ./deployment/artifacts/ms-cosmo/config.yaml
+  cp supergraph.json ./deployment/artifacts/ms-cosmo/router.json
 
   cd ms-cosmo
   # Build the go module for Arm64 and without RPC.
   # See here for more info https://aws.amazon.com/blogs/compute/migrating-aws-lambda-functions-from-the-go1-x-runtime-to-the-custom-runtime-on-amazon-linux-2/.
   GOOS=linux GOARCH=arm64 go build -tags lambda.norpc -o bin/bootstrap cmd/main.go
   cp bin/bootstrap ../deployment/artifacts/ms-cosmo/bootstrap
-
-_build-ms-router-app build="release":
-  @ just docker-prepare ms-router
-  @ just docker-build ms-router
-  @ just docker-push ms-router
 
 docker-prepare project:
   just _docker-prepare-{{project}}

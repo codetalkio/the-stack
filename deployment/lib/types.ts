@@ -123,6 +123,7 @@ export type Supergraph =
       runtime: 'lambda';
       path: string;
       pinToVersionedApi: boolean;
+      developmentMode: boolean;
     }
   | {
       service: 'router';

@@ -1,4 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
+import { Construct } from 'constructs';
 
 /** We want to be able to target a specific stack for build and deployment. We extract
  * the requested stack from CDK and use that to determine what we should build.
@@ -8,13 +9,13 @@ import * as cdk from 'aws-cdk-lib';
  *  cdk synth <stack-name> --exclusively
  * ```
  */
-export const matchesStack = (app: cdk.App, stackName: string): boolean => {
+export const matchesStack = (app: cdk.App | Construct, stackName: string, exactMatch: boolean = false): boolean => {
   const bundlingStacks = app.node.tryGetContext('aws:cdk:bundling-stacks') as Array<string>;
   const buildAllStacks = bundlingStacks.includes('**');
   const matches =
     buildAllStacks ||
     bundlingStacks.length === 0 ||
-    bundlingStacks.some((s) => s === stackName || s === `${stackName}/*`);
+    bundlingStacks.some((s) => s === stackName || (!exactMatch && s === `${stackName}/*`));
   if (matches && process.env.VERBOSE) {
     console.log(`Building stack: ${stackName}`);
   }

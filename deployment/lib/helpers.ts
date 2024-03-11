@@ -1,3 +1,7 @@
+import * as cdk from 'aws-cdk-lib';
+import { Construct } from 'constructs';
+
+import { matchesStack } from '../bin/helpers';
 import { config as configMap } from '../config';
 import { App, Config, Supergraph, validEnvironments } from './types';
 
@@ -11,8 +15,10 @@ const resolveConfig = (env: string | undefined): Config => {
   } else if (!validEnvironments.includes(env as any)) {
     throw new Error(`ENVIRONMENT '${env}' is not a valid option. Possible values ${validEnvironments.join(', ')}`);
   } else if (env in configMap) {
+    console.log(`👉 Using '${env}' configuration.`);
     return configMap[env];
   }
+  console.log("👉 Using 'Base' configuration as no specific environment was set via 'ENVIRONMENT'.");
   return configMap['Base'];
 };
 
@@ -61,7 +67,7 @@ export const setupSupergraph = <N extends Supergraph['service'], R extends Super
   name: N,
   runtime: R,
   supergraphRoutes: { [key: string]: string },
-  stackFn: (additionalConfig?: Specific<Supergraph, { service: N; runtime: R }>) => string,
+  stackFn: (config: Specific<Supergraph, { service: N; runtime: R }>) => string,
 ) => {
   const isMainSupergraph = config.supergraph.service === name && config.supergraph.runtime === runtime;
   // We cast our result to `undefined | Specific` to narrow down the type.
@@ -71,11 +77,12 @@ export const setupSupergraph = <N extends Supergraph['service'], R extends Super
 
   // If the supergraph is the main one, or if it's an additional supergraph, set up the stack.
   if (isMainSupergraph || additionalSupergraphConfig) {
-    const url = stackFn(additionalSupergraphConfig);
     if (isMainSupergraph) {
+      const url = stackFn(config.supergraph as Specific<Supergraph, { service: N; runtime: R }>);
       supergraphRoutes[config.supergraph.path] = url;
     }
     if (additionalSupergraphConfig) {
+      const url = stackFn(additionalSupergraphConfig);
       supergraphRoutes[additionalSupergraphConfig.path] = url;
     }
   }
@@ -111,5 +118,22 @@ export const setupApp = <N extends App['service']>(
 
   if (appConfig && appConfig.service === name) {
     return stackFn(appConfig);
+  }
+};
+
+/**
+ * Add dependencies to the Supergraph stack and skip dependencies if the Supergraph stack is
+ * being directly deployed.
+ *
+ * Example:
+ * ```ts
+ * addSupergraphDependencies(scope, `${id}/${supergraphId}`, supergraph, subgraphs);
+ * ```
+ */
+export const addSupergraphDependencies = (scope: Construct, id: string, supergraph: cdk.Stack, subgraphs: any[]) => {
+  if (!matchesStack(scope, id, true)) {
+    subgraphs.forEach((subgraph) => supergraph.addDependency(subgraph));
+  } else {
+    console.log(`👉 Skipping dependencies for ${id} as it is being directly deployed`);
   }
 };

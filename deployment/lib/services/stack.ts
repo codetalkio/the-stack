@@ -3,7 +3,7 @@ import * as cdk from 'aws-cdk-lib';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 
-import { config, setupApp, setupSupergraph } from '../helpers';
+import { addSupergraphDependencies, config, setupApp, setupSupergraph } from '../helpers';
 import * as routerAppRunner from './app-runner';
 import * as lambdaFn from './lambda';
 import * as s3Website from './s3-website';
@@ -31,7 +31,7 @@ export class Stack extends cdk.Stack {
     super(scope, id, props);
 
     // Collect environment variables pointing to each subgraph URL for the Supergraph.
-    const subgraphEnvsSsm = {};
+    const subgraphEnvsSsm: { [key: string]: string } = {};
     // Collect all subgraphs that the supergraph will depend on.
     const subgraphs: Stack[] = [];
 
@@ -62,7 +62,8 @@ export class Stack extends cdk.Stack {
 
     // Set up our Apollo Gateway that pieces together the microservices.
     setupSupergraph('gateway', 'lambda', supergraphRoutesSsm, (config) => {
-      const supergraph = new lambdaFn.Stack(this, 'MsGateway', {
+      const supergraphId = 'MsGateway';
+      const supergraph = new lambdaFn.Stack(this, supergraphId, {
         ...props,
         functionName: 'ms-gateway',
         handler: 'lambda.graphqlHandler',
@@ -75,13 +76,14 @@ export class Stack extends cdk.Stack {
         },
       });
       supergraphs.push(supergraph);
-      subgraphs.forEach((subgraph) => supergraph.addDependency(subgraph));
+      addSupergraphDependencies(scope, `${id}/${supergraphId}`, supergraph, subgraphs);
       return config?.pinToVersionedApi ? supergraph.aliasUrlParameterName : supergraph.latestUrlParameterName;
     });
 
     // Set up our GraphQL Mesh that pieces together the microservices.
     setupSupergraph('mesh', 'lambda', supergraphRoutesSsm, (config) => {
-      const supergraph = new lambdaFn.Stack(this, 'MsMesh', {
+      const supergraphId = 'MsMesh';
+      const supergraph = new lambdaFn.Stack(this, supergraphId, {
         ...props,
         functionName: 'ms-mesh',
         handler: 'lambda.graphqlHandler',
@@ -94,13 +96,14 @@ export class Stack extends cdk.Stack {
         },
       });
       supergraphs.push(supergraph);
-      subgraphs.forEach((subgraph) => supergraph.addDependency(subgraph));
+      addSupergraphDependencies(scope, `${id}/${supergraphId}`, supergraph, subgraphs);
       return config?.pinToVersionedApi ? supergraph.aliasUrlParameterName : supergraph.latestUrlParameterName;
     });
 
-    // Set up our Apollo Router Lambda that pieces together the microservices.
+    // Set up our Cosmo Router Lambda that pieces together the microservices.
     setupSupergraph('router', 'lambda', supergraphRoutesSsm, (config) => {
-      const supergraph = new lambdaFn.Stack(this, 'MsRouterLambda', {
+      const supergraphId = 'MsRouterLambda';
+      const supergraph = new lambdaFn.Stack(this, supergraphId, {
         ...props,
         functionName: 'ms-router',
         assets: 'artifacts/ms-router',
@@ -111,15 +114,26 @@ export class Stack extends cdk.Stack {
         environmentFromSsm: {
           ...subgraphEnvsSsm,
         },
+        environment: {
+          DEV_MODE: config.developmentMode ? 'true' : 'false',
+          DISABLE_TELEMETRY: 'true',
+          // FIXME: These are not read by the Lambda Cosmo Router.
+          GRAPHQL_PATH: '/',
+          PLAYGROUND_PATH: '/graphiql',
+          CONFIG_PATH: 'config.yaml',
+          ROUTER_CONFIG_PATH: 'router.json',
+          ENGINE_ENABLE_REQUEST_TRACING: 'false',
+        },
       });
       supergraphs.push(supergraph);
-      subgraphs.forEach((subgraph) => supergraph.addDependency(subgraph));
+      addSupergraphDependencies(scope, `${id}/${supergraphId}`, supergraph, subgraphs);
       return config?.pinToVersionedApi ? supergraph.aliasUrlParameterName : supergraph.latestUrlParameterName;
     });
 
     // Set up our Apollo Router App Runner that pieces together the microservices.
     setupSupergraph('router', 'app-runner', supergraphRoutesSsm, () => {
-      const supergraph = new routerAppRunner.Stack(this, 'MsRouterApp', {
+      const supergraphId = 'MsRouterApp';
+      const supergraph = new routerAppRunner.Stack(this, supergraphId, {
         ...props,
         repo: 'ms-router',
         tag: process.env.SUPERGRAPH_ROUTER_IMAGE_TAG ?? `latest`,
@@ -131,33 +145,14 @@ export class Stack extends cdk.Stack {
         memory: appRunner.Memory.HALF_GB,
       });
       supergraphs.push(supergraph);
-      subgraphs.forEach((subgraph) => supergraph.addDependency(subgraph));
+      addSupergraphDependencies(scope, `${id}/${supergraphId}`, supergraph, subgraphs);
       return supergraph.urlParameterName;
     });
 
     // Set up our Cosmo Router Lambda that pieces together the microservices.
-    // setupSupergraph('cosmo', 'lambda', supergraphRoutesSsm, (config) => {
-    //   const supergraph = new lambdaFn.Stack(this, 'MsCosmo', {
-    //     ...props,
-    //     functionName: 'ms-cosmo',
-    //     assets: 'artifacts/ms-cosmo',
-    //     billingGroup: 'ms-cosmo',
-    //     runtime: lambda.Runtime.PROVIDED_AL2023,
-    //     lambdaInsights: false,
-    //     environmentFromSsm: {
-    //       ...subgraphEnvsSsm,
-    //     },
-    //     environment: {
-    //       PATH_ROUTER: './router',
-    //     },
-    //   });
-    //   supergraphs.push(supergraph);
-    //   subgraphs.forEach((subgraph) => supergraph.addDependency(subgraph));
-    //   return config?.pinToVersionedApi ? supergraph.aliasUrlParameterName : supergraph.latestUrlParameterName;
-    // });
-
     setupSupergraph('cosmo', 'lambda', supergraphRoutesSsm, (config) => {
-      const supergraph = new lambdaFn.Stack(this, 'MsCosmo', {
+      const supergraphId = 'MsCosmo';
+      const supergraph = new lambdaFn.Stack(this, supergraphId, {
         ...props,
         functionName: 'ms-cosmo',
         assets: 'artifacts/ms-cosmo',
@@ -174,7 +169,7 @@ export class Stack extends cdk.Stack {
         },
       });
       supergraphs.push(supergraph);
-      subgraphs.forEach((subgraph) => supergraph.addDependency(subgraph));
+      addSupergraphDependencies(scope, `${id}/${supergraphId}`, supergraph, subgraphs);
       return config?.pinToVersionedApi ? supergraph.aliasUrlParameterName : supergraph.latestUrlParameterName;
     });
 

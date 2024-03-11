@@ -24,10 +24,10 @@ import benchmarkPayloadProducts from './payload-products.json';
 /**
  * Benchmark configuration values.
  */
-const COLD_STARTS = 10;
-const WARM_STARTS = 10;
+const COLD_STARTS = 1;
+const WARM_STARTS = 1;
 // const MEMORY_SIZES = [128, 256, 512, 1024, 2048] as const;
-const MEMORY_SIZES = [512, 1024, 2048] as const;
+const MEMORY_SIZES = [1024] as const;
 
 // How long to wait for XRay to gather all the traces.
 const WAIT_FOR_XRAY = 15;
@@ -281,7 +281,14 @@ const invokeFunctions = async (functionName: string, memorySize: number) => {
       body: mkPayload(),
       headers: { 'Content-Type': 'application/json' },
     });
-    const payload = await res.json();
+    let payload: { error: any; errorMessage: any; errorType: any; data: any };
+    try {
+      payload = await res.json();
+    } catch (err) {
+      console.error('Error:', err);
+      console.error('Response:', res);
+      process.exit(1);
+    }
     const statusCode = res.status;
 
     if (statusCode !== 200 || payload.error || payload.errorMessage || payload.errorType || !payload.data) {
