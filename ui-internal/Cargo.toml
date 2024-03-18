@@ -1,3 +1,6 @@
+# This line needs to come before anything else in Cargo.toml
+cargo-features = ["codegen-backend"]
+
 [package]
 name = "ui-internal"
 version = "0.1.0"
@@ -18,6 +21,13 @@ lto = true        # Enable Link Time Optimization.
 codegen-units = 1 # Reduce Parallel Code Generation Units to Increase Optimization.
 strip = true      # Automatically strip symbols from the binary.
 debug = false
+
+# Use Cranelift as the codegen backend for faster build times.
+# rustup component add rustc-codegen-cranelift-preview --toolchain nightly
+# https://bjorn3.github.io/2023/10/31/progress-report-oct-2023.html
+# NOTE: Unavailable on ARM macOS for now.
+# [profile.dev]
+# codegen-backend = "cranelift"
 
 [dependencies]
 # Core leptos library.
